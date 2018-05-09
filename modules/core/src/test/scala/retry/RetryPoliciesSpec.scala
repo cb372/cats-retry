@@ -54,6 +54,58 @@ class RetryPoliciesSpec extends FlatSpec with Checkers {
     test(3, 800.milliseconds)
   }
 
+  behavior of "fibonacciBackoff"
+
+  it should "start with the base delay and increase the delay in a Fibonacci-y way" in {
+    val policy                   = RetryPolicies.fibonacciBackoff[Id](100.milliseconds)
+    val arbitraryCumulativeDelay = 999.milliseconds
+    val arbitraryPreviousDelay   = Some(999.milliseconds)
+
+    def test(retriesSoFar: Int, expectedDelay: FiniteDuration) = {
+      val status = RetryStatus(retriesSoFar,
+                               arbitraryCumulativeDelay,
+                               arbitraryPreviousDelay)
+      val verdict = policy.decideNextRetry(status)
+      assert(verdict == PolicyDecision.DelayAndRetry(expectedDelay))
+    }
+
+    test(0, 100.milliseconds)
+    test(1, 100.milliseconds)
+    test(2, 200.milliseconds)
+    test(3, 300.milliseconds)
+    test(4, 500.milliseconds)
+    test(5, 800.milliseconds)
+    test(6, 1300.milliseconds)
+    test(7, 2100.milliseconds)
+  }
+
+  behavior of "fullJitter"
+
+  it should "implement the AWS Full Jitter backoff algorithm" in {
+    val policy                   = RetryPolicies.fullJitter[Id](100.milliseconds)
+    val arbitraryCumulativeDelay = 999.milliseconds
+    val arbitraryPreviousDelay   = Some(999.milliseconds)
+
+    def test(retriesSoFar: Int, expectedMaximumDelay: FiniteDuration) = {
+      val status = RetryStatus(retriesSoFar,
+                               arbitraryCumulativeDelay,
+                               arbitraryPreviousDelay)
+      for (i <- 1 to 1000) {
+        val verdict = policy.decideNextRetry(status)
+        val delay   = verdict.asInstanceOf[PolicyDecision.DelayAndRetry].delay
+        assert(delay >= Duration.Zero)
+        assert(delay < expectedMaximumDelay)
+      }
+    }
+
+    test(0, 100.milliseconds)
+    test(1, 200.milliseconds)
+    test(2, 400.milliseconds)
+    test(3, 800.milliseconds)
+    test(4, 1600.milliseconds)
+    test(5, 3200.milliseconds)
+  }
+
   behavior of "limitRetries"
 
   it should "retry with no delay until the limit is reached" in check {
