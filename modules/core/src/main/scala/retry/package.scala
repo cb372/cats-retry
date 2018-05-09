@@ -82,8 +82,8 @@ package object retry {
 
   class RetryingOnAllErrorsPartiallyApplied[A] {
 
-    def retryingOnAllErrors[M[_], E](policy: RetryPolicy[M],
-                                     onError: (E, RetryDetails) => M[Unit])(
+    def apply[M[_], E](policy: RetryPolicy[M],
+                       onError: (E, RetryDetails) => M[Unit])(
         action: => M[A])(implicit ME: MonadError[M, E], S: Sleep[M]): M[A] = {
 
       def performNextStep(error: E, nextStep: NextStep): M[A] =

@@ -27,5 +27,3 @@ object Sleep {
       Future(blocking(Thread.sleep(delay.toMillis)))(ec)
 
 }
-
-// TODO cats-effect instance in separate module
