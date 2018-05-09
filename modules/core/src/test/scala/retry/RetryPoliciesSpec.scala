@@ -2,10 +2,12 @@ package retry
 
 import java.util.concurrent.TimeUnit
 
+import retry.RetryPolicies._
 import cats.Id
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.FlatSpec
 import org.scalatest.prop.Checkers
+import retry.PolicyDecision.{DelayAndRetry, GiveUp}
 
 import scala.concurrent.duration._
 
@@ -28,15 +30,14 @@ class RetryPoliciesSpec extends FlatSpec with Checkers {
 
   it should "always retry with the same delay" in check {
     (status: RetryStatus) =>
-      RetryPolicies
-        .constantDelay[Id](1.second)
+      constantDelay[Id](1.second)
         .decideNextRetry(status) == PolicyDecision.DelayAndRetry(1.second)
   }
 
   behavior of "exponentialBackoff"
 
   it should "start with the base delay and double the delay after each iteration" in {
-    val policy                   = RetryPolicies.exponentialBackoff[Id](100.milliseconds)
+    val policy                   = exponentialBackoff[Id](100.milliseconds)
     val arbitraryCumulativeDelay = 999.milliseconds
     val arbitraryPreviousDelay   = Some(999.milliseconds)
 
@@ -57,7 +58,7 @@ class RetryPoliciesSpec extends FlatSpec with Checkers {
   behavior of "fibonacciBackoff"
 
   it should "start with the base delay and increase the delay in a Fibonacci-y way" in {
-    val policy                   = RetryPolicies.fibonacciBackoff[Id](100.milliseconds)
+    val policy                   = fibonacciBackoff[Id](100.milliseconds)
     val arbitraryCumulativeDelay = 999.milliseconds
     val arbitraryPreviousDelay   = Some(999.milliseconds)
 
@@ -82,7 +83,7 @@ class RetryPoliciesSpec extends FlatSpec with Checkers {
   behavior of "fullJitter"
 
   it should "implement the AWS Full Jitter backoff algorithm" in {
-    val policy                   = RetryPolicies.fullJitter[Id](100.milliseconds)
+    val policy                   = fullJitter[Id](100.milliseconds)
     val arbitraryCumulativeDelay = 999.milliseconds
     val arbitraryPreviousDelay   = Some(999.milliseconds)
 
@@ -112,12 +113,64 @@ class RetryPoliciesSpec extends FlatSpec with Checkers {
     (status: RetryStatus) =>
       val limit = 500
       val verdict =
-        RetryPolicies.limitRetries[Id](limit).decideNextRetry(status)
+        limitRetries[Id](limit).decideNextRetry(status)
       if (status.retriesSoFar < limit) {
         verdict == PolicyDecision.DelayAndRetry(Duration.Zero)
       } else {
         verdict == PolicyDecision.GiveUp
       }
+  }
+
+  behavior of "capDelay"
+
+  it should "cap the delay" in {
+    check { (status: RetryStatus) =>
+      capDelay(100.milliseconds, constantDelay(101.milliseconds))
+        .decideNextRetry(status) == DelayAndRetry(100.milliseconds)
+    }
+
+    check { (status: RetryStatus) =>
+      capDelay(100.milliseconds, constantDelay(99.milliseconds))
+        .decideNextRetry(status) == DelayAndRetry(99.milliseconds)
+    }
+  }
+
+  behavior of "limitRetriesByDelay"
+
+  it should "give up if the underlying policy chooses a delay greater than the threshold" in {
+    check { (status: RetryStatus) =>
+      limitRetriesByDelay(100.milliseconds, constantDelay(101.milliseconds))
+        .decideNextRetry(status) == GiveUp
+    }
+
+    check { (status: RetryStatus) =>
+      limitRetriesByDelay(100.milliseconds, constantDelay(99.milliseconds))
+        .decideNextRetry(status) == DelayAndRetry(99.milliseconds)
+    }
+  }
+
+  behavior of "limitRetriesByCumulativeDelay"
+
+  it should "give up if cumulativeDelay + underlying policy's next delay >= threshold" in {
+    val cumulativeDelay        = 400.milliseconds
+    val arbitraryRetriesSoFar  = 5
+    val arbitraryPreviousDelay = Some(123.milliseconds)
+    val status = RetryStatus(arbitraryRetriesSoFar,
+                             cumulativeDelay,
+                             arbitraryPreviousDelay)
+
+    val threshold = 500.milliseconds
+
+    def test(underlyingPolicy: RetryPolicy[Id],
+             expectedDecision: PolicyDecision) = {
+      val policy = limitRetriesByCumulativeDelay(threshold, underlyingPolicy)
+      assert(policy.decideNextRetry(status) == expectedDecision)
+    }
+
+    test(constantDelay(98.milliseconds), DelayAndRetry(98.milliseconds))
+    test(constantDelay(99.milliseconds), DelayAndRetry(99.milliseconds))
+    test(constantDelay(100.milliseconds), GiveUp)
+    test(constantDelay(101.milliseconds), GiveUp)
   }
 
 }
