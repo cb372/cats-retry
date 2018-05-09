@@ -23,13 +23,14 @@ class PackageObjectSpec extends FlatSpec {
     implicit val dummySleep: Sleep[Id] =
       (delay: FiniteDuration) => sleeps.append(delay)
 
-    def onFailure(x: Int, nextStep: NextStep): Unit = {
+    def onFailure(x: Int, details: RetryDetails): Unit = {
       failedResults.append(x)
-      nextStep match {
-        case WillRetryAfterDelay(delay, prev, updated) =>
-          println(s"Previous: $prev ... Updated: $updated")
+      details match {
+        case RetryDetails.WillDelayAndRetry(delay,
+                                            retriesSoFar,
+                                            cumulativeDelay) =>
           delays.append(delay)
-        case WillGiveUp(_) => gaveUp = true
+        case RetryDetails.GivingUp(totalRetries, totalDelay) => gaveUp = true
       }
     }
 
@@ -58,11 +59,14 @@ class PackageObjectSpec extends FlatSpec {
     val delays        = ArrayBuffer.empty[FiniteDuration]
     var gaveUp        = false
 
-    def onFailure(x: Int, nextStep: NextStep): Unit = {
+    def onFailure(x: Int, details: RetryDetails): Unit = {
       failedResults.append(x)
-      nextStep match {
-        case WillRetryAfterDelay(delay, _, _) => delays.append(delay)
-        case WillGiveUp(_)                    => gaveUp = true
+      details match {
+        case RetryDetails.WillDelayAndRetry(delay,
+                                            retriesSoFar,
+                                            cumulativeDelay) =>
+          delays.append(delay)
+        case RetryDetails.GivingUp(totalRetries, totalDelay) => gaveUp = true
       }
     }
 
@@ -96,11 +100,14 @@ class PackageObjectSpec extends FlatSpec {
     val delays   = ArrayBuffer.empty[FiniteDuration]
     var gaveUp   = false
 
-    def onError(error: String, nextStep: NextStep): Either[String, Unit] = {
+    def onError(error: String, details: RetryDetails): Either[String, Unit] = {
       errors.append(error)
-      nextStep match {
-        case WillRetryAfterDelay(delay, _, _) => delays.append(delay)
-        case WillGiveUp(_)                    => gaveUp = true
+      details match {
+        case RetryDetails.WillDelayAndRetry(delay,
+                                            retriesSoFar,
+                                            cumulativeDelay) =>
+          delays.append(delay)
+        case RetryDetails.GivingUp(totalRetries, totalDelay) => gaveUp = true
       }
       Right(())
     }

@@ -30,7 +30,7 @@ class RetryPoliciesSpec extends FlatSpec with Checkers {
     (status: RetryStatus) =>
       RetryPolicies
         .constantDelay[Id](1.second)
-        .decideNextRetry(status) == DelayAndRetry(1.second)
+        .decideNextRetry(status) == PolicyDecision.DelayAndRetry(1.second)
   }
 
   behavior of "exponentialBackoff"
@@ -45,7 +45,7 @@ class RetryPoliciesSpec extends FlatSpec with Checkers {
                                arbitraryCumulativeDelay,
                                arbitraryPreviousDelay)
       val verdict = policy.decideNextRetry(status)
-      assert(verdict == DelayAndRetry(expectedDelay))
+      assert(verdict == PolicyDecision.DelayAndRetry(expectedDelay))
     }
 
     test(0, 100.milliseconds)
@@ -62,9 +62,9 @@ class RetryPoliciesSpec extends FlatSpec with Checkers {
       val verdict =
         RetryPolicies.limitRetries[Id](limit).decideNextRetry(status)
       if (status.retriesSoFar < limit) {
-        verdict == DelayAndRetry(Duration.Zero)
+        verdict == PolicyDecision.DelayAndRetry(Duration.Zero)
       } else {
-        verdict == GiveUp
+        verdict == PolicyDecision.GiveUp
       }
   }
 

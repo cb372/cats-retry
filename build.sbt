@@ -11,7 +11,8 @@ val commonSettings = Seq(
     "-language:higherKinds"
   ),
   scalacOptions in (Test, compile) += "-Ypartial-unification",
-  libraryDependencies ++= commonDeps
+  libraryDependencies ++= commonDeps,
+  scalafmtOnCompile := true
 )
 
 val core = project.in(file("modules/core"))
@@ -27,5 +28,3 @@ val `cats-effect` = project.in(file("modules/cats-effect"))
   )
 
 val root = project.in(file(".")).aggregate(core, `cats-effect`)
-
-scalafmtOnCompile := true

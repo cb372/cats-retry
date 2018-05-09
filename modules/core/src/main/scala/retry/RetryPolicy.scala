@@ -2,15 +2,16 @@ package retry
 
 import cats.Monad
 import cats.kernel.Monoid
+import retry.PolicyDecision._
 
 import scala.concurrent.duration.Duration
 
 case class RetryPolicy[M[_]: Monad](
-    decideNextRetry: RetryStatus => M[RetryVerdict])
+    decideNextRetry: RetryStatus => M[PolicyDecision])
 
 object RetryPolicy {
 
-  def lift[M[_]](f: RetryStatus => RetryVerdict)(
+  def lift[M[_]](f: RetryStatus => PolicyDecision)(
       implicit M: Monad[M]): RetryPolicy[M] =
     RetryPolicy[M](decideNextRetry = retryStatus => M.pure(f(retryStatus)))
 

@@ -1,6 +1,7 @@
 package retry
 
 import cats.Monad
+import retry.PolicyDecision._
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 

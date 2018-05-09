@@ -7,6 +7,7 @@ import scala.concurrent.duration.FiniteDuration
 
 package object effect {
 
-  implicit def sleepUsingTimer[F[_]](implicit timer: Timer[F]): Sleep[F] = (delay: FiniteDuration) => timer.sleep(delay)
-  
+  implicit def sleepUsingTimer[F[_]](implicit timer: Timer[F]): Sleep[F] =
+    (delay: FiniteDuration) => timer.sleep(delay)
+
 }
