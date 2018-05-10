@@ -10,3 +10,6 @@ Designed to work with [cats](https://typelevel.org/cats/) and (optionally)
 
 Inspired by the [retry Haskell
 package](https://hackage.haskell.org/package/retry).
+
+Get started with [Getting
+started](https://cb372.github.io/cats-retry/docs/index.html)!
