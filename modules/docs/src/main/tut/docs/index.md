@@ -10,22 +10,18 @@ Let's start with a realistic example.
 In order to provide business value to our stakeholders, we need to download a
 textual description of a cat gif.
 
-Unfortunately we have to do this over a flaky network connection, so there's an
-70% chance it will fail.
+Unfortunately we have to do this over a flaky network connection, so there's a
+high probability it will fail.
 
 We'll be working with the cats-effect `IO` monad, but any monad will do.
 
 ```tut:book
 import cats.effect.IO
-import scala.util.Random
-import java.io.IOException
+
+val httpClient = util.FlakyHttpClient()
 
 val flakyRequest: IO[String] = IO {
-  if (Random.nextDouble() < 0.3) {
-    "cute cat gets sleepy and falls asleep"
-  } else {
-    throw new IOException("Failed to download")
-  }
+  httpClient.getCatGif()
 }
 ```
 
@@ -49,15 +45,22 @@ the `IO` monad.
 import scala.concurrent.duration.FiniteDuration
 import retry.RetryDetails._
 
+val logMessages = collection.mutable.ArrayBuffer.empty[String]
+
 def logError(err: Throwable, details: RetryDetails): IO[Unit] = details match {
 
   case WillDelayAndRetry(nextDelay: FiniteDuration,
                          retriesSoFar: Int,
                          cumulativeDelay: FiniteDuration) =>
-    IO(println(s"Failed to download. So far we have retried $retriesSoFar times."))
+    IO {
+      logMessages.append(
+        s"Failed to download. So far we have retried $retriesSoFar times.")
+    }
 
   case GivingUp(totalRetries: Int, totalDelay: FiniteDuration) =>
-    IO(println(s"Giving up after $totalRetries retries"))
+    IO {
+      logMessages.append(s"Giving up after $totalRetries retries")
+    }
 
 }
 ```
@@ -83,6 +86,8 @@ Let's see it in action.
 
 ```tut
 flakyRequestWithRetry.unsafeRunSync()
+
+logMessages.foreach(println)
 ```
 
 Next steps:

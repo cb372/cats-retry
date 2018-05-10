@@ -11,7 +11,7 @@ class PackageObjectSpec extends FlatSpec {
 
   type StringOr[A] = Either[String, A]
 
-  behavior of "retrying"
+  behavior of "retryingM"
 
   it should "retry until the action succeeds" in new TestContext {
     val policy = RetryPolicies.constantDelay[Id](1.second)
@@ -21,7 +21,7 @@ class PackageObjectSpec extends FlatSpec {
     implicit val dummySleep: Sleep[Id] =
       (delay: FiniteDuration) => sleeps.append(delay)
 
-    val finalResult = retrying[String][Id](
+    val finalResult = retryingM[String][Id](
       policy,
       _.toInt > 3,
       onError
@@ -41,7 +41,7 @@ class PackageObjectSpec extends FlatSpec {
   it should "retry until the policy chooses to give up" in new TestContext {
     val policy = RetryPolicies.limitRetries[Id](2)
 
-    val finalResult = retrying[String][Id](
+    val finalResult = retryingM[String][Id](
       policy,
       _.toInt > 3,
       onError

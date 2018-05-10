@@ -1,4 +1,4 @@
-import cats.{Monad, MonadError}
+import cats.{Id, Monad, MonadError}
 import cats.syntax.functor._
 import cats.syntax.flatMap._
 
@@ -6,7 +6,13 @@ import scala.concurrent.duration.FiniteDuration
 
 package object retry {
 
-  def retrying[A] = new RetryingPartiallyApplied[A]
+  def retrying[A](policy: RetryPolicy[Id],
+                  wasSuccessful: A => Boolean,
+                  onFailure: (A, RetryDetails) => Unit)(
+      action: => A)(implicit M: Monad[Id], S: Sleep[Id]): A =
+    retryingM[A][Id](policy, wasSuccessful, onFailure)(action)
+
+  def retryingM[A] = new RetryingPartiallyApplied[A]
 
   class RetryingPartiallyApplied[A] {
 
