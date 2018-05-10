@@ -19,7 +19,7 @@ high probability it will fail.</p>
 <span class="k">val</span> <span class="n">flakyRequest</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="nc">IO</span> <span class="o">{</span>
   <span class="n">httpClient</span><span class="o">.</span><span class="n">getCatGif</span><span class="o">()</span>
 <span class="o">}</span>
-<span class="c1">// flakyRequest: cats.effect.IO[String] = IO$1406416980
+<span class="c1">// flakyRequest: cats.effect.IO[String] = IO$1805893931
 </span></code></pre></div></div>
 
 <p>To improve the chance of successfully downloading the file, let’s wrap this with
@@ -32,7 +32,7 @@ no delay between attempts.</p>
 <span class="c1">// import retry._
 </span>
 <span class="k">val</span> <span class="n">retryFiveTimes</span> <span class="k">=</span> <span class="nc">RetryPolicies</span><span class="o">.</span><span class="n">limitRetries</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mi">10</span><span class="o">)</span>
-<span class="c1">// retryFiveTimes: retry.RetryPolicy[cats.effect.IO] = RetryPolicy(retry.RetryPolicy$$$Lambda$10560/1825917390@6db4dc4b)
+<span class="c1">// retryFiveTimes: retry.RetryPolicy[cats.effect.IO] = RetryPolicy(retry.RetryPolicy$$$Lambda$12579/1957014963@351585f5)
 </span></code></pre></div></div>
 
 <p>We’ll also provide an error handler that does some logging before every retry.
@@ -83,7 +83,7 @@ retries.</p>
     <span class="n">policy</span> <span class="k">=</span> <span class="n">retryFiveTimes</span><span class="o">,</span>
     <span class="n">onError</span> <span class="k">=</span> <span class="n">logError</span>
   <span class="o">)(</span><span class="n">flakyRequest</span><span class="o">)</span>
-<span class="c1">// flakyRequestWithRetry: cats.effect.IO[String] = IO$1413995580
+<span class="c1">// flakyRequestWithRetry: cats.effect.IO[String] = IO$637100886
 </span></code></pre></div></div>
 
 <p>Let’s see it in action.</p>
