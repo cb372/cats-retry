@@ -1,0 +1,9 @@
+options:
+  - title: Getting started
+    url: docs/index.html
+  - title: Combinators
+    url: docs/combinators.html
+  - title: Retry policies
+    url: docs/policies.html
+  - title: Sleep
+    url: docs/sleep.html

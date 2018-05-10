@@ -27,4 +27,27 @@ val `cats-effect` = project.in(file("modules/cats-effect"))
     )
   )
 
-val root = project.in(file(".")).aggregate(core, `cats-effect`)
+val docs = project.in(file("modules/docs"))
+  .dependsOn(core, `cats-effect`)
+  .enablePlugins(MicrositesPlugin)
+  .settings(commonSettings)
+  .settings(
+    publishArtifact := false,
+    micrositeName := "cats-retry",
+    micrositeAuthor := "Chris Birchall",
+    micrositeDescription := "cats-retry",
+    micrositeBaseUrl := "/cats-retry",
+    micrositeDocumentationUrl := "/cats-retry/docs",
+    micrositeHomepage := "https://github.com/cb372/cats-retry",
+    micrositeGithubOwner := "cb372",
+    micrositeGithubRepo := "cats-retry",
+    micrositeGitterChannel := true,
+    micrositeTwitterCreator := "@cbirchall",
+    micrositeShareOnSocial := true
+  )
+
+val root = project.in(file("."))
+  .aggregate(core, `cats-effect`, docs)
+  .settings(
+    publishArtifact := false
+  )
