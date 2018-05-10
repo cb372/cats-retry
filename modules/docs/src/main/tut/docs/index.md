@@ -28,13 +28,14 @@ val flakyRequest: IO[String] = IO {
 To improve the chance of successfully downloading the file, let's wrap this with
 some retry logic.
 
-First we'll need a retry policy. Let's keep it simple: retry up to 10 times, with
-no delay between attempts.
+First we'll need a retry policy. We'll keep it simple: retry up to 5 times, with
+no delay between attempts. (See the [retry policies page](policies.html) for
+information on more powerful policies).
 
 ```tut:book
 import retry._
 
-val retryFiveTimes = RetryPolicies.limitRetries[IO](10)
+val retryFiveTimes = RetryPolicies.limitRetries[IO](5)
 ```
 
 We'll also provide an error handler that does some logging before every retry.
