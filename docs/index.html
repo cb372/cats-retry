@@ -5,28 +5,21 @@
 <p>In order to provide business value to our stakeholders, we need to download a
 textual description of a cat gif.</p>
 
-<p>Unfortunately we have to do this over a flaky network connection, so there’s an
-70% chance it will fail.</p>
+<p>Unfortunately we have to do this over a flaky network connection, so there’s a
+high probability it will fail.</p>
 
 <p>We’ll be working with the cats-effect <code class="highlighter-rouge">IO</code> monad, but any monad will do.</p>
 
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">cats.effect.IO</span>
 <span class="c1">// import cats.effect.IO
 </span>
-<span class="k">import</span> <span class="nn">scala.util.Random</span>
-<span class="c1">// import scala.util.Random
-</span>
-<span class="k">import</span> <span class="nn">java.io.IOException</span>
-<span class="c1">// import java.io.IOException
+<span class="k">val</span> <span class="n">httpClient</span> <span class="k">=</span> <span class="n">util</span><span class="o">.</span><span class="nc">FlakyHttpClient</span><span class="o">()</span>
+<span class="c1">// httpClient: util.FlakyHttpClient = FlakyHttpClient()
 </span>
 <span class="k">val</span> <span class="n">flakyRequest</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="nc">IO</span> <span class="o">{</span>
-  <span class="k">if</span> <span class="o">(</span><span class="nc">Random</span><span class="o">.</span><span class="n">nextDouble</span><span class="o">()</span> <span class="o">&lt;</span> <span class="mf">0.3</span><span class="o">)</span> <span class="o">{</span>
-    <span class="s">"cute cat gets sleepy and falls asleep"</span>
-  <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
-    <span class="k">throw</span> <span class="k">new</span> <span class="nc">IOException</span><span class="o">(</span><span class="s">"Failed to download"</span><span class="o">)</span>
-  <span class="o">}</span>
+  <span class="n">httpClient</span><span class="o">.</span><span class="n">getCatGif</span><span class="o">()</span>
 <span class="o">}</span>
-<span class="c1">// flakyRequest: cats.effect.IO[String] = IO$561674852
+<span class="c1">// flakyRequest: cats.effect.IO[String] = IO$1406416980
 </span></code></pre></div></div>
 
 <p>To improve the chance of successfully downloading the file, let’s wrap this with
@@ -39,7 +32,7 @@ no delay between attempts.</p>
 <span class="c1">// import retry._
 </span>
 <span class="k">val</span> <span class="n">retryFiveTimes</span> <span class="k">=</span> <span class="nc">RetryPolicies</span><span class="o">.</span><span class="n">limitRetries</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mi">10</span><span class="o">)</span>
-<span class="c1">// retryFiveTimes: retry.RetryPolicy[cats.effect.IO] = RetryPolicy(retry.RetryPolicy$$$Lambda$5807/1927725480@770df2b3)
+<span class="c1">// retryFiveTimes: retry.RetryPolicy[cats.effect.IO] = RetryPolicy(retry.RetryPolicy$$$Lambda$10560/1825917390@6db4dc4b)
 </span></code></pre></div></div>
 
 <p>We’ll also provide an error handler that does some logging before every retry.
@@ -52,15 +45,23 @@ the <code class="highlighter-rouge">IO</code> monad.</p>
 <span class="k">import</span> <span class="nn">retry.RetryDetails._</span>
 <span class="c1">// import retry.RetryDetails._
 </span>
+<span class="k">val</span> <span class="n">logMessages</span> <span class="k">=</span> <span class="n">collection</span><span class="o">.</span><span class="n">mutable</span><span class="o">.</span><span class="nc">ArrayBuffer</span><span class="o">.</span><span class="n">empty</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span>
+<span class="c1">// logMessages: scala.collection.mutable.ArrayBuffer[String] = ArrayBuffer()
+</span>
 <span class="k">def</span> <span class="n">logError</span><span class="o">(</span><span class="n">err</span><span class="k">:</span> <span class="kt">Throwable</span><span class="o">,</span> <span class="n">details</span><span class="k">:</span> <span class="kt">RetryDetails</span><span class="o">)</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="n">details</span> <span class="k">match</span> <span class="o">{</span>
 
   <span class="k">case</span> <span class="nc">WillDelayAndRetry</span><span class="o">(</span><span class="n">nextDelay</span><span class="k">:</span> <span class="kt">FiniteDuration</span><span class="o">,</span>
                          <span class="n">retriesSoFar</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span>
                          <span class="n">cumulativeDelay</span><span class="k">:</span> <span class="kt">FiniteDuration</span><span class="o">)</span> <span class="k">=&gt;</span>
-    <span class="nc">IO</span><span class="o">(</span><span class="n">println</span><span class="o">(</span><span class="n">s</span><span class="s">"Failed to download. So far we have retried $retriesSoFar times."</span><span class="o">))</span>
+    <span class="nc">IO</span> <span class="o">{</span>
+      <span class="n">logMessages</span><span class="o">.</span><span class="n">append</span><span class="o">(</span>
+        <span class="n">s</span><span class="s">"Failed to download. So far we have retried $retriesSoFar times."</span><span class="o">)</span>
+    <span class="o">}</span>
 
   <span class="k">case</span> <span class="nc">GivingUp</span><span class="o">(</span><span class="n">totalRetries</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">totalDelay</span><span class="k">:</span> <span class="kt">FiniteDuration</span><span class="o">)</span> <span class="k">=&gt;</span>
-    <span class="nc">IO</span><span class="o">(</span><span class="n">println</span><span class="o">(</span><span class="n">s</span><span class="s">"Giving up after $totalRetries retries"</span><span class="o">))</span>
+    <span class="nc">IO</span> <span class="o">{</span>
+      <span class="n">logMessages</span><span class="o">.</span><span class="n">append</span><span class="o">(</span><span class="n">s</span><span class="s">"Giving up after $totalRetries retries"</span><span class="o">)</span>
+    <span class="o">}</span>
 
 <span class="o">}</span>
 <span class="c1">// logError: (err: Throwable, details: retry.RetryDetails)cats.effect.IO[Unit]
@@ -82,13 +83,19 @@ retries.</p>
     <span class="n">policy</span> <span class="k">=</span> <span class="n">retryFiveTimes</span><span class="o">,</span>
     <span class="n">onError</span> <span class="k">=</span> <span class="n">logError</span>
   <span class="o">)(</span><span class="n">flakyRequest</span><span class="o">)</span>
-<span class="c1">// flakyRequestWithRetry: cats.effect.IO[String] = IO$1874161222
+<span class="c1">// flakyRequestWithRetry: cats.effect.IO[String] = IO$1413995580
 </span></code></pre></div></div>
 
 <p>Let’s see it in action.</p>
 
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">scala</span><span class="o">&gt;</span> <span class="n">flakyRequestWithRetry</span><span class="o">.</span><span class="n">unsafeRunSync</span><span class="o">()</span>
 <span class="n">res2</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="n">cute</span> <span class="n">cat</span> <span class="n">gets</span> <span class="n">sleepy</span> <span class="n">and</span> <span class="n">falls</span> <span class="n">asleep</span>
+
+<span class="n">scala</span><span class="o">&gt;</span> <span class="n">logMessages</span><span class="o">.</span><span class="n">foreach</span><span class="o">(</span><span class="n">println</span><span class="o">)</span>
+<span class="nc">Failed</span> <span class="n">to</span> <span class="n">download</span><span class="o">.</span> <span class="nc">So</span> <span class="n">far</span> <span class="n">we</span> <span class="n">have</span> <span class="n">retried</span> <span class="mi">0</span> <span class="n">times</span><span class="o">.</span>
+<span class="nc">Failed</span> <span class="n">to</span> <span class="n">download</span><span class="o">.</span> <span class="nc">So</span> <span class="n">far</span> <span class="n">we</span> <span class="n">have</span> <span class="n">retried</span> <span class="mi">1</span> <span class="n">times</span><span class="o">.</span>
+<span class="nc">Failed</span> <span class="n">to</span> <span class="n">download</span><span class="o">.</span> <span class="nc">So</span> <span class="n">far</span> <span class="n">we</span> <span class="n">have</span> <span class="n">retried</span> <span class="mi">2</span> <span class="n">times</span><span class="o">.</span>
+<span class="nc">Failed</span> <span class="n">to</span> <span class="n">download</span><span class="o">.</span> <span class="nc">So</span> <span class="n">far</span> <span class="n">we</span> <span class="n">have</span> <span class="n">retried</span> <span class="mi">3</span> <span class="n">times</span><span class="o">.</span>
 </code></pre></div></div>
 
 <p>Next steps:</p>
