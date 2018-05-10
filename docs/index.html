@@ -26,7 +26,7 @@ textual description of a cat gif.</p>
     <span class="k">throw</span> <span class="k">new</span> <span class="nc">IOException</span><span class="o">(</span><span class="s">"Failed to download"</span><span class="o">)</span>
   <span class="o">}</span>
 <span class="o">}</span>
-<span class="c1">// flakyRequest: cats.effect.IO[String] = IO$1170129087
+<span class="c1">// flakyRequest: cats.effect.IO[String] = IO$561674852
 </span></code></pre></div></div>
 
 <p>To improve the chance of successfully downloading the file, let’s wrap this with
@@ -39,7 +39,7 @@ no delay between attempts.</p>
 <span class="c1">// import retry._
 </span>
 <span class="k">val</span> <span class="n">retryFiveTimes</span> <span class="k">=</span> <span class="nc">RetryPolicies</span><span class="o">.</span><span class="n">limitRetries</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mi">10</span><span class="o">)</span>
-<span class="c1">// retryFiveTimes: retry.RetryPolicy[cats.effect.IO] = RetryPolicy(retry.RetryPolicy$$$Lambda$6315/1064432734@18ba3489)
+<span class="c1">// retryFiveTimes: retry.RetryPolicy[cats.effect.IO] = RetryPolicy(retry.RetryPolicy$$$Lambda$5807/1927725480@770df2b3)
 </span></code></pre></div></div>
 
 <p>We’ll also provide an error handler that does some logging before every retry.
@@ -82,7 +82,7 @@ retries.</p>
     <span class="n">policy</span> <span class="k">=</span> <span class="n">retryFiveTimes</span><span class="o">,</span>
     <span class="n">onError</span> <span class="k">=</span> <span class="n">logError</span>
   <span class="o">)(</span><span class="n">flakyRequest</span><span class="o">)</span>
-<span class="c1">// flakyRequestWithRetry: cats.effect.IO[String] = IO$1934339431
+<span class="c1">// flakyRequestWithRetry: cats.effect.IO[String] = IO$1874161222
 </span></code></pre></div></div>
 
 <p>Let’s see it in action.</p>

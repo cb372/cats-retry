@@ -5,12 +5,64 @@ retries.</p>
 
 <h2 id="retrying"><code class="highlighter-rouge">retrying</code></h2>
 
-<p>This is useful when you are working in an arbitrary <code class="highlighter-rouge">Monad</code> that is not a
-<code class="highlighter-rouge">MonadError</code>. Your operation doesn’t throw errors, but you want to retry until
-it returns a value that you are happy with.</p>
+<p>This is useful when you are not working in a monadic context.  You have an
+operation that simply returns a value of some type <code class="highlighter-rouge">A</code>, and you want to retry
+until it returns a value that you are happy with.</p>
 
 <p>To use <code class="highlighter-rouge">retrying</code>, you pass in a predicate that decides whether you are
 happy with the result or you want to retry.</p>
+
+<p>The API looks like this:</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="n">retrying</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">policy</span><span class="k">:</span> <span class="kt">RetryPolicy</span><span class="o">[</span><span class="kt">Id</span><span class="o">],</span>
+                <span class="n">wasSuccessful</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="nc">Boolean</span><span class="o">,</span>
+                <span class="n">onFailure</span><span class="k">:</span> <span class="o">(</span><span class="kt">A</span><span class="o">,</span> <span class="kt">RetryDetails</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nc">Unit</span><span class="o">)</span>
+               <span class="o">(</span><span class="n">action</span><span class="k">:</span> <span class="o">=&gt;</span> <span class="n">A</span><span class="o">)</span>
+</code></pre></div></div>
+
+<p>You need to pass in:</p>
+
+<ul>
+  <li>a retry policy</li>
+  <li>a predicate that decides whether the operation was successful</li>
+  <li>a failure handler, often used for logging</li>
+  <li>the operation that you want to wrap with retries</li>
+</ul>
+
+<p>For example, let’s keep rolling a die until we get a six.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">cats.Id</span>
+<span class="c1">// import cats.Id
+</span>
+<span class="k">import</span> <span class="nn">retry._</span>
+<span class="c1">// import retry._
+</span>
+<span class="k">import</span> <span class="nn">scala.concurrent.duration._</span>
+<span class="c1">// import scala.concurrent.duration._
+</span>
+<span class="k">val</span> <span class="n">policy</span> <span class="k">=</span> <span class="nc">RetryPolicies</span><span class="o">.</span><span class="n">constantDelay</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">)</span>
+<span class="c1">// policy: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$$Lambda$5807/1927725480@5249fe5e)
+</span>
+<span class="k">val</span> <span class="n">predicate</span> <span class="k">=</span> <span class="o">(</span><span class="k">_:</span> <span class="kt">Int</span><span class="o">)</span> <span class="o">==</span> <span class="mi">6</span>
+<span class="c1">// predicate: Int =&gt; Boolean = $$Lambda$5808/1972787228@288bb432
+</span>
+<span class="k">def</span> <span class="n">onFailure</span><span class="o">(</span><span class="n">failedValue</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">details</span><span class="k">:</span> <span class="kt">RetryDetails</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
+  <span class="n">println</span><span class="o">(</span><span class="n">s</span><span class="s">"Rolled a $failedValue, retrying ..."</span><span class="o">)</span>
+<span class="o">}</span>
+<span class="c1">// onFailure: (failedValue: Int, details: retry.RetryDetails)Unit
+</span></code></pre></div></div>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">scala</span><span class="o">&gt;</span> <span class="n">retrying</span><span class="o">(</span><span class="n">policy</span><span class="o">,</span> <span class="n">predicate</span><span class="o">,</span> <span class="n">onFailure</span><span class="o">){</span>
+     <span class="o">|</span>   <span class="n">scala</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="nc">Random</span><span class="o">.</span><span class="n">nextInt</span><span class="o">(</span><span class="mi">6</span><span class="o">)</span> <span class="o">+</span> <span class="mi">1</span>
+     <span class="o">|</span> <span class="o">}</span>
+<span class="n">res0</span><span class="k">:</span> <span class="kt">Int</span> <span class="o">=</span> <span class="mi">6</span>
+</code></pre></div></div>
+
+<h2 id="retryingm"><code class="highlighter-rouge">retryingM</code></h2>
+
+<p>This is similar to <code class="highlighter-rouge">retrying</code>, but is useful when you are working in an
+arbitrary <code class="highlighter-rouge">Monad</code> that is not a <code class="highlighter-rouge">MonadError</code>. Your operation doesn’t throw
+errors, but you want to retry until it returns a value that you are happy with.</p>
 
 <p>The API (modulo some type-inference trickery) looks like this:</p>
 
@@ -29,39 +81,42 @@ happy with the result or you want to retry.</p>
   <li>the operation that you want to wrap with retries</li>
 </ul>
 
-<p>For example, let’s keep rolling a die until we get a six.</p>
+<p>For example, let’s redo the rolling-a-six example, this time using <code class="highlighter-rouge">Future</code>.</p>
 
-<p>To keep things simple, we’ll work in the <code class="highlighter-rouge">Id</code> monad.</p>
-
-<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">cats.Id</span>
-<span class="c1">// import cats.Id
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">scala.concurrent.Future</span>
+<span class="c1">// import scala.concurrent.Future
 </span>
-<span class="k">import</span> <span class="nn">retry._</span>
-<span class="c1">// import retry._
+<span class="k">import</span> <span class="nn">scala.concurrent.ExecutionContext.Implicits.global</span>
+<span class="c1">// import scala.concurrent.ExecutionContext.Implicits.global
 </span>
-<span class="k">import</span> <span class="nn">scala.concurrent.duration._</span>
-<span class="c1">// import scala.concurrent.duration._
+<span class="k">import</span> <span class="nn">cats.instances.future._</span>
+<span class="c1">// import cats.instances.future._
 </span>
-<span class="k">val</span> <span class="n">policy</span> <span class="k">=</span> <span class="nc">RetryPolicies</span><span class="o">.</span><span class="n">constantDelay</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">)</span>
-<span class="c1">// policy: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$$Lambda$6315/1064432734@4a7b9e71)
+<span class="k">val</span> <span class="n">futurePolicy</span> <span class="k">=</span> <span class="nc">RetryPolicies</span><span class="o">.</span><span class="n">constantDelay</span><span class="o">[</span><span class="kt">Future</span><span class="o">](</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">)</span>
+<span class="c1">// futurePolicy: retry.RetryPolicy[scala.concurrent.Future] = RetryPolicy(retry.RetryPolicy$$$Lambda$5807/1927725480@4853c35b)
 </span>
-<span class="k">val</span> <span class="n">predicate</span> <span class="k">=</span> <span class="o">(</span><span class="k">_:</span> <span class="kt">Int</span><span class="o">)</span> <span class="o">==</span> <span class="mi">6</span>
-<span class="c1">// predicate: Int =&gt; Boolean = $$Lambda$6316/841033819@16388113
-</span>
-<span class="k">def</span> <span class="n">onFailure</span><span class="o">(</span><span class="n">failedValue</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">details</span><span class="k">:</span> <span class="kt">RetryDetails</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
-  <span class="n">println</span><span class="o">(</span><span class="n">s</span><span class="s">"Rolled a $failedValue, retrying ..."</span><span class="o">)</span>
+<span class="k">def</span> <span class="n">futureOnFailure</span><span class="o">(</span><span class="n">failedValue</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">details</span><span class="k">:</span> <span class="kt">RetryDetails</span><span class="o">)</span><span class="k">:</span> <span class="kt">Future</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
+  <span class="nc">Future</span><span class="o">(</span><span class="n">println</span><span class="o">(</span><span class="n">s</span><span class="s">"Rolled a $failedValue, retrying ..."</span><span class="o">))</span>
 <span class="o">}</span>
-<span class="c1">// onFailure: (failedValue: Int, details: retry.RetryDetails)Unit
+<span class="c1">// futureOnFailure: (failedValue: Int, details: retry.RetryDetails)scala.concurrent.Future[Unit]
 </span></code></pre></div></div>
 
-<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">scala</span><span class="o">&gt;</span> <span class="n">retrying</span><span class="o">[</span><span class="kt">Int</span><span class="o">][</span><span class="kt">Id</span><span class="o">](</span><span class="n">policy</span><span class="o">,</span> <span class="n">predicate</span><span class="o">,</span> <span class="n">onFailure</span><span class="o">){</span>
-     <span class="o">|</span>   <span class="n">scala</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="nc">Random</span><span class="o">.</span><span class="n">nextInt</span><span class="o">(</span><span class="mi">6</span><span class="o">)</span> <span class="o">+</span> <span class="mi">1</span>
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">scala</span><span class="o">&gt;</span> <span class="k">import</span> <span class="nn">scala.concurrent.Await</span>
+<span class="k">import</span> <span class="nn">scala.concurrent.Await</span>
+
+<span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">future</span> <span class="k">=</span> <span class="n">retryingM</span><span class="o">(</span><span class="n">futurePolicy</span><span class="o">,</span> <span class="n">predicate</span><span class="o">,</span> <span class="n">futureOnFailure</span><span class="o">){</span>
+     <span class="o">|</span>   <span class="nc">Future</span><span class="o">(</span><span class="n">scala</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="nc">Random</span><span class="o">.</span><span class="n">nextInt</span><span class="o">(</span><span class="mi">6</span><span class="o">)</span> <span class="o">+</span> <span class="mi">1</span><span class="o">)</span>
      <span class="o">|</span> <span class="o">}</span>
+<span class="n">future</span><span class="k">:</span> <span class="kt">scala.concurrent.Future</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Future</span><span class="o">(&lt;</span><span class="n">not</span> <span class="n">completed</span><span class="o">&gt;)</span>
+
+<span class="n">scala</span><span class="o">&gt;</span> <span class="nc">Await</span><span class="o">.</span><span class="n">result</span><span class="o">(</span><span class="n">future</span><span class="o">,</span> <span class="mf">1.</span><span class="n">minute</span><span class="o">)</span>
 <span class="nc">Rolled</span> <span class="n">a</span> <span class="mi">4</span><span class="o">,</span> <span class="n">retrying</span> <span class="o">...</span>
+<span class="nc">Rolled</span> <span class="n">a</span> <span class="mi">5</span><span class="o">,</span> <span class="n">retrying</span> <span class="o">...</span>
+<span class="nc">Rolled</span> <span class="n">a</span> <span class="mi">5</span><span class="o">,</span> <span class="n">retrying</span> <span class="o">...</span>
+<span class="nc">Rolled</span> <span class="n">a</span> <span class="mi">3</span><span class="o">,</span> <span class="n">retrying</span> <span class="o">...</span>
 <span class="nc">Rolled</span> <span class="n">a</span> <span class="mi">1</span><span class="o">,</span> <span class="n">retrying</span> <span class="o">...</span>
-<span class="nc">Rolled</span> <span class="n">a</span> <span class="mi">4</span><span class="o">,</span> <span class="n">retrying</span> <span class="o">...</span>
-<span class="nc">Rolled</span> <span class="n">a</span> <span class="mi">1</span><span class="o">,</span> <span class="n">retrying</span> <span class="o">...</span>
-<span class="n">res0</span><span class="k">:</span> <span class="kt">cats.Id</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="k">=</span> <span class="mi">6</span>
+<span class="nc">Rolled</span> <span class="n">a</span> <span class="mi">5</span><span class="o">,</span> <span class="n">retrying</span> <span class="o">...</span>
+<span class="n">res1</span><span class="k">:</span> <span class="kt">Int</span> <span class="o">=</span> <span class="mi">6</span>
 </code></pre></div></div>
 
 <h2 id="retryingonsomeerrors"><code class="highlighter-rouge">retryingOnSomeErrors</code></h2>
