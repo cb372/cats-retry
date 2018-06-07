@@ -1,12 +1,12 @@
+import ReleaseTransformations._
 
 val commonDeps = Seq(
   "org.typelevel" %% "cats-core" % "1.1.0",
   "org.scalatest" %% "scalatest" % "3.0.5" % Test,
   "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
 )
+
 val commonSettings = Seq(
-  scalaVersion := "2.12.6",
-  crossScalaVersions := Seq("2.11.12", scalaVersion.value),
   scalacOptions ++= Seq(
     "-language:higherKinds"
   ),
@@ -46,8 +46,47 @@ val docs = project.in(file("modules/docs"))
     micrositeShareOnSocial := true
   )
 
+val releaseSettings = Seq(
+  releaseCrossBuild := true,
+  releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+  pomIncludeRepository := { _ => false },
+  publishMavenStyle := true,
+  licenses := Seq("Apache License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html")),
+  homepage := Some(url("https://cb372.github.io/cats-retry/")),
+  developers := List(
+    Developer(
+      id    = "cb372",
+      name  = "Chris Birchall",
+      email = "chris.birchall@gmail.com",
+      url   = url("https://github.com/cb372")
+    )
+  ),
+  publishTo := {
+    val nexus = "https://oss.sonatype.org/"
+    if (isSnapshot.value)
+      Some("snapshots" at nexus + "content/repositories/snapshots")
+    else
+      Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+  },
+  releaseProcess := Seq[ReleaseStep](
+    checkSnapshotDependencies,
+    inquireVersions,
+    runClean,
+    runTest,
+    setReleaseVersion,
+    commitReleaseVersion,
+    tagRelease,
+    publishArtifacts,
+    setNextVersion,
+    commitNextVersion,
+    releaseStepCommand("sonatypeReleaseAll"),
+    pushChanges
+  )
+)
+
 val root = project.in(file("."))
   .aggregate(core, `cats-effect`, docs)
+  .settings(releaseSettings)
   .settings(
     publishArtifact := false
   )
