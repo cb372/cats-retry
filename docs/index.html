@@ -19,11 +19,20 @@ high probability it will fail.</p>
 <span class="k">val</span> <span class="n">flakyRequest</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="nc">IO</span> <span class="o">{</span>
   <span class="n">httpClient</span><span class="o">.</span><span class="n">getCatGif</span><span class="o">()</span>
 <span class="o">}</span>
-<span class="c1">// flakyRequest: cats.effect.IO[String] = IO$1025208614
+<span class="c1">// flakyRequest: cats.effect.IO[String] = IO$1653351161
 </span></code></pre></div></div>
 
 <p>To improve the chance of successfully downloading the file, let’s wrap this with
 some retry logic.</p>
+
+<p>We’ll add dependencies on the <code class="highlighter-rouge">core</code> and <code class="highlighter-rouge">cats-effect</code> modules:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>val catsRetryVersion = "0.1.0"
+libraryDependencies ++= Seq(
+  "com.github.cb372" %% "cats-retry-core"        % catsRetryVersion,
+  "com.github.cb372" %% "cats-retry-cats-effect" % catsRetryVersion
+)
+</code></pre></div></div>
 
 <p>First we’ll need a retry policy. We’ll keep it simple: retry up to 5 times, with
 no delay between attempts. (See the <a href="policies.html">retry policies page</a> for
@@ -33,7 +42,7 @@ information on more powerful policies).</p>
 <span class="c1">// import retry._
 </span>
 <span class="k">val</span> <span class="n">retryFiveTimes</span> <span class="k">=</span> <span class="nc">RetryPolicies</span><span class="o">.</span><span class="n">limitRetries</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mi">5</span><span class="o">)</span>
-<span class="c1">// retryFiveTimes: retry.RetryPolicy[cats.effect.IO] = RetryPolicy(retry.RetryPolicy$$$Lambda$13161/1831065777@2e332ce2)
+<span class="c1">// retryFiveTimes: retry.RetryPolicy[cats.effect.IO] = RetryPolicy(retry.RetryPolicy$$$Lambda$11183/300616967@5a0f5e96)
 </span></code></pre></div></div>
 
 <p>We’ll also provide an error handler that does some logging before every retry.
@@ -84,7 +93,7 @@ retries.</p>
     <span class="n">policy</span> <span class="k">=</span> <span class="n">retryFiveTimes</span><span class="o">,</span>
     <span class="n">onError</span> <span class="k">=</span> <span class="n">logError</span>
   <span class="o">)(</span><span class="n">flakyRequest</span><span class="o">)</span>
-<span class="c1">// flakyRequestWithRetry: cats.effect.IO[String] = IO$1686426689
+<span class="c1">// flakyRequestWithRetry: cats.effect.IO[String] = IO$983719630
 </span></code></pre></div></div>
 
 <p>Let’s see it in action.</p>
