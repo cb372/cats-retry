@@ -28,6 +28,16 @@ val flakyRequest: IO[String] = IO {
 To improve the chance of successfully downloading the file, let's wrap this with
 some retry logic.
 
+We'll add dependencies on the `core` and `cats-effect` modules:
+
+```
+val catsRetryVersion = "0.1.0"
+libraryDependencies ++= Seq(
+  "com.github.cb372" %% "cats-retry-core"        % catsRetryVersion,
+  "com.github.cb372" %% "cats-retry-cats-effect" % catsRetryVersion
+)
+```
+
 First we'll need a retry policy. We'll keep it simple: retry up to 5 times, with
 no delay between attempts. (See the [retry policies page](policies.html) for
 information on more powerful policies).
