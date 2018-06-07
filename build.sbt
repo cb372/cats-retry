@@ -7,12 +7,15 @@ val commonDeps = Seq(
 )
 
 val commonSettings = Seq(
+  organization := "com.github.cb372",
+  moduleName := s"cats-retry-${name.value}",
   scalacOptions ++= Seq(
     "-language:higherKinds"
   ),
   scalacOptions in (Test, compile) += "-Ypartial-unification",
   libraryDependencies ++= commonDeps,
-  scalafmtOnCompile := true
+  scalafmtOnCompile := true,
+  publishTo := sonatypePublishTo.value
 )
 
 val core = project.in(file("modules/core"))
@@ -61,13 +64,6 @@ val releaseSettings = Seq(
       url   = url("https://github.com/cb372")
     )
   ),
-  publishTo := {
-    val nexus = "https://oss.sonatype.org/"
-    if (isSnapshot.value)
-      Some("snapshots" at nexus + "content/repositories/snapshots")
-    else
-      Some("releases"  at nexus + "service/local/staging/deploy/maven2")
-  },
   releaseProcess := Seq[ReleaseStep](
     checkSnapshotDependencies,
     inquireVersions,
@@ -88,5 +84,6 @@ val root = project.in(file("."))
   .aggregate(core, `cats-effect`, docs)
   .settings(releaseSettings)
   .settings(
+    publishTo := sonatypePublishTo.value, // see https://github.com/sbt/sbt-release/issues/184
     publishArtifact := false
   )
