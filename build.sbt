@@ -8,13 +8,6 @@ val commonDeps = Seq(
 
 val commonSettings = Seq(
   organization := "com.github.cb372",
-  moduleName := s"cats-retry-${name.value}",
-  scalacOptions ++= Seq(
-    "-language:higherKinds"
-  ),
-  scalacOptions in (Test, compile) += "-Ypartial-unification",
-  libraryDependencies ++= commonDeps,
-  scalafmtOnCompile := true,
   publishTo := sonatypePublishTo.value,
   releaseCrossBuild := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
@@ -32,12 +25,22 @@ val commonSettings = Seq(
   )
 )
 
+val moduleSettings = commonSettings ++ Seq(
+  moduleName := s"cats-retry-${name.value}",
+  scalacOptions ++= Seq(
+    "-language:higherKinds"
+  ),
+  scalacOptions in (Test, compile) += "-Ypartial-unification",
+  libraryDependencies ++= commonDeps,
+  scalafmtOnCompile := true
+)
+
 val core = project.in(file("modules/core"))
-    .settings(commonSettings)
+    .settings(moduleSettings)
 
 val `cats-effect` = project.in(file("modules/cats-effect"))
   .dependsOn(core)
-  .settings(commonSettings)
+  .settings(moduleSettings)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-effect" % "0.10.1"
@@ -47,7 +50,7 @@ val `cats-effect` = project.in(file("modules/cats-effect"))
 val docs = project.in(file("modules/docs"))
   .dependsOn(core, `cats-effect`)
   .enablePlugins(MicrositesPlugin)
-  .settings(commonSettings)
+  .settings(moduleSettings)
   .settings(
     publishArtifact := false,
     micrositeName := "cats-retry",
@@ -65,6 +68,7 @@ val docs = project.in(file("modules/docs"))
 
 val root = project.in(file("."))
   .aggregate(core, `cats-effect`, docs)
+  .settings(commonSettings)
   .settings(
     publishTo := sonatypePublishTo.value, // see https://github.com/sbt/sbt-release/issues/184
     publishArtifact := false,
