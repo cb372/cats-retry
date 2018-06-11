@@ -15,7 +15,21 @@ val commonSettings = Seq(
   scalacOptions in (Test, compile) += "-Ypartial-unification",
   libraryDependencies ++= commonDeps,
   scalafmtOnCompile := true,
-  publishTo := sonatypePublishTo.value
+  publishTo := sonatypePublishTo.value,
+  releaseCrossBuild := true,
+  releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+  pomIncludeRepository := { _ => false },
+  publishMavenStyle := true,
+  licenses := Seq("Apache License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html")),
+  homepage := Some(url("https://cb372.github.io/cats-retry/")),
+  developers := List(
+    Developer(
+      id    = "cb372",
+      name  = "Chris Birchall",
+      email = "chris.birchall@gmail.com",
+      url   = url("https://github.com/cb372")
+    )
+  )
 )
 
 val core = project.in(file("modules/core"))
@@ -49,41 +63,23 @@ val docs = project.in(file("modules/docs"))
     micrositeShareOnSocial := true
   )
 
-val releaseSettings = Seq(
-  releaseCrossBuild := true,
-  releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-  pomIncludeRepository := { _ => false },
-  publishMavenStyle := true,
-  licenses := Seq("Apache License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html")),
-  homepage := Some(url("https://cb372.github.io/cats-retry/")),
-  developers := List(
-    Developer(
-      id    = "cb372",
-      name  = "Chris Birchall",
-      email = "chris.birchall@gmail.com",
-      url   = url("https://github.com/cb372")
-    )
-  ),
-  releaseProcess := Seq[ReleaseStep](
-    checkSnapshotDependencies,
-    inquireVersions,
-    runClean,
-    runTest,
-    setReleaseVersion,
-    commitReleaseVersion,
-    tagRelease,
-    publishArtifacts,
-    setNextVersion,
-    commitNextVersion,
-    releaseStepCommand("sonatypeReleaseAll"),
-    pushChanges
-  )
-)
-
 val root = project.in(file("."))
   .aggregate(core, `cats-effect`, docs)
-  .settings(releaseSettings)
   .settings(
     publishTo := sonatypePublishTo.value, // see https://github.com/sbt/sbt-release/issues/184
-    publishArtifact := false
+    publishArtifact := false,
+    releaseProcess := Seq[ReleaseStep](
+      checkSnapshotDependencies,
+      inquireVersions,
+      runClean,
+      runTest,
+      setReleaseVersion,
+      commitReleaseVersion,
+      tagRelease,
+      publishArtifacts,
+      setNextVersion,
+      commitNextVersion,
+      releaseStepCommand("sonatypeReleaseAll"),
+      pushChanges
+    )
   )
