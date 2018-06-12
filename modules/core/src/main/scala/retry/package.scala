@@ -1,30 +1,45 @@
 import cats.{Id, Monad, MonadError}
 import cats.syntax.functor._
 import cats.syntax.flatMap._
+import cats.syntax.apply._
 
 import scala.concurrent.duration.FiniteDuration
 
 package object retry {
 
-  def retrying[A](policy: RetryPolicy[Id],
-                  wasSuccessful: A => Boolean,
-                  onFailure: (A, RetryDetails) => Unit)(
-      action: => A)(implicit M: Monad[Id], S: Sleep[Id]): A =
+  def retrying[A](
+      policy: RetryPolicy[Id],
+      wasSuccessful: A => Boolean,
+      onFailure: (A, RetryDetails) => Unit
+  )(
+      action: => A
+  )(
+      implicit
+      M: Monad[Id],
+      S: Sleep[Id]
+  ): A =
     retryingM[A][Id](policy, wasSuccessful, onFailure)(action)
 
   def retryingM[A] = new RetryingPartiallyApplied[A]
 
-  class RetryingPartiallyApplied[A] {
+  private[retry] class RetryingPartiallyApplied[A] {
 
-    def apply[M[_]](policy: RetryPolicy[M],
-                    wasSuccessful: A => Boolean,
-                    onFailure: (A, RetryDetails) => M[Unit])(
-        action: => M[A])(implicit M: Monad[M], S: Sleep[M]): M[A] = {
+    def apply[M[_]](
+        policy: RetryPolicy[M],
+        wasSuccessful: A => Boolean,
+        onFailure: (A, RetryDetails) => M[Unit]
+    )(
+        action: => M[A]
+    )(
+        implicit
+        M: Monad[M],
+        S: Sleep[M]
+    ): M[A] = {
 
       def performNextStep(failedResult: A, nextStep: NextStep): M[A] =
         nextStep match {
           case NextStep.RetryAfterDelay(delay, updatedStatus) =>
-            S.sleep(delay).flatMap(_ => performAction(updatedStatus))
+            S.sleep(delay) *> performAction(updatedStatus)
           case NextStep.GiveUp =>
             M.pure(failedResult)
         }
@@ -51,17 +66,24 @@ package object retry {
 
   def retryingOnSomeErrors[A] = new RetryingOnSomeErrorsPartiallyApplied[A]
 
-  class RetryingOnSomeErrorsPartiallyApplied[A] {
+  private[retry] class RetryingOnSomeErrorsPartiallyApplied[A] {
 
-    def apply[M[_], E](policy: RetryPolicy[M],
-                       isWorthRetrying: E => Boolean,
-                       onError: (E, RetryDetails) => M[Unit])(
-        action: => M[A])(implicit ME: MonadError[M, E], S: Sleep[M]): M[A] = {
+    def apply[M[_], E](
+        policy: RetryPolicy[M],
+        isWorthRetrying: E => Boolean,
+        onError: (E, RetryDetails) => M[Unit]
+    )(
+        action: => M[A]
+    )(
+        implicit
+        ME: MonadError[M, E],
+        S: Sleep[M]
+    ): M[A] = {
 
       def performNextStep(error: E, nextStep: NextStep): M[A] =
         nextStep match {
           case NextStep.RetryAfterDelay(delay, updatedStatus) =>
-            S.sleep(delay).flatMap(_ => performAction(updatedStatus))
+            S.sleep(delay) *> performAction(updatedStatus)
           case NextStep.GiveUp =>
             ME.raiseError[A](error)
         }
@@ -86,16 +108,23 @@ package object retry {
 
   def retryingOnAllErrors[A] = new RetryingOnAllErrorsPartiallyApplied[A]
 
-  class RetryingOnAllErrorsPartiallyApplied[A] {
+  private[retry] class RetryingOnAllErrorsPartiallyApplied[A] {
 
-    def apply[M[_], E](policy: RetryPolicy[M],
-                       onError: (E, RetryDetails) => M[Unit])(
-        action: => M[A])(implicit ME: MonadError[M, E], S: Sleep[M]): M[A] = {
+    def apply[M[_], E](
+        policy: RetryPolicy[M],
+        onError: (E, RetryDetails) => M[Unit]
+    )(
+        action: => M[A]
+    )(
+        implicit
+        ME: MonadError[M, E],
+        S: Sleep[M]
+    ): M[A] = {
 
       def performNextStep(error: E, nextStep: NextStep): M[A] =
         nextStep match {
           case NextStep.RetryAfterDelay(delay, updatedStatus) =>
-            S.sleep(delay).flatMap(_ => performAction(updatedStatus))
+            S.sleep(delay) *> performAction(updatedStatus)
           case NextStep.GiveUp =>
             ME.raiseError[A](error)
         }
@@ -119,8 +148,10 @@ package object retry {
   def noop[M[_]: Monad, A]: (A, RetryDetails) => M[Unit] =
     (_, _) => Monad[M].pure(())
 
-  private def applyPolicy[M[_]: Monad](policy: RetryPolicy[M],
-                                       retryStatus: RetryStatus): M[NextStep] =
+  private def applyPolicy[M[_]: Monad](
+      policy: RetryPolicy[M],
+      retryStatus: RetryStatus
+  ): M[NextStep] =
     policy.decideNextRetry(retryStatus).map {
       case PolicyDecision.DelayAndRetry(delay) =>
         NextStep.RetryAfterDelay(delay, retryStatus.addRetry(delay))
@@ -128,16 +159,22 @@ package object retry {
         NextStep.GiveUp
     }
 
-  private def buildRetryDetails(currentStatus: RetryStatus,
-                                nextStep: NextStep): RetryDetails =
+  private def buildRetryDetails(
+      currentStatus: RetryStatus,
+      nextStep: NextStep
+  ): RetryDetails =
     nextStep match {
       case NextStep.RetryAfterDelay(delay, _) =>
-        RetryDetails.WillDelayAndRetry(delay,
-                                       currentStatus.retriesSoFar,
-                                       currentStatus.cumulativeDelay)
+        RetryDetails.WillDelayAndRetry(
+          delay,
+          currentStatus.retriesSoFar,
+          currentStatus.cumulativeDelay
+        )
       case NextStep.GiveUp =>
-        RetryDetails.GivingUp(currentStatus.retriesSoFar,
-                              currentStatus.cumulativeDelay)
+        RetryDetails.GivingUp(
+          currentStatus.retriesSoFar,
+          currentStatus.cumulativeDelay
+        )
     }
 
   private sealed trait NextStep
@@ -146,9 +183,10 @@ package object retry {
 
     case object GiveUp extends NextStep
 
-    case class RetryAfterDelay(delay: FiniteDuration,
-                               updatedStatus: RetryStatus)
-        extends NextStep
+    final case class RetryAfterDelay(
+        delay: FiniteDuration,
+        updatedStatus: RetryStatus
+    ) extends NextStep
 
   }
 

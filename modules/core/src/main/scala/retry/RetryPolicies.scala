@@ -66,8 +66,10 @@ object RetryPolicies {
   /**
     * Set an upper bound on any individual delay produced by the given policy.
     */
-  def capDelay[M[_]: Applicative](cap: FiniteDuration,
-                                  policy: RetryPolicy[M]): RetryPolicy[M] = {
+  def capDelay[M[_]: Applicative](
+      cap: FiniteDuration,
+      policy: RetryPolicy[M]
+  ): RetryPolicy[M] = {
 
     def decideNextRetry(status: RetryStatus): M[PolicyDecision] =
       policy.decideNextRetry(status).map {
@@ -86,7 +88,8 @@ object RetryPolicies {
     */
   def limitRetriesByDelay[M[_]: Applicative](
       threshold: FiniteDuration,
-      policy: RetryPolicy[M]): RetryPolicy[M] = {
+      policy: RetryPolicy[M]
+  ): RetryPolicy[M] = {
 
     def decideNextRetry(status: RetryStatus): M[PolicyDecision] =
       policy.decideNextRetry(status).map {
@@ -105,7 +108,8 @@ object RetryPolicies {
     */
   def limitRetriesByCumulativeDelay[M[_]: Applicative](
       threshold: FiniteDuration,
-      policy: RetryPolicy[M]): RetryPolicy[M] = {
+      policy: RetryPolicy[M]
+  ): RetryPolicy[M] = {
 
     def decideNextRetry(status: RetryStatus): M[PolicyDecision] =
       policy.decideNextRetry(status).map {
