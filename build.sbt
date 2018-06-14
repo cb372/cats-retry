@@ -47,8 +47,17 @@ val `cats-effect` = project.in(file("modules/cats-effect"))
     )
   )
 
+val `monix` = project.in(file("modules/monix"))
+  .dependsOn(core)
+  .settings(moduleSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      "io.monix" %% "monix" % "3.0.0-RC1"
+    )
+  )
+
 val docs = project.in(file("modules/docs"))
-  .dependsOn(core, `cats-effect`)
+  .dependsOn(core, `monix`, `cats-effect`)
   .enablePlugins(MicrositesPlugin)
   .settings(moduleSettings)
   .settings(
