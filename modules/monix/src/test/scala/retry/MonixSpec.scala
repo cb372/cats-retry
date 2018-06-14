@@ -12,8 +12,6 @@ import scala.util.Success
 
 class MonixSpec extends FlatSpec {
 
-  type StringOr[A] = Either[String, A]
-
   behavior of "retryingM"
 
   it should "retry until the action succeeds" in new TestContext {
