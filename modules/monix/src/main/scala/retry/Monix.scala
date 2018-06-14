@@ -11,6 +11,6 @@ object Monix {
       implicit
       scheduler: Scheduler
   ): Sleep[CancelableFuture] =
-    (delay: FiniteDuration) => Task(()).delayExecution(delay).runAsync
+    (delay: FiniteDuration) => Task.sleep(delay).runAsync
 
 }
