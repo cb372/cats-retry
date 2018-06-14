@@ -57,7 +57,7 @@ val `monix` = project.in(file("modules/monix"))
   )
 
 val docs = project.in(file("modules/docs"))
-  .dependsOn(core, `monix`, `cats-effect`)
+  .dependsOn(core, `cats-effect`, `monix`)
   .enablePlugins(MicrositesPlugin)
   .settings(moduleSettings)
   .settings(
@@ -76,7 +76,7 @@ val docs = project.in(file("modules/docs"))
   )
 
 val root = project.in(file("."))
-  .aggregate(core, `cats-effect`, docs)
+  .aggregate(core, `cats-effect`, docs, `monix`)
   .settings(commonSettings)
   .settings(
     publishTo := sonatypePublishTo.value, // see https://github.com/sbt/sbt-release/issues/184
