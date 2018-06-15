@@ -30,7 +30,7 @@ val moduleSettings = commonSettings ++ Seq(
   scalacOptions ++= Seq(
     "-Xfuture",
     "-Ywarn-dead-code",
-    "-Ywarn-unused"
+    "-Ywarn-unused",
     "-deprecation",
     "-encoding", "UTF-8",
     "-language:higherKinds",
