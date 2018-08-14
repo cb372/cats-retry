@@ -185,8 +185,8 @@ class PackageObjectSpec extends FlatSpec {
     def onError(error: String, details: RetryDetails): Either[String, Unit] = {
       errors.append(error)
       details match {
-        case RetryDetails.WillDelayAndRetry(delay, _, _)     => delays.append(delay)
-        case RetryDetails.GivingUp(totalRetries, totalDelay) => gaveUp = true
+        case RetryDetails.WillDelayAndRetry(delay, _, _) => delays.append(delay)
+        case RetryDetails.GivingUp(_, _)                 => gaveUp = true
       }
       Right(())
     }

@@ -28,7 +28,13 @@ val commonSettings = Seq(
 val moduleSettings = commonSettings ++ Seq(
   moduleName := s"cats-retry-${name.value}",
   scalacOptions ++= Seq(
-    "-language:higherKinds"
+    "-Xfuture",
+    "-Ywarn-dead-code",
+    "-Ywarn-unused",
+    "-deprecation",
+    "-encoding", "UTF-8",
+    "-language:higherKinds",
+    "-unchecked",
   ),
   scalacOptions in (Test, compile) += "-Ypartial-unification",
   libraryDependencies ++= commonDeps,

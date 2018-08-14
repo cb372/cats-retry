@@ -1,6 +1,6 @@
 package retry
 
-import cats.{Applicative, Apply, Monad}
+import cats.Applicative
 import cats.kernel.Monoid
 import retry.PolicyDecision._
 
