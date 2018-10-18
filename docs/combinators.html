@@ -32,83 +32,32 @@ happy with the result or you want to retry.</p>
 <p>For example, let’s keep rolling a die until we get a six.</p>
 
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">cats.Id</span>
-<span class="c1">// &lt;console&gt;:12: warning: Unused import
-//        import cats.Id
-//                    ^
-// import cats.Id
+<span class="c1">// import cats.Id
 </span>
 <span class="k">import</span> <span class="nn">retry._</span>
-<span class="c1">// &lt;console&gt;:9: warning: Unused import
-//        import cats.Id
-//                    ^
-// &lt;console&gt;:13: warning: Unused import
-//        import retry._
-//                     ^
-// import retry._
+<span class="c1">// import retry._
 </span>
 <span class="k">import</span> <span class="nn">scala.concurrent.duration._</span>
-<span class="c1">// &lt;console&gt;:9: warning: Unused import
-//        import cats.Id
-//                    ^
-// &lt;console&gt;:11: warning: Unused import
-//        import retry._
-//                     ^
-// &lt;console&gt;:16: warning: Unused import
-//        import scala.concurrent.duration._
-//                                         ^
-// import scala.concurrent.duration._
+<span class="c1">// import scala.concurrent.duration._
 </span>
 <span class="k">val</span> <span class="n">policy</span> <span class="k">=</span> <span class="nc">RetryPolicies</span><span class="o">.</span><span class="n">constantDelay</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">)</span>
-<span class="c1">// policy: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$$Lambda$7609/40585520@68670856)
+<span class="c1">// policy: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$$Lambda$6985/837916374@1118c7b4)
 </span>
 <span class="k">val</span> <span class="n">predicate</span> <span class="k">=</span> <span class="o">(</span><span class="k">_:</span> <span class="kt">Int</span><span class="o">)</span> <span class="o">==</span> <span class="mi">6</span>
-<span class="c1">// &lt;console&gt;:9: warning: Unused import
-//        import cats.Id
-//                    ^
-// &lt;console&gt;:11: warning: Unused import
-//        import retry._
-//                     ^
-// &lt;console&gt;:14: warning: Unused import
-//        import scala.concurrent.duration._
-//                                         ^
-// predicate: Int =&gt; Boolean = $$Lambda$7695/2090260971@38b57c48
+<span class="c1">// predicate: Int =&gt; Boolean = $$Lambda$7071/771461108@2d44c353
 </span>
 <span class="k">def</span> <span class="n">onFailure</span><span class="o">(</span><span class="n">failedValue</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">details</span><span class="k">:</span> <span class="kt">RetryDetails</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
   <span class="n">println</span><span class="o">(</span><span class="n">s</span><span class="s">"Rolled a $failedValue, retrying ..."</span><span class="o">)</span>
 <span class="o">}</span>
-<span class="c1">// &lt;console&gt;:9: warning: Unused import
-//        import cats.Id
-//                    ^
-// &lt;console&gt;:14: warning: Unused import
-//        import scala.concurrent.duration._
-//                                         ^
-// &lt;console&gt;:19: warning: parameter value details in method onFailure is never used
-//        def onFailure(failedValue: Int, details: RetryDetails): Unit = {
-//                                        ^
-// onFailure: (failedValue: Int, details: retry.RetryDetails)Unit
+<span class="c1">// onFailure: (failedValue: Int, details: retry.RetryDetails)Unit
 </span></code></pre></div></div>
 
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">loadedDie</span> <span class="k">=</span> <span class="n">util</span><span class="o">.</span><span class="nc">LoadedDie</span><span class="o">(</span><span class="mi">2</span><span class="o">,</span> <span class="mi">5</span><span class="o">,</span> <span class="mi">4</span><span class="o">,</span> <span class="mi">1</span><span class="o">,</span> <span class="mi">3</span><span class="o">,</span> <span class="mi">2</span><span class="o">,</span> <span class="mi">6</span><span class="o">)</span>
-<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">9</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
-       <span class="k">import</span> <span class="nn">cats.Id</span>
-                   <span class="o">^</span>
-<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">11</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
-       <span class="k">import</span> <span class="nn">retry._</span>
-                    <span class="o">^</span>
-<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">14</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
-       <span class="k">import</span> <span class="nn">scala.concurrent.duration._</span>
-                                        <span class="o">^</span>
 <span class="n">loadedDie</span><span class="k">:</span> <span class="kt">util.LoadedDie</span> <span class="o">=</span> <span class="nc">LoadedDie</span><span class="o">(</span><span class="nc">WrappedArray</span><span class="o">(</span><span class="mi">2</span><span class="o">,</span> <span class="mi">5</span><span class="o">,</span> <span class="mi">4</span><span class="o">,</span> <span class="mi">1</span><span class="o">,</span> <span class="mi">3</span><span class="o">,</span> <span class="mi">2</span><span class="o">,</span> <span class="mi">6</span><span class="o">))</span>
 
 <span class="n">scala</span><span class="o">&gt;</span> <span class="n">retrying</span><span class="o">(</span><span class="n">policy</span><span class="o">,</span> <span class="n">predicate</span><span class="o">,</span> <span class="n">onFailure</span><span class="o">){</span>
      <span class="o">|</span>   <span class="n">loadedDie</span><span class="o">.</span><span class="n">roll</span><span class="o">()</span>
      <span class="o">|</span> <span class="o">}</span>
-<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">9</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
-       <span class="k">import</span> <span class="nn">cats.Id</span>
-                   <span class="o">^</span>
-<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">14</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
-       <span class="k">import</span> <span class="nn">scala.concurrent.duration._</span>
-                                        <span class="o">^</span>
 <span class="nc">Rolled</span> <span class="n">a</span> <span class="mi">2</span><span class="o">,</span> <span class="n">retrying</span> <span class="o">...</span>
 <span class="nc">Rolled</span> <span class="n">a</span> <span class="mi">5</span><span class="o">,</span> <span class="n">retrying</span> <span class="o">...</span>
 <span class="nc">Rolled</span> <span class="n">a</span> <span class="mi">4</span><span class="o">,</span> <span class="n">retrying</span> <span class="o">...</span>
@@ -144,137 +93,32 @@ errors, but you want to retry until it returns a value that you are happy with.<
 <p>For example, let’s redo the rolling-a-six example, this time using <code class="highlighter-rouge">Future</code>.</p>
 
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">scala.concurrent.Future</span>
-<span class="c1">// &lt;console&gt;:9: warning: Unused import
-//        import cats.Id
-//                    ^
-// &lt;console&gt;:11: warning: Unused import
-//        import retry._
-//                     ^
-// &lt;console&gt;:14: warning: Unused import
-//        import scala.concurrent.duration._
-//                                         ^
-// &lt;console&gt;:19: warning: Unused import
-//        import scala.concurrent.Future
-//                                ^
-// import scala.concurrent.Future
+<span class="c1">// import scala.concurrent.Future
 </span>
 <span class="k">import</span> <span class="nn">scala.concurrent.ExecutionContext.Implicits.global</span>
-<span class="c1">// &lt;console&gt;:9: warning: Unused import
-//        import cats.Id
-//                    ^
-// &lt;console&gt;:11: warning: Unused import
-//        import retry._
-//                     ^
-// &lt;console&gt;:14: warning: Unused import
-//        import scala.concurrent.duration._
-//                                         ^
-// &lt;console&gt;:16: warning: Unused import
-//        import scala.concurrent.Future
-//                                ^
-// &lt;console&gt;:20: warning: Unused import
-//        import scala.concurrent.ExecutionContext.Implicits.global
-//                                                           ^
-// import scala.concurrent.ExecutionContext.Implicits.global
+<span class="c1">// import scala.concurrent.ExecutionContext.Implicits.global
 </span>
 <span class="k">import</span> <span class="nn">cats.instances.future._</span>
-<span class="c1">// &lt;console&gt;:9: warning: Unused import
-//        import cats.Id
-//                    ^
-// &lt;console&gt;:11: warning: Unused import
-//        import retry._
-//                     ^
-// &lt;console&gt;:14: warning: Unused import
-//        import scala.concurrent.duration._
-//                                         ^
-// &lt;console&gt;:16: warning: Unused import
-//        import scala.concurrent.Future
-//                                ^
-// &lt;console&gt;:17: warning: Unused import
-//        import scala.concurrent.ExecutionContext.Implicits.global
-//                                                           ^
-// &lt;console&gt;:21: warning: Unused import
-//        import cats.instances.future._
-//                                     ^
-// import cats.instances.future._
+<span class="c1">// import cats.instances.future._
 </span>
 <span class="k">val</span> <span class="n">futurePolicy</span> <span class="k">=</span> <span class="nc">RetryPolicies</span><span class="o">.</span><span class="n">constantDelay</span><span class="o">[</span><span class="kt">Future</span><span class="o">](</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">)</span>
-<span class="c1">// &lt;console&gt;:9: warning: Unused import
-//        import cats.Id
-//                    ^
-// futurePolicy: retry.RetryPolicy[scala.concurrent.Future] = RetryPolicy(retry.RetryPolicy$$$Lambda$7609/40585520@436c8221)
+<span class="c1">// futurePolicy: retry.RetryPolicy[scala.concurrent.Future] = RetryPolicy(retry.RetryPolicy$$$Lambda$6985/837916374@7da5d817)
 </span>
 <span class="k">def</span> <span class="n">futureOnFailure</span><span class="o">(</span><span class="n">failedValue</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">details</span><span class="k">:</span> <span class="kt">RetryDetails</span><span class="o">)</span><span class="k">:</span> <span class="kt">Future</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
   <span class="nc">Future</span><span class="o">(</span><span class="n">println</span><span class="o">(</span><span class="n">s</span><span class="s">"Rolled a $failedValue, retrying ..."</span><span class="o">))</span>
 <span class="o">}</span>
-<span class="c1">// &lt;console&gt;:9: warning: Unused import
-//        import cats.Id
-//                    ^
-// &lt;console&gt;:14: warning: Unused import
-//        import scala.concurrent.duration._
-//                                         ^
-// &lt;console&gt;:19: warning: Unused import
-//        import cats.instances.future._
-//                                     ^
-// &lt;console&gt;:24: warning: parameter value details in method futureOnFailure is never used
-//        def futureOnFailure(failedValue: Int, details: RetryDetails): Future[Unit] = {
-//                                              ^
-// futureOnFailure: (failedValue: Int, details: retry.RetryDetails)scala.concurrent.Future[Unit]
+<span class="c1">// futureOnFailure: (failedValue: Int, details: retry.RetryDetails)scala.concurrent.Future[Unit]
 </span></code></pre></div></div>
 
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">scala</span><span class="o">&gt;</span> <span class="k">import</span> <span class="nn">scala.concurrent.Await</span>
-<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">9</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
-       <span class="k">import</span> <span class="nn">cats.Id</span>
-                   <span class="o">^</span>
-<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">11</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
-       <span class="k">import</span> <span class="nn">retry._</span>
-                    <span class="o">^</span>
-<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">14</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
-       <span class="k">import</span> <span class="nn">scala.concurrent.duration._</span>
-                                        <span class="o">^</span>
-<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">16</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
-       <span class="k">import</span> <span class="nn">scala.concurrent.Future</span>
-                               <span class="o">^</span>
-<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">17</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
-       <span class="k">import</span> <span class="nn">scala.concurrent.ExecutionContext.Implicits.global</span>
-                                                          <span class="o">^</span>
-<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">19</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
-       <span class="k">import</span> <span class="nn">cats.instances.future._</span>
-                                    <span class="o">^</span>
-<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">24</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
-       <span class="k">import</span> <span class="nn">scala.concurrent.Await</span>
-                               <span class="o">^</span>
 <span class="k">import</span> <span class="nn">scala.concurrent.Await</span>
 
 <span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">future</span> <span class="k">=</span> <span class="n">retryingM</span><span class="o">(</span><span class="n">futurePolicy</span><span class="o">,</span> <span class="n">predicate</span><span class="o">,</span> <span class="n">futureOnFailure</span><span class="o">){</span>
      <span class="o">|</span>   <span class="nc">Future</span><span class="o">(</span><span class="n">loadedDie</span><span class="o">.</span><span class="n">roll</span><span class="o">())</span>
      <span class="o">|</span> <span class="o">}</span>
-<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">9</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
-       <span class="k">import</span> <span class="nn">cats.Id</span>
-                   <span class="o">^</span>
-<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">14</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
-       <span class="k">import</span> <span class="nn">scala.concurrent.duration._</span>
-                                        <span class="o">^</span>
-<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">25</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
-       <span class="k">import</span> <span class="nn">scala.concurrent.Await</span>
-                               <span class="o">^</span>
 <span class="n">future</span><span class="k">:</span> <span class="kt">scala.concurrent.Future</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Future</span><span class="o">(&lt;</span><span class="n">not</span> <span class="n">completed</span><span class="o">&gt;)</span>
 
 <span class="n">scala</span><span class="o">&gt;</span> <span class="nc">Await</span><span class="o">.</span><span class="n">result</span><span class="o">(</span><span class="n">future</span><span class="o">,</span> <span class="mf">1.</span><span class="n">minute</span><span class="o">)</span>
-<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">9</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
-       <span class="k">import</span> <span class="nn">cats.Id</span>
-                   <span class="o">^</span>
-<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">11</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
-       <span class="k">import</span> <span class="nn">retry._</span>
-                    <span class="o">^</span>
-<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">16</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
-       <span class="k">import</span> <span class="nn">scala.concurrent.Future</span>
-                               <span class="o">^</span>
-<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">17</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
-       <span class="k">import</span> <span class="nn">scala.concurrent.ExecutionContext.Implicits.global</span>
-                                                          <span class="o">^</span>
-<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">19</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
-       <span class="k">import</span> <span class="nn">cats.instances.future._</span>
-                                    <span class="o">^</span>
 <span class="n">res1</span><span class="k">:</span> <span class="kt">Int</span> <span class="o">=</span> <span class="mi">6</span>
 </code></pre></div></div>
 

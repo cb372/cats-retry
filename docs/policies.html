@@ -59,49 +59,19 @@ policies easily.</p>
 exponentially up to a maximum of 1 second:</p>
 
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">cats.Id</span>
-<span class="c1">// &lt;console&gt;:12: warning: Unused import
-//        import cats.Id
-//                    ^
-// import cats.Id
+<span class="c1">// import cats.Id
 </span>
 <span class="k">import</span> <span class="nn">cats.syntax.monoid._</span>
-<span class="c1">// &lt;console&gt;:9: warning: Unused import
-//        import cats.Id
-//                    ^
-// &lt;console&gt;:13: warning: Unused import
-//        import cats.syntax.monoid._
-//                                  ^
-// import cats.syntax.monoid._
+<span class="c1">// import cats.syntax.monoid._
 </span>
 <span class="k">import</span> <span class="nn">scala.concurrent.duration._</span>
-<span class="c1">// &lt;console&gt;:9: warning: Unused import
-//        import cats.Id
-//                    ^
-// &lt;console&gt;:11: warning: Unused import
-//        import cats.syntax.monoid._
-//                                  ^
-// &lt;console&gt;:16: warning: Unused import
-//        import scala.concurrent.duration._
-//                                         ^
-// import scala.concurrent.duration._
+<span class="c1">// import scala.concurrent.duration._
 </span>
 <span class="k">import</span> <span class="nn">retry.RetryPolicies._</span>
-<span class="c1">// &lt;console&gt;:9: warning: Unused import
-//        import cats.Id
-//                    ^
-// &lt;console&gt;:11: warning: Unused import
-//        import cats.syntax.monoid._
-//                                  ^
-// &lt;console&gt;:14: warning: Unused import
-//        import scala.concurrent.duration._
-//                                         ^
-// &lt;console&gt;:19: warning: Unused import
-//        import retry.RetryPolicies._
-//                                   ^
-// import retry.RetryPolicies._
+<span class="c1">// import retry.RetryPolicies._
 </span>
 <span class="k">val</span> <span class="n">policy</span> <span class="k">=</span> <span class="n">limitRetries</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mi">5</span><span class="o">)</span> <span class="o">|+|</span> <span class="n">capDelay</span><span class="o">(</span><span class="mf">1.</span><span class="n">second</span><span class="o">,</span> <span class="n">exponentialBackoff</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">))</span>
-<span class="c1">// policy: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$anon$1$$Lambda$7612/262173285@111aac04)
+<span class="c1">// policy: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$anon$1$$Lambda$6988/746970870@28263306)
 </span></code></pre></div></div>
 
 <h2 id="writing-your-own-policy">Writing your own policy</h2>
@@ -110,79 +80,13 @@ exponentially up to a maximum of 1 second:</p>
 specifying the monad you need to work in:</p>
 
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">retry.</span><span class="o">{</span><span class="nc">RetryPolicy</span><span class="o">,</span> <span class="nc">PolicyDecision</span><span class="o">}</span>
-<span class="c1">// &lt;console&gt;:9: warning: Unused import
-//        import cats.Id
-//                    ^
-// &lt;console&gt;:11: warning: Unused import
-//        import cats.syntax.monoid._
-//                                  ^
-// &lt;console&gt;:14: warning: Unused import
-//        import scala.concurrent.duration._
-//                                         ^
-// &lt;console&gt;:17: warning: Unused import
-//        import retry.RetryPolicies._
-//                                   ^
-// &lt;console&gt;:22: warning: Unused import
-//        import retry.{RetryPolicy, PolicyDecision}
-//                      ^
-// &lt;console&gt;:22: warning: Unused import
-//        import retry.{RetryPolicy, PolicyDecision}
-//                                   ^
-// import retry.{RetryPolicy, PolicyDecision}
+<span class="c1">// import retry.{RetryPolicy, PolicyDecision}
 </span>
 <span class="k">import</span> <span class="nn">cats.effect.IO</span>
-<span class="c1">// &lt;console&gt;:9: warning: Unused import
-//        import cats.Id
-//                    ^
-// &lt;console&gt;:11: warning: Unused import
-//        import cats.syntax.monoid._
-//                                  ^
-// &lt;console&gt;:14: warning: Unused import
-//        import scala.concurrent.duration._
-//                                         ^
-// &lt;console&gt;:17: warning: Unused import
-//        import retry.RetryPolicies._
-//                                   ^
-// &lt;console&gt;:19: warning: Unused import
-//        import retry.{RetryPolicy, PolicyDecision}
-//                      ^
-// &lt;console&gt;:19: warning: Unused import
-//        import retry.{RetryPolicy, PolicyDecision}
-//                                   ^
-// &lt;console&gt;:23: warning: Unused import
-//        import cats.effect.IO
-//                           ^
-// import cats.effect.IO
+<span class="c1">// import cats.effect.IO
 </span>
 <span class="k">import</span> <span class="nn">java.time.</span><span class="o">{</span><span class="nc">LocalDate</span><span class="o">,</span> <span class="nc">DayOfWeek</span><span class="o">}</span>
-<span class="c1">// &lt;console&gt;:9: warning: Unused import
-//        import cats.Id
-//                    ^
-// &lt;console&gt;:11: warning: Unused import
-//        import cats.syntax.monoid._
-//                                  ^
-// &lt;console&gt;:14: warning: Unused import
-//        import scala.concurrent.duration._
-//                                         ^
-// &lt;console&gt;:17: warning: Unused import
-//        import retry.RetryPolicies._
-//                                   ^
-// &lt;console&gt;:19: warning: Unused import
-//        import retry.{RetryPolicy, PolicyDecision}
-//                      ^
-// &lt;console&gt;:19: warning: Unused import
-//        import retry.{RetryPolicy, PolicyDecision}
-//                                   ^
-// &lt;console&gt;:20: warning: Unused import
-//        import cats.effect.IO
-//                           ^
-// &lt;console&gt;:24: warning: Unused import
-//        import java.time.{LocalDate, DayOfWeek}
-//                          ^
-// &lt;console&gt;:24: warning: Unused import
-//        import java.time.{LocalDate, DayOfWeek}
-//                                     ^
-// import java.time.{LocalDate, DayOfWeek}
+<span class="c1">// import java.time.{LocalDate, DayOfWeek}
 </span>
 <span class="k">val</span> <span class="n">onlyRetryOnTuesdays</span> <span class="k">=</span> <span class="nc">RetryPolicy</span><span class="o">.</span><span class="n">lift</span><span class="o">[</span><span class="kt">IO</span><span class="o">]</span> <span class="o">{</span> <span class="k">_</span> <span class="k">=&gt;</span>
   <span class="k">if</span> <span class="o">(</span><span class="nc">LocalDate</span><span class="o">.</span><span class="n">now</span><span class="o">().</span><span class="n">getDayOfWeek</span><span class="o">()</span> <span class="o">==</span> <span class="nc">DayOfWeek</span><span class="o">.</span><span class="nc">TUESDAY</span><span class="o">)</span> <span class="o">{</span>
@@ -191,16 +95,7 @@ specifying the monad you need to work in:</p>
     <span class="nc">PolicyDecision</span><span class="o">.</span><span class="nc">GiveUp</span>
   <span class="o">}</span>
 <span class="o">}</span>
-<span class="c1">// &lt;console&gt;:9: warning: Unused import
-//        import cats.Id
-//                    ^
-// &lt;console&gt;:11: warning: Unused import
-//        import cats.syntax.monoid._
-//                                  ^
-// &lt;console&gt;:17: warning: Unused import
-//        import retry.RetryPolicies._
-//                                   ^
-// onlyRetryOnTuesdays: retry.RetryPolicy[cats.effect.IO] = RetryPolicy(retry.RetryPolicy$$$Lambda$7609/40585520@72e3acc5)
+<span class="c1">// onlyRetryOnTuesdays: retry.RetryPolicy[cats.effect.IO] = RetryPolicy(retry.RetryPolicy$$$Lambda$6985/837916374@69bd6c5)
 </span></code></pre></div></div>
 </section></div></div></div></div><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script><script src="/cats-retry/highlight/highlight.pack.js"></script><script>hljs.configure({
 languages:['scala','java','bash']
