@@ -31,7 +31,7 @@ some retry logic.
 We'll add dependencies on the `core` and `cats-effect` modules:
 
 ```
-val catsRetryVersion = "0.1.0"
+val catsRetryVersion = "0.2.0"
 libraryDependencies ++= Seq(
   "com.github.cb372" %% "cats-retry-core"        % catsRetryVersion,
   "com.github.cb372" %% "cats-retry-cats-effect" % catsRetryVersion

@@ -67,6 +67,10 @@ val docs = project.in(file("modules/docs"))
   .enablePlugins(MicrositesPlugin)
   .settings(moduleSettings)
   .settings(
+    scalacOptions -= "-Ywarn-dead-code",
+    scalacOptions -= "-Ywarn-unused"
+  )
+  .settings(
     publishArtifact := false,
     micrositeName := "cats-retry",
     micrositeAuthor := "Chris Birchall",
