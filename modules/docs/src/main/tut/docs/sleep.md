@@ -39,9 +39,11 @@ The `cats-effect` module provides an instance that uses a cats-effect
 [`Timer`](https://typelevel.org/cats-effect/datatypes/timer.html).
 
 ```tut:book
-import cats.effect.IO
-import scala.concurrent.ExecutionContext.Implicits.global
+import cats.effect.{IO, Timer}
+import scala.concurrent.ExecutionContext.global
 import retry.CatsEffect._
+
+implicit val timer: Timer[IO] = IO.timer(global)
 
 Sleep[IO].sleep(10.milliseconds)
 ```
