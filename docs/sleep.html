@@ -50,10 +50,10 @@ simply do a <code class="highlighter-rouge">Thread.sleep(...)</code>.</p>
 <span class="c1">// import retry.CatsEffect._
 </span>
 <span class="k">implicit</span> <span class="k">val</span> <span class="n">timer</span><span class="k">:</span> <span class="kt">Timer</span><span class="o">[</span><span class="kt">IO</span><span class="o">]</span> <span class="k">=</span> <span class="nc">IO</span><span class="o">.</span><span class="n">timer</span><span class="o">(</span><span class="n">global</span><span class="o">)</span>
-<span class="c1">// timer: cats.effect.Timer[cats.effect.IO] = cats.effect.internals.IOTimer@512fcc52
+<span class="c1">// timer: cats.effect.Timer[cats.effect.IO] = cats.effect.internals.IOTimer@60a47a01
 </span>
 <span class="nc">Sleep</span><span class="o">[</span><span class="kt">IO</span><span class="o">].</span><span class="n">sleep</span><span class="o">(</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">)</span>
-<span class="c1">// res2: cats.effect.IO[Unit] = IO$650030538
+<span class="c1">// res2: cats.effect.IO[Unit] = IO$142659432
 </span></code></pre></div></div>
 
 <p>Being able to inject your own <code class="highlighter-rouge">Sleep</code> instance can be handy in tests, as you

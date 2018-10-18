@@ -41,10 +41,10 @@ happy with the result or you want to retry.</p>
 <span class="c1">// import scala.concurrent.duration._
 </span>
 <span class="k">val</span> <span class="n">policy</span> <span class="k">=</span> <span class="nc">RetryPolicies</span><span class="o">.</span><span class="n">constantDelay</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">)</span>
-<span class="c1">// policy: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$$Lambda$6985/837916374@1118c7b4)
+<span class="c1">// policy: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$$Lambda$8588/551621729@21812a77)
 </span>
 <span class="k">val</span> <span class="n">predicate</span> <span class="k">=</span> <span class="o">(</span><span class="k">_:</span> <span class="kt">Int</span><span class="o">)</span> <span class="o">==</span> <span class="mi">6</span>
-<span class="c1">// predicate: Int =&gt; Boolean = $$Lambda$7071/771461108@2d44c353
+<span class="c1">// predicate: Int =&gt; Boolean = $$Lambda$8669/192196218@3c74385b
 </span>
 <span class="k">def</span> <span class="n">onFailure</span><span class="o">(</span><span class="n">failedValue</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">details</span><span class="k">:</span> <span class="kt">RetryDetails</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
   <span class="n">println</span><span class="o">(</span><span class="n">s</span><span class="s">"Rolled a $failedValue, retrying ..."</span><span class="o">)</span>
@@ -102,7 +102,7 @@ errors, but you want to retry until it returns a value that you are happy with.<
 <span class="c1">// import cats.instances.future._
 </span>
 <span class="k">val</span> <span class="n">futurePolicy</span> <span class="k">=</span> <span class="nc">RetryPolicies</span><span class="o">.</span><span class="n">constantDelay</span><span class="o">[</span><span class="kt">Future</span><span class="o">](</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">)</span>
-<span class="c1">// futurePolicy: retry.RetryPolicy[scala.concurrent.Future] = RetryPolicy(retry.RetryPolicy$$$Lambda$6985/837916374@7da5d817)
+<span class="c1">// futurePolicy: retry.RetryPolicy[scala.concurrent.Future] = RetryPolicy(retry.RetryPolicy$$$Lambda$8588/551621729@29d3d541)
 </span>
 <span class="k">def</span> <span class="n">futureOnFailure</span><span class="o">(</span><span class="n">failedValue</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">details</span><span class="k">:</span> <span class="kt">RetryDetails</span><span class="o">)</span><span class="k">:</span> <span class="kt">Future</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
   <span class="nc">Future</span><span class="o">(</span><span class="n">println</span><span class="o">(</span><span class="n">s</span><span class="s">"Rolled a $failedValue, retrying ..."</span><span class="o">))</span>
@@ -117,7 +117,13 @@ errors, but you want to retry until it returns a value that you are happy with.<
      <span class="o">|</span>   <span class="nc">Future</span><span class="o">(</span><span class="n">loadedDie</span><span class="o">.</span><span class="n">roll</span><span class="o">())</span>
      <span class="o">|</span> <span class="o">}</span>
 <span class="n">future</span><span class="k">:</span> <span class="kt">scala.concurrent.Future</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Future</span><span class="o">(&lt;</span><span class="n">not</span> <span class="n">completed</span><span class="o">&gt;)</span>
+<span class="nc">Rolled</span> <span class="n">a</span> <span class="mi">2</span><span class="o">,</span> <span class="n">retrying</span> <span class="o">...</span>
+<span class="nc">Rolled</span> <span class="n">a</span> <span class="mi">5</span><span class="o">,</span> <span class="n">retrying</span> <span class="o">...</span>
+<span class="nc">Rolled</span> <span class="n">a</span> <span class="mi">4</span><span class="o">,</span> <span class="n">retrying</span> <span class="o">...</span>
+<span class="nc">Rolled</span> <span class="n">a</span> <span class="mi">1</span><span class="o">,</span> <span class="n">retrying</span> <span class="o">...</span>
+<span class="nc">Rolled</span> <span class="n">a</span> <span class="mi">3</span><span class="o">,</span> <span class="n">retrying</span> <span class="o">...</span>
 
+<span class="nc">Rolled</span> <span class="n">a</span> <span class="mi">2</span><span class="o">,</span> <span class="n">retrying</span> <span class="o">...</span>
 <span class="n">scala</span><span class="o">&gt;</span> <span class="nc">Await</span><span class="o">.</span><span class="n">result</span><span class="o">(</span><span class="n">future</span><span class="o">,</span> <span class="mf">1.</span><span class="n">minute</span><span class="o">)</span>
 <span class="n">res1</span><span class="k">:</span> <span class="kt">Int</span> <span class="o">=</span> <span class="mi">6</span>
 </code></pre></div></div>
