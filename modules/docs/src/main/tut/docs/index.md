@@ -80,8 +80,10 @@ Now we have a retry policy and an error handler, we can wrap our `IO` in
 retries.
 
 ```tut:book
-// This is needed to get an implicit cats.effect.Timer
-import scala.concurrent.ExecutionContext.Implicits.global
+// We need an implicit cats.effect.Timer
+import cats.effect.Timer
+import scala.concurrent.ExecutionContext.global
+implicit val timer: Timer[IO] = IO.timer(global)
 
 // This is so we can use that Timer to perform delays between retries
 import retry.CatsEffect._

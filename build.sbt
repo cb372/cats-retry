@@ -1,7 +1,7 @@
 import ReleaseTransformations._
 
 val commonDeps = Seq(
-  "org.typelevel" %% "cats-core" % "1.1.0",
+  "org.typelevel" %% "cats-core" % "1.4.0",
   "org.scalatest" %% "scalatest" % "3.0.5" % Test,
   "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
 )
@@ -49,7 +49,7 @@ val `cats-effect` = project.in(file("modules/cats-effect"))
   .settings(moduleSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-effect" % "0.10.1"
+      "org.typelevel" %% "cats-effect" % "1.0.0"
     )
   )
 
