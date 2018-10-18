@@ -11,15 +11,21 @@ high probability it will fail.</p>
 <p>We’ll be working with the cats-effect <code class="highlighter-rouge">IO</code> monad, but any monad will do.</p>
 
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">cats.effect.IO</span>
-<span class="c1">// import cats.effect.IO
+<span class="c1">// &lt;console&gt;:12: warning: Unused import
+//        import cats.effect.IO
+//                           ^
+// import cats.effect.IO
 </span>
 <span class="k">val</span> <span class="n">httpClient</span> <span class="k">=</span> <span class="n">util</span><span class="o">.</span><span class="nc">FlakyHttpClient</span><span class="o">()</span>
-<span class="c1">// httpClient: util.FlakyHttpClient = FlakyHttpClient()
+<span class="c1">// &lt;console&gt;:9: warning: Unused import
+//        import cats.effect.IO
+//                           ^
+// httpClient: util.FlakyHttpClient = FlakyHttpClient()
 </span>
 <span class="k">val</span> <span class="n">flakyRequest</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="nc">IO</span> <span class="o">{</span>
   <span class="n">httpClient</span><span class="o">.</span><span class="n">getCatGif</span><span class="o">()</span>
 <span class="o">}</span>
-<span class="c1">// flakyRequest: cats.effect.IO[String] = IO$1653351161
+<span class="c1">// flakyRequest: cats.effect.IO[String] = IO$1196456130
 </span></code></pre></div></div>
 
 <p>To improve the chance of successfully downloading the file, let’s wrap this with
@@ -39,10 +45,16 @@ no delay between attempts. (See the <a href="policies.html">retry policies page<
 information on more powerful policies).</p>
 
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">retry._</span>
-<span class="c1">// import retry._
+<span class="c1">// &lt;console&gt;:9: warning: Unused import
+//        import cats.effect.IO
+//                           ^
+// &lt;console&gt;:13: warning: Unused import
+//        import retry._
+//                     ^
+// import retry._
 </span>
 <span class="k">val</span> <span class="n">retryFiveTimes</span> <span class="k">=</span> <span class="nc">RetryPolicies</span><span class="o">.</span><span class="n">limitRetries</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mi">5</span><span class="o">)</span>
-<span class="c1">// retryFiveTimes: retry.RetryPolicy[cats.effect.IO] = RetryPolicy(retry.RetryPolicy$$$Lambda$11183/300616967@5a0f5e96)
+<span class="c1">// retryFiveTimes: retry.RetryPolicy[cats.effect.IO] = RetryPolicy(retry.RetryPolicy$$$Lambda$7609/40585520@1a3d301b)
 </span></code></pre></div></div>
 
 <p>We’ll also provide an error handler that does some logging before every retry.
@@ -50,13 +62,46 @@ Note how this also happens within whatever monad you’re working in, in this ca
 the <code class="highlighter-rouge">IO</code> monad.</p>
 
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">scala.concurrent.duration.FiniteDuration</span>
-<span class="c1">// import scala.concurrent.duration.FiniteDuration
+<span class="c1">// &lt;console&gt;:9: warning: Unused import
+//        import cats.effect.IO
+//                           ^
+// &lt;console&gt;:11: warning: Unused import
+//        import retry._
+//                     ^
+// &lt;console&gt;:16: warning: Unused import
+//        import scala.concurrent.duration.FiniteDuration
+//                                         ^
+// import scala.concurrent.duration.FiniteDuration
 </span>
 <span class="k">import</span> <span class="nn">retry.RetryDetails._</span>
-<span class="c1">// import retry.RetryDetails._
+<span class="c1">// &lt;console&gt;:9: warning: Unused import
+//        import cats.effect.IO
+//                           ^
+// &lt;console&gt;:11: warning: Unused import
+//        import retry._
+//                     ^
+// &lt;console&gt;:13: warning: Unused import
+//        import scala.concurrent.duration.FiniteDuration
+//                                         ^
+// &lt;console&gt;:17: warning: Unused import
+//        import retry.RetryDetails._
+//                                  ^
+// import retry.RetryDetails._
 </span>
 <span class="k">val</span> <span class="n">logMessages</span> <span class="k">=</span> <span class="n">collection</span><span class="o">.</span><span class="n">mutable</span><span class="o">.</span><span class="nc">ArrayBuffer</span><span class="o">.</span><span class="n">empty</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span>
-<span class="c1">// logMessages: scala.collection.mutable.ArrayBuffer[String] = ArrayBuffer()
+<span class="c1">// &lt;console&gt;:9: warning: Unused import
+//        import cats.effect.IO
+//                           ^
+// &lt;console&gt;:11: warning: Unused import
+//        import retry._
+//                     ^
+// &lt;console&gt;:13: warning: Unused import
+//        import scala.concurrent.duration.FiniteDuration
+//                                         ^
+// &lt;console&gt;:15: warning: Unused import
+//        import retry.RetryDetails._
+//                                  ^
+// logMessages: scala.collection.mutable.ArrayBuffer[String] = ArrayBuffer()
 </span>
 <span class="k">def</span> <span class="n">logError</span><span class="o">(</span><span class="n">err</span><span class="k">:</span> <span class="kt">Throwable</span><span class="o">,</span> <span class="n">details</span><span class="k">:</span> <span class="kt">RetryDetails</span><span class="o">)</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="n">details</span> <span class="k">match</span> <span class="o">{</span>
 
@@ -74,34 +119,178 @@ the <code class="highlighter-rouge">IO</code> monad.</p>
     <span class="o">}</span>
 
 <span class="o">}</span>
-<span class="c1">// logError: (err: Throwable, details: retry.RetryDetails)cats.effect.IO[Unit]
+<span class="c1">// &lt;console&gt;:23: warning: pattern var nextDelay in method logError is never used; `nextDelay@_' suppresses this warning
+//          case WillDelayAndRetry(nextDelay: FiniteDuration,
+//                                 ^
+// &lt;console&gt;:25: warning: pattern var cumulativeDelay in method logError is never used; `cumulativeDelay@_' suppresses this warning
+//                                 cumulativeDelay: FiniteDuration) =&gt;
+//                                 ^
+// &lt;console&gt;:31: warning: pattern var totalDelay in method logError is never used; `totalDelay@_' suppresses this warning
+//          case GivingUp(totalRetries: Int, totalDelay: FiniteDuration) =&gt;
+//                                           ^
+// &lt;console&gt;:21: warning: parameter value err in method logError is never used
+//        def logError(err: Throwable, details: RetryDetails): IO[Unit] = details match {
+//                     ^
+// logError: (err: Throwable, details: retry.RetryDetails)cats.effect.IO[Unit]
 </span></code></pre></div></div>
 
 <p>Now we have a retry policy and an error handler, we can wrap our <code class="highlighter-rouge">IO</code> in
 retries.</p>
 
-<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// This is needed to get an implicit cats.effect.Timer
-</span><span class="k">import</span> <span class="nn">scala.concurrent.ExecutionContext.Implicits.global</span>
-<span class="c1">// import scala.concurrent.ExecutionContext.Implicits.global
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// We need an implicit cats.effect.Timer
+</span><span class="k">import</span> <span class="nn">cats.effect.Timer</span>
+<span class="c1">// &lt;console&gt;:9: warning: Unused import
+//        import cats.effect.IO
+//                           ^
+// &lt;console&gt;:11: warning: Unused import
+//        import retry._
+//                     ^
+// &lt;console&gt;:13: warning: Unused import
+//        import scala.concurrent.duration.FiniteDuration
+//                                         ^
+// &lt;console&gt;:15: warning: Unused import
+//        import retry.RetryDetails._
+//                                  ^
+// &lt;console&gt;:21: warning: Unused import
+//        import cats.effect.Timer
+//                           ^
+// import cats.effect.Timer
+</span>
+<span class="k">import</span> <span class="nn">scala.concurrent.ExecutionContext.global</span>
+<span class="c1">// &lt;console&gt;:9: warning: Unused import
+//        import cats.effect.IO
+//                           ^
+// &lt;console&gt;:11: warning: Unused import
+//        import retry._
+//                     ^
+// &lt;console&gt;:13: warning: Unused import
+//        import scala.concurrent.duration.FiniteDuration
+//                                         ^
+// &lt;console&gt;:15: warning: Unused import
+//        import retry.RetryDetails._
+//                                  ^
+// &lt;console&gt;:17: warning: Unused import
+//        import cats.effect.Timer
+//                           ^
+// &lt;console&gt;:21: warning: Unused import
+//        import scala.concurrent.ExecutionContext.global
+//                                                 ^
+// import scala.concurrent.ExecutionContext.global
+</span>
+<span class="k">implicit</span> <span class="k">val</span> <span class="n">timer</span><span class="k">:</span> <span class="kt">Timer</span><span class="o">[</span><span class="kt">IO</span><span class="o">]</span> <span class="k">=</span> <span class="nc">IO</span><span class="o">.</span><span class="n">timer</span><span class="o">(</span><span class="n">global</span><span class="o">)</span>
+<span class="c1">// &lt;console&gt;:11: warning: Unused import
+//        import retry._
+//                     ^
+// &lt;console&gt;:13: warning: Unused import
+//        import scala.concurrent.duration.FiniteDuration
+//                                         ^
+// &lt;console&gt;:15: warning: Unused import
+//        import retry.RetryDetails._
+//                                  ^
+// timer: cats.effect.Timer[cats.effect.IO] = cats.effect.internals.IOTimer@5b7a15d6
 </span>
 <span class="c1">// This is so we can use that Timer to perform delays between retries
 </span><span class="k">import</span> <span class="nn">retry.CatsEffect._</span>
-<span class="c1">// import retry.CatsEffect._
+<span class="c1">// &lt;console&gt;:9: warning: Unused import
+//        import cats.effect.IO
+//                           ^
+// &lt;console&gt;:11: warning: Unused import
+//        import retry._
+//                     ^
+// &lt;console&gt;:13: warning: Unused import
+//        import scala.concurrent.duration.FiniteDuration
+//                                         ^
+// &lt;console&gt;:15: warning: Unused import
+//        import retry.RetryDetails._
+//                                  ^
+// &lt;console&gt;:17: warning: Unused import
+//        import cats.effect.Timer
+//                           ^
+// &lt;console&gt;:18: warning: Unused import
+//        import scala.concurrent.ExecutionContext.global
+//                                                 ^
+// &lt;console&gt;:19: warning: Unused import
+//        import timer
+//                                                     ^
+// &lt;console&gt;:24: warning: Unused import
+//        import retry.CatsEffect._
+//                                ^
+// import retry.CatsEffect._
 </span>
 <span class="k">val</span> <span class="n">flakyRequestWithRetry</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span>
   <span class="n">retryingOnAllErrors</span><span class="o">[</span><span class="kt">String</span><span class="o">](</span>
     <span class="n">policy</span> <span class="k">=</span> <span class="n">retryFiveTimes</span><span class="o">,</span>
     <span class="n">onError</span> <span class="k">=</span> <span class="n">logError</span>
   <span class="o">)(</span><span class="n">flakyRequest</span><span class="o">)</span>
-<span class="c1">// flakyRequestWithRetry: cats.effect.IO[String] = IO$983719630
+<span class="c1">// &lt;console&gt;:15: warning: Unused import
+//        import scala.concurrent.duration.FiniteDuration
+//                                         ^
+// &lt;console&gt;:17: warning: Unused import
+//        import retry.RetryDetails._
+//                                  ^
+// &lt;console&gt;:20: warning: Unused import
+//        import cats.effect.Timer
+//                           ^
+// &lt;console&gt;:21: warning: Unused import
+//        import scala.concurrent.ExecutionContext.global
+//                                                 ^
+// flakyRequestWithRetry: cats.effect.IO[String] = IO$1411091969
 </span></code></pre></div></div>
 
 <p>Let’s see it in action.</p>
 
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">scala</span><span class="o">&gt;</span> <span class="n">flakyRequestWithRetry</span><span class="o">.</span><span class="n">unsafeRunSync</span><span class="o">()</span>
+<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">9</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
+       <span class="k">import</span> <span class="nn">cats.effect.IO</span>
+                          <span class="o">^</span>
+<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">11</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
+       <span class="k">import</span> <span class="nn">retry._</span>
+                    <span class="o">^</span>
+<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">13</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
+       <span class="k">import</span> <span class="nn">scala.concurrent.duration.FiniteDuration</span>
+                                        <span class="o">^</span>
+<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">15</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
+       <span class="k">import</span> <span class="nn">retry.RetryDetails._</span>
+                                 <span class="o">^</span>
+<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">17</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
+       <span class="k">import</span> <span class="nn">cats.effect.Timer</span>
+                          <span class="o">^</span>
+<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">18</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
+       <span class="k">import</span> <span class="nn">scala.concurrent.ExecutionContext.global</span>
+                                                <span class="o">^</span>
+<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">19</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
+       <span class="k">import</span> <span class="nn">timer</span>
+                                                    <span class="o">^</span>
+<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">21</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
+       <span class="k">import</span> <span class="nn">retry.CatsEffect._</span>
+                               <span class="o">^</span>
 <span class="n">res2</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="n">cute</span> <span class="n">cat</span> <span class="n">gets</span> <span class="n">sleepy</span> <span class="n">and</span> <span class="n">falls</span> <span class="n">asleep</span>
 
 <span class="n">scala</span><span class="o">&gt;</span> <span class="n">logMessages</span><span class="o">.</span><span class="n">foreach</span><span class="o">(</span><span class="n">println</span><span class="o">)</span>
+<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">9</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
+       <span class="k">import</span> <span class="nn">cats.effect.IO</span>
+                          <span class="o">^</span>
+<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">11</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
+       <span class="k">import</span> <span class="nn">retry._</span>
+                    <span class="o">^</span>
+<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">13</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
+       <span class="k">import</span> <span class="nn">scala.concurrent.duration.FiniteDuration</span>
+                                        <span class="o">^</span>
+<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">15</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
+       <span class="k">import</span> <span class="nn">retry.RetryDetails._</span>
+                                 <span class="o">^</span>
+<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">18</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
+       <span class="k">import</span> <span class="nn">cats.effect.Timer</span>
+                          <span class="o">^</span>
+<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">19</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
+       <span class="k">import</span> <span class="nn">scala.concurrent.ExecutionContext.global</span>
+                                                <span class="o">^</span>
+<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">20</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
+       <span class="k">import</span> <span class="nn">timer</span>
+                                                    <span class="o">^</span>
+<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">22</span><span class="k">:</span> <span class="kt">warning:</span> <span class="kt">Unused</span> <span class="kt">import</span>
+       <span class="k">import</span> <span class="nn">retry.CatsEffect._</span>
+                               <span class="o">^</span>
 <span class="nc">Failed</span> <span class="n">to</span> <span class="n">download</span><span class="o">.</span> <span class="nc">So</span> <span class="n">far</span> <span class="n">we</span> <span class="n">have</span> <span class="n">retried</span> <span class="mi">0</span> <span class="n">times</span><span class="o">.</span>
 <span class="nc">Failed</span> <span class="n">to</span> <span class="n">download</span><span class="o">.</span> <span class="nc">So</span> <span class="n">far</span> <span class="n">we</span> <span class="n">have</span> <span class="n">retried</span> <span class="mi">1</span> <span class="n">times</span><span class="o">.</span>
 <span class="nc">Failed</span> <span class="n">to</span> <span class="n">download</span><span class="o">.</span> <span class="nc">So</span> <span class="n">far</span> <span class="n">we</span> <span class="n">have</span> <span class="n">retried</span> <span class="mi">2</span> <span class="n">times</span><span class="o">.</span>
