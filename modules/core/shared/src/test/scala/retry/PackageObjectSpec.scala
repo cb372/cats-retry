@@ -41,6 +41,9 @@ class PackageObjectSpec extends FlatSpec {
   it should "retry until the policy chooses to give up" in new TestContext {
     val policy = RetryPolicies.limitRetries[Id](2)
 
+    implicit val dummySleep: Sleep[Id] =
+      (delay: FiniteDuration) => ()
+
     val finalResult = retryingM[String][Id](
       policy,
       _.toInt > 3,
