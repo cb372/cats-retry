@@ -20,6 +20,9 @@ trait Sleep[M[_]] {
 Out of the box, the core module provides instances for `Id` and `Future` that
 simply do a `Thread.sleep(...)`.
 
+Note: these instances are not provided if you are using Scala.js, as
+`Thread.sleep` doesn't make any sense in JavaScript.
+
 ```tut:book
 import retry.Sleep
 import cats.Id
@@ -47,6 +50,8 @@ implicit val timer: Timer[IO] = IO.timer(global)
 
 Sleep[IO].sleep(10.milliseconds)
 ```
+
+The `monix` module provides an instance that calls `Task.sleep`.
 
 Being able to inject your own `Sleep` instance can be handy in tests, as you
 can mock it out to avoid slowing down your unit tests.
