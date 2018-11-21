@@ -54,6 +54,7 @@ val catsEffect = crossProject(JVMPlatform, JSPlatform)
   .jsConfigure(_.dependsOn(coreJS))
   .settings(moduleSettings)
   .settings(
+    name := "cats-effect",
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-effect" % "1.0.0",
       "org.scalatest" %%% "scalatest" % "3.0.5" % Test,
