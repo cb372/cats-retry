@@ -31,12 +31,14 @@ some retry logic.
 We'll add dependencies on the `core` and `cats-effect` modules:
 
 ```
-val catsRetryVersion = "0.2.0"
+val catsRetryVersion = "0.2.2"
 libraryDependencies ++= Seq(
   "com.github.cb372" %% "cats-retry-core"        % catsRetryVersion,
   "com.github.cb372" %% "cats-retry-cats-effect" % catsRetryVersion
 )
 ```
+
+(Note: if you're using Scala.js, you'll need a `%%%` instead of `%%`.)
 
 First we'll need a retry policy. We'll keep it simple: retry up to 5 times, with
 no delay between attempts. (See the [retry policies page](policies.html) for
