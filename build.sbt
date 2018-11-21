@@ -1,10 +1,5 @@
 import ReleaseTransformations._
-
-val commonDeps = Seq(
-  "org.typelevel" %% "cats-core" % "1.4.0",
-  "org.scalatest" %% "scalatest" % "3.0.5" % Test,
-  "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
-)
+import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
 val commonSettings = Seq(
   organization := "com.github.cb372",
@@ -37,33 +32,54 @@ val moduleSettings = commonSettings ++ Seq(
     "-unchecked",
   ),
   scalacOptions in (Test, compile) += "-Ypartial-unification",
-  libraryDependencies ++= commonDeps,
   scalafmtOnCompile := true
 )
 
-val core = project.in(file("modules/core"))
-    .settings(moduleSettings)
-
-val `cats-effect` = project.in(file("modules/cats-effect"))
-  .dependsOn(core)
+val core = crossProject(JVMPlatform, JSPlatform)
+  .in(file("modules/core"))
   .settings(moduleSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-effect" % "1.0.0"
+        "org.typelevel" %%% "cats-core" % "1.4.0",
+        "org.scalatest" %%% "scalatest" % "3.0.5" % Test,
+        "org.scalacheck" %%% "scalacheck" % "1.14.0" % Test
+      )
     )
-  )
+val coreJVM = core.jvm
+val coreJS = core.js
 
-val `monix` = project.in(file("modules/monix"))
-  .dependsOn(core)
+val catsEffect = crossProject(JVMPlatform, JSPlatform)
+  .in(file("modules/cats-effect"))
+  .jvmConfigure(_.dependsOn(coreJVM))
+  .jsConfigure(_.dependsOn(coreJS))
   .settings(moduleSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "io.monix" %% "monix" % "3.0.0-RC1"
+      "org.typelevel" %%% "cats-effect" % "1.0.0",
+      "org.scalatest" %%% "scalatest" % "3.0.5" % Test,
+      "org.scalacheck" %%% "scalacheck" % "1.14.0" % Test
     )
   )
+val catsEffectJVM = catsEffect.jvm
+val catsEffectJS = catsEffect.js
+
+val monix = crossProject(JVMPlatform, JSPlatform)
+  .in(file("modules/monix"))
+  .jvmConfigure(_.dependsOn(coreJVM))
+  .jsConfigure(_.dependsOn(coreJS))
+  .settings(moduleSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      "io.monix" %%% "monix" % "3.0.0-RC1",
+      "org.scalatest" %%% "scalatest" % "3.0.5" % Test,
+      "org.scalacheck" %%% "scalacheck" % "1.14.0" % Test
+    )
+  )
+val monixJVM = monix.jvm
+val monixJS = monix.js
 
 val docs = project.in(file("modules/docs"))
-  .dependsOn(core, `cats-effect`, `monix`)
+  .dependsOn(coreJVM, catsEffectJVM, monixJVM)
   .enablePlugins(MicrositesPlugin)
   .settings(moduleSettings)
   .settings(
@@ -86,7 +102,7 @@ val docs = project.in(file("modules/docs"))
   )
 
 val root = project.in(file("."))
-  .aggregate(core, `cats-effect`, docs, `monix`)
+  .aggregate(coreJVM, coreJS, catsEffectJVM, catsEffectJS, monixJVM, monixJS, docs)
   .settings(commonSettings)
   .settings(
     publishTo := sonatypePublishTo.value, // see https://github.com/sbt/sbt-release/issues/184
