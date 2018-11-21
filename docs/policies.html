@@ -71,7 +71,7 @@ exponentially up to a maximum of 1 second:</p>
 <span class="c1">// import retry.RetryPolicies._
 </span>
 <span class="k">val</span> <span class="n">policy</span> <span class="k">=</span> <span class="n">limitRetries</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mi">5</span><span class="o">)</span> <span class="o">|+|</span> <span class="n">capDelay</span><span class="o">(</span><span class="mf">1.</span><span class="n">second</span><span class="o">,</span> <span class="n">exponentialBackoff</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">))</span>
-<span class="c1">// policy: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$anon$1$$Lambda$8591/1113385721@105e00b2)
+<span class="c1">// policy: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$anon$1$$Lambda$12982/392333069@5c462b51)
 </span></code></pre></div></div>
 
 <h2 id="writing-your-own-policy">Writing your own policy</h2>
@@ -95,7 +95,7 @@ specifying the monad you need to work in:</p>
     <span class="nc">PolicyDecision</span><span class="o">.</span><span class="nc">GiveUp</span>
   <span class="o">}</span>
 <span class="o">}</span>
-<span class="c1">// onlyRetryOnTuesdays: retry.RetryPolicy[cats.effect.IO] = RetryPolicy(retry.RetryPolicy$$$Lambda$8588/551621729@7be33a0d)
+<span class="c1">// onlyRetryOnTuesdays: retry.RetryPolicy[cats.effect.IO] = RetryPolicy(retry.RetryPolicy$$$Lambda$12979/2508909@3d17187f)
 </span></code></pre></div></div>
 </section></div></div></div></div><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script><script src="/cats-retry/highlight/highlight.pack.js"></script><script>hljs.configure({
 languages:['scala','java','bash']
