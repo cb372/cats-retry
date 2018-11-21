@@ -29,7 +29,7 @@ class MonixSpec extends FlatSpec {
     }
 
     val scheduler = TestScheduler()
-    val f         = finalResult.runAsync(scheduler)
+    val f         = finalResult.runToFuture(scheduler)
 
     scheduler.tick(30.seconds)
 
