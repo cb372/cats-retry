@@ -35,12 +35,14 @@ val moduleSettings = commonSettings ++ Seq(
   scalafmtOnCompile := true
 )
 
+val catsVersion = "1.5.0"
 val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/core"))
   .settings(moduleSettings)
   .settings(
     libraryDependencies ++= Seq(
-        "org.typelevel" %%% "cats-core" % "1.4.0",
+        "org.typelevel" %%% "cats-core" % catsVersion,
+        "org.typelevel" %%% "cats-kernel-laws" % catsVersion % Test,
         "org.scalatest" %%% "scalatest" % "3.0.5" % Test,
         "org.scalacheck" %%% "scalacheck" % "1.14.0" % Test
       )

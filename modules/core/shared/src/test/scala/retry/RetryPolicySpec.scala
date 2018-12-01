@@ -1,7 +1,7 @@
 package retry
 
 import cats.Id
-import cats.syntax.monoid._
+import cats.syntax.semigroup._
 import org.scalatest.FlatSpec
 
 import scala.concurrent.duration._
