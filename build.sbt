@@ -83,13 +83,13 @@ val monixJS = monix.js
 
 val docs = project.in(file("modules/docs"))
   .dependsOn(coreJVM, catsEffectJVM, monixJVM)
-  .enablePlugins(MicrositesPlugin)
+  .enablePlugins(MicrositesPlugin, BuildInfoPlugin)
   .settings(moduleSettings)
   .settings(
     scalacOptions -= "-Ywarn-dead-code",
-    scalacOptions -= "-Ywarn-unused"
-  )
-  .settings(
+    scalacOptions -= "-Ywarn-unused",
+    buildInfoKeys := Seq[BuildInfoKey](latestVersion),
+    buildInfoPackage := "retry",
     publishArtifact := false,
     micrositeName := "cats-retry",
     micrositeAuthor := "Chris Birchall",
@@ -116,6 +116,7 @@ val root = project.in(file("."))
       runClean,
       runTest,
       setReleaseVersion,
+      setLatestVersion,
       commitReleaseVersion,
       tagRelease,
       publishArtifacts,

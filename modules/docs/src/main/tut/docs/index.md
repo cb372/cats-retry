@@ -3,6 +3,10 @@ layout: docs
 title: Getting started
 ---
 
+```tut:invisible
+import retry.BuildInfo.latestVersion
+```
+
 # Getting started
 
 Let's start with a realistic example.
@@ -30,11 +34,15 @@ some retry logic.
 
 We'll add dependencies on the `core` and `cats-effect` modules:
 
-```
-val catsRetryVersion = "0.2.2"
-libraryDependencies ++= Seq(
-  "com.github.cb372" %% "cats-retry-core"        % catsRetryVersion,
-  "com.github.cb372" %% "cats-retry-cats-effect" % catsRetryVersion
+```tut:evaluated
+println(
+  s"""
+  |val catsRetryVersion = "$latestVersion"
+  |libraryDependencies ++= Seq(
+  |  "com.github.cb372" %% "cats-retry-core"        % catsRetryVersion,
+  |  "com.github.cb372" %% "cats-retry-cats-effect" % catsRetryVersion
+  |)
+  |""".stripMargin.trim
 )
 ```
 
