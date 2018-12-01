@@ -39,7 +39,7 @@ There are also a few combinators to transform policies, including:
 
 ## Composing policies
 
-Retry policies form a bounded semilattice (also know as commutative semilattice).
+Retry policies form a bounded semilattice (also known as commutative semilattice).
 
 The empty element is a simple policy that retries with no delay and never gives
 up.
@@ -50,7 +50,7 @@ The `combine` operation has the following semantics:
 * If both policies want to delay and retry, the *longer* of the two delays is
   chosen.
 
-This way of combining policies imply:
+This way of combining policies implies:
 
 * That combining two identical policies result in this same policy.
 * That the order you combine policies doesn't affect the resulted policy.
