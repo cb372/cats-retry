@@ -1,7 +1,7 @@
 package retry
 
 import cats.Applicative
-import cats.kernel.Monoid
+import cats.kernel.BoundedSemilattice
 import retry.PolicyDecision._
 
 import scala.concurrent.duration.Duration
@@ -18,10 +18,10 @@ object RetryPolicy {
   ): RetryPolicy[M] =
     RetryPolicy[M](decideNextRetry = retryStatus => M.pure(f(retryStatus)))
 
-  implicit def monoidForRetryPolicy[M[_]](
+  implicit def boundedSemilatticeForRetryPolicy[M[_]](
       implicit M: Applicative[M]
-  ): Monoid[RetryPolicy[M]] =
-    new Monoid[RetryPolicy[M]] {
+  ): BoundedSemilattice[RetryPolicy[M]] =
+    new BoundedSemilattice[RetryPolicy[M]] {
 
       override def empty: RetryPolicy[M] =
         RetryPolicies.constantDelay[M](Duration.Zero)

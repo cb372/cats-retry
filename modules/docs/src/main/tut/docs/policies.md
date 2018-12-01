@@ -39,7 +39,7 @@ There are also a few combinators to transform policies, including:
 
 ## Composing policies
 
-Retry policies form a commutative monoid.
+Retry policies form a bounded semilattice (also know as commutative semilattice).
 
 The empty element is a simple policy that retries with no delay and never gives
 up.
@@ -50,7 +50,12 @@ The `combine` operation has the following semantics:
 * If both policies want to delay and retry, the *longer* of the two delays is
   chosen.
 
-A `Monoid` instance is provided in the companion object, so you can compose
+This way of combining policies imply:
+
+* That combining two identical policies result in this same policy.
+* That the order you combine policies doesn't affect the resulted policy.
+
+A `BoundedSemilattice` instance is provided in the companion object, so you can compose
 policies easily.
 
 For example, to retry up to 5 times, starting with a 10 ms delay and increasing
@@ -58,7 +63,7 @@ exponentially up to a maximum of 1 second:
 
 ```tut:book
 import cats.Id
-import cats.syntax.monoid._
+import cats.syntax.semigroup._
 import scala.concurrent.duration._
 import retry.RetryPolicies._
 

@@ -8,7 +8,7 @@ import scala.concurrent.duration._
 
 class RetryPolicySpec extends FlatSpec {
 
-  behavior of "Monoid append"
+  behavior of "BoundedSemillatice append"
 
   it should "give up if either of the composed policies decides to give up" in {
     val alwaysGiveUp = RetryPolicy.lift[Id](_ => PolicyDecision.GiveUp)
