@@ -41,10 +41,10 @@ happy with the result or you want to retry.</p>
 <span class="c1">// import scala.concurrent.duration._
 </span>
 <span class="k">val</span> <span class="n">policy</span> <span class="k">=</span> <span class="nc">RetryPolicies</span><span class="o">.</span><span class="n">constantDelay</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">)</span>
-<span class="c1">// policy: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$$Lambda$14509/320782822@69e31dce)
+<span class="c1">// policy: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$$Lambda$7758/1750000386@1ec1ddaf)
 </span>
 <span class="k">val</span> <span class="n">predicate</span> <span class="k">=</span> <span class="o">(</span><span class="k">_:</span> <span class="kt">Int</span><span class="o">)</span> <span class="o">==</span> <span class="mi">6</span>
-<span class="c1">// predicate: Int =&gt; Boolean = $$Lambda$14590/935869917@24e3181f
+<span class="c1">// predicate: Int =&gt; Boolean = $$Lambda$7844/2136242231@3e2cde6d
 </span>
 <span class="k">def</span> <span class="n">onFailure</span><span class="o">(</span><span class="n">failedValue</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">details</span><span class="k">:</span> <span class="kt">RetryDetails</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
   <span class="n">println</span><span class="o">(</span><span class="n">s</span><span class="s">"Rolled a $failedValue, retrying ..."</span><span class="o">)</span>
@@ -102,7 +102,7 @@ errors, but you want to retry until it returns a value that you are happy with.<
 <span class="c1">// import cats.instances.future._
 </span>
 <span class="k">val</span> <span class="n">futurePolicy</span> <span class="k">=</span> <span class="nc">RetryPolicies</span><span class="o">.</span><span class="n">constantDelay</span><span class="o">[</span><span class="kt">Future</span><span class="o">](</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">)</span>
-<span class="c1">// futurePolicy: retry.RetryPolicy[scala.concurrent.Future] = RetryPolicy(retry.RetryPolicy$$$Lambda$14509/320782822@b0eca63)
+<span class="c1">// futurePolicy: retry.RetryPolicy[scala.concurrent.Future] = RetryPolicy(retry.RetryPolicy$$$Lambda$7758/1750000386@1c31ab5c)
 </span>
 <span class="k">def</span> <span class="n">futureOnFailure</span><span class="o">(</span><span class="n">failedValue</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">details</span><span class="k">:</span> <span class="kt">RetryDetails</span><span class="o">)</span><span class="k">:</span> <span class="kt">Future</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
   <span class="nc">Future</span><span class="o">(</span><span class="n">println</span><span class="o">(</span><span class="n">s</span><span class="s">"Rolled a $failedValue, retrying ..."</span><span class="o">))</span>

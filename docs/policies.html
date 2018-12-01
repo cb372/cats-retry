@@ -39,7 +39,7 @@ certain limit)</li>
 
 <h2 id="composing-policies">Composing policies</h2>
 
-<p>Retry policies form a commutative monoid.</p>
+<p>Retry policies form a bounded semilattice (also known as commutative semilattice).</p>
 
 <p>The empty element is a simple policy that retries with no delay and never gives
 up.</p>
@@ -52,7 +52,14 @@ up.</p>
 chosen.</li>
 </ul>
 
-<p>A <code class="highlighter-rouge">Monoid</code> instance is provided in the companion object, so you can compose
+<p>This way of combining policies implies:</p>
+
+<ul>
+  <li>That combining two identical policies result in this same policy.</li>
+  <li>That the order you combine policies doesn’t affect the resulted policy.</li>
+</ul>
+
+<p>A <code class="highlighter-rouge">BoundedSemilattice</code> instance is provided in the companion object, so you can compose
 policies easily.</p>
 
 <p>For example, to retry up to 5 times, starting with a 10 ms delay and increasing
@@ -61,8 +68,8 @@ exponentially up to a maximum of 1 second:</p>
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">cats.Id</span>
 <span class="c1">// import cats.Id
 </span>
-<span class="k">import</span> <span class="nn">cats.syntax.monoid._</span>
-<span class="c1">// import cats.syntax.monoid._
+<span class="k">import</span> <span class="nn">cats.syntax.semigroup._</span>
+<span class="c1">// import cats.syntax.semigroup._
 </span>
 <span class="k">import</span> <span class="nn">scala.concurrent.duration._</span>
 <span class="c1">// import scala.concurrent.duration._
@@ -71,7 +78,7 @@ exponentially up to a maximum of 1 second:</p>
 <span class="c1">// import retry.RetryPolicies._
 </span>
 <span class="k">val</span> <span class="n">policy</span> <span class="k">=</span> <span class="n">limitRetries</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mi">5</span><span class="o">)</span> <span class="o">|+|</span> <span class="n">capDelay</span><span class="o">(</span><span class="mf">1.</span><span class="n">second</span><span class="o">,</span> <span class="n">exponentialBackoff</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">))</span>
-<span class="c1">// policy: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$anon$1$$Lambda$14512/368294605@57cee02d)
+<span class="c1">// policy: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$anon$1$$Lambda$7761/44336165@7e064f93)
 </span></code></pre></div></div>
 
 <h2 id="writing-your-own-policy">Writing your own policy</h2>
@@ -95,7 +102,7 @@ specifying the monad you need to work in:</p>
     <span class="nc">PolicyDecision</span><span class="o">.</span><span class="nc">GiveUp</span>
   <span class="o">}</span>
 <span class="o">}</span>
-<span class="c1">// onlyRetryOnTuesdays: retry.RetryPolicy[cats.effect.IO] = RetryPolicy(retry.RetryPolicy$$$Lambda$14509/320782822@5df5b6b5)
+<span class="c1">// onlyRetryOnTuesdays: retry.RetryPolicy[cats.effect.IO] = RetryPolicy(retry.RetryPolicy$$$Lambda$7758/1750000386@14565dc4)
 </span></code></pre></div></div>
 </section></div></div></div></div><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script><script src="/cats-retry/highlight/highlight.pack.js"></script><script>hljs.configure({
 languages:['scala','java','bash']
