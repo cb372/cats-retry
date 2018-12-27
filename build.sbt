@@ -1,8 +1,9 @@
-import ReleaseTransformations._
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
+import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
 
 val commonSettings = Seq(
   organization := "com.github.cb372",
+  crossScalaVersions := Seq(scalaVersion.value, "2.11.12"),
   publishTo := sonatypePublishTo.value,
   releaseCrossBuild := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
@@ -12,10 +13,10 @@ val commonSettings = Seq(
   homepage := Some(url("https://cb372.github.io/cats-retry/")),
   developers := List(
     Developer(
-      id    = "cb372",
-      name  = "Chris Birchall",
+      id = "cb372",
+      name = "Chris Birchall",
       email = "chris.birchall@gmail.com",
-      url   = url("https://github.com/cb372")
+      url = url("https://github.com/cb372")
     )
   )
 )
@@ -31,7 +32,7 @@ val moduleSettings = commonSettings ++ Seq(
     "-language:higherKinds",
     "-unchecked",
   ),
-  scalacOptions in (Test, compile) += "-Ypartial-unification",
+  scalacOptions in(Test, compile) += "-Ypartial-unification",
   scalafmtOnCompile := true
 )
 
@@ -41,12 +42,12 @@ val core = crossProject(JVMPlatform, JSPlatform)
   .settings(moduleSettings)
   .settings(
     libraryDependencies ++= Seq(
-        "org.typelevel" %%% "cats-core" % catsVersion,
-        "org.typelevel" %%% "cats-kernel-laws" % catsVersion % Test,
-        "org.scalatest" %%% "scalatest" % "3.0.5" % Test,
-        "org.scalacheck" %%% "scalacheck" % "1.14.0" % Test
-      )
+      "org.typelevel" %%% "cats-core" % catsVersion,
+      "org.typelevel" %%% "cats-kernel-laws" % catsVersion % Test,
+      "org.scalatest" %%% "scalatest" % "3.0.5" % Test,
+      "org.scalacheck" %%% "scalacheck" % "1.14.0" % Test
     )
+  )
 val coreJVM = core.jvm
 val coreJS = core.js
 
@@ -108,7 +109,7 @@ val root = project.in(file("."))
   .aggregate(coreJVM, coreJS, catsEffectJVM, catsEffectJS, monixJVM, monixJS, docs)
   .settings(commonSettings)
   .settings(
-    publishTo := sonatypePublishTo.value, // see https://github.com/sbt/sbt-release/issues/184
+    publishTo := sonatypePublishTo.value, // see https://github.com/sbt/sbt-release/issues/184,
     publishArtifact := false,
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,

@@ -1,0 +1,592 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding" addBOMForNewFiles="with NO BOM">
+    <file url="PROJECT" charset="UTF-8" />
+  </component>
+  <component name="InspectionProjectProfileManager">
+    <profile version="1.0">
+      <option name="myName" value="Project Default" />
+    </profile>
+    <version value="1.0" />
+  </component>
+  <component name="NodePackageJsonFileManager">
+    <packageJsonPaths />
+  </component>
+  <component name="ProjectCodeStyleConfiguration">
+    <option name="PREFERRED_PROJECT_CODE_STYLE" value="Default (1)" />
+    <code_scheme name="Project" version="173">
+      <XML>
+        <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
+      </XML>
+    </code_scheme>
+  </component>
+  <component name="ProjectInspectionProfilesVisibleTreeState">
+    <entry key="Project Default">
+      <profile-state>
+        <expanded-state>
+          <State>
+            <id />
+          </State>
+          <State>
+            <id>Code StyleScala</id>
+          </State>
+          <State>
+            <id>Scala</id>
+          </State>
+        </expanded-state>
+        <selected-state>
+          <State>
+            <id>ScalaStyle</id>
+          </State>
+        </selected-state>
+      </profile-state>
+    </entry>
+  </component>
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/cats-effect.iml" filepath="$PROJECT_DIR$/.idea/modules/cats-effect.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/cats-effect-sources.iml" filepath="$PROJECT_DIR$/.idea/modules/cats-effect-sources.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/core.iml" filepath="$PROJECT_DIR$/.idea/modules/core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/core-sources.iml" filepath="$PROJECT_DIR$/.idea/modules/core-sources.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/docs.iml" filepath="$PROJECT_DIR$/.idea/modules/docs.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/js-monix.iml" filepath="$PROJECT_DIR$/.idea/modules/js-monix.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/jvm-cats-effect.iml" filepath="$PROJECT_DIR$/.idea/modules/jvm-cats-effect.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/jvm-core.iml" filepath="$PROJECT_DIR$/.idea/modules/jvm-core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/monix.iml" filepath="$PROJECT_DIR$/.idea/modules/monix.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/monix-sources.iml" filepath="$PROJECT_DIR$/.idea/modules/monix-sources.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/root.iml" filepath="$PROJECT_DIR$/.idea/modules/root.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/root-build.iml" filepath="$PROJECT_DIR$/.idea/modules/root-build.iml" />
+    </modules>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="false" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/out" />
+  </component>
+  <component name="ScalaCompilerConfiguration">
+    <option name="incrementalityType" value="SBT" />
+    <profile name="sbt 1" modules="cats-retry_1502,root" />
+    <profile name="sbt 2" modules="cats-effect,core,js-monix">
+      <option name="higherKinds" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <parameters>
+        <parameter value="-Xfuture" />
+        <parameter value="-Ywarn-dead-code" />
+        <parameter value="-Ywarn-unused" />
+        <parameter value="-encoding" />
+        <parameter value="UTF-8" />
+      </parameters>
+      <plugins>
+        <plugin path="$USER_HOME$/.ivy2/cache/org.scala-js/scalajs-compiler_2.12.6/jars/scalajs-compiler_2.12.6-0.6.25.jar" />
+      </plugins>
+    </profile>
+    <profile name="sbt 3" modules="jvm-cats-effect,jvm-core,monix">
+      <option name="higherKinds" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <parameters>
+        <parameter value="-Xfuture" />
+        <parameter value="-Ywarn-dead-code" />
+        <parameter value="-Ywarn-unused" />
+        <parameter value="-encoding" />
+        <parameter value="UTF-8" />
+      </parameters>
+    </profile>
+    <profile name="sbt 4" modules="docs">
+      <option name="higherKinds" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <parameters>
+        <parameter value="-Xfuture" />
+        <parameter value="-encoding" />
+        <parameter value="UTF-8" />
+      </parameters>
+    </profile>
+  </component>
+  <component name="ScalaSbtSettings">
+    <option name="customLauncherPath" value="/usr/local/bin" />
+    <option name="customVMEnabled" value="true" />
+    <option name="customVMPath" value="/Library/Java/JavaVirtualMachines/jdk1.8.0_192.jdk/Contents/Home" />
+    <option name="linkedExternalProjectsSettings">
+      <SbtProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/modules/cats-effect/js" />
+            <option value="$PROJECT_DIR$/modules/cats-effect/jvm" />
+            <option value="$PROJECT_DIR$/modules/cats-effect/shared" />
+            <option value="$PROJECT_DIR$/modules/core/js" />
+            <option value="$PROJECT_DIR$/modules/core/jvm" />
+            <option value="$PROJECT_DIR$/modules/core/shared" />
+            <option value="$PROJECT_DIR$/modules/docs" />
+            <option value="$PROJECT_DIR$/modules/monix/js" />
+            <option value="$PROJECT_DIR$/modules/monix/jvm" />
+            <option value="$PROJECT_DIR$/modules/monix/shared" />
+            <option value="$PROJECT_DIR$/project" />
+          </set>
+        </option>
+        <option name="sbtVersion" value="1.2.6" />
+      </SbtProjectSettings>
+    </option>
+    <option name="maximumHeapSize" value="2048" />
+    <option name="vmParameters" value="-XX:MaxPermSize=1024M" />
+  </component>
+  <component name="ThriftCompiler">
+    <compilers />
+  </component>
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs="Git" />
+  </component>
+  <component name="libraryTable">
+    <library name="sbt: io.monix:monix-catnap_2.12:3.0.0-RC2:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-catnap_2.12/jars/monix-catnap_2.12-3.0.0-RC2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-catnap_2.12/srcs/monix-catnap_2.12-3.0.0-RC2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: io.monix:monix-catnap_sjs0.6_2.12:3.0.0-RC2:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-catnap_sjs0.6_2.12/jars/monix-catnap_sjs0.6_2.12-3.0.0-RC2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-catnap_sjs0.6_2.12/srcs/monix-catnap_sjs0.6_2.12-3.0.0-RC2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: io.monix:monix-eval_2.12:3.0.0-RC2:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-eval_2.12/jars/monix-eval_2.12-3.0.0-RC2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-eval_2.12/srcs/monix-eval_2.12-3.0.0-RC2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: io.monix:monix-eval_sjs0.6_2.12:3.0.0-RC2:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-eval_sjs0.6_2.12/jars/monix-eval_sjs0.6_2.12-3.0.0-RC2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-eval_sjs0.6_2.12/srcs/monix-eval_sjs0.6_2.12-3.0.0-RC2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: io.monix:monix-execution_2.12:3.0.0-RC2:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-execution_2.12/jars/monix-execution_2.12-3.0.0-RC2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-execution_2.12/srcs/monix-execution_2.12-3.0.0-RC2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: io.monix:monix-execution_sjs0.6_2.12:3.0.0-RC2:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-execution_sjs0.6_2.12/jars/monix-execution_sjs0.6_2.12-3.0.0-RC2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-execution_sjs0.6_2.12/srcs/monix-execution_sjs0.6_2.12-3.0.0-RC2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: io.monix:monix-java_2.12:3.0.0-RC2:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-java_2.12/jars/monix-java_2.12-3.0.0-RC2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-java_2.12/srcs/monix-java_2.12-3.0.0-RC2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: io.monix:monix-reactive_2.12:3.0.0-RC2:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-reactive_2.12/jars/monix-reactive_2.12-3.0.0-RC2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-reactive_2.12/srcs/monix-reactive_2.12-3.0.0-RC2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: io.monix:monix-reactive_sjs0.6_2.12:3.0.0-RC2:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-reactive_sjs0.6_2.12/jars/monix-reactive_sjs0.6_2.12-3.0.0-RC2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-reactive_sjs0.6_2.12/srcs/monix-reactive_sjs0.6_2.12-3.0.0-RC2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: io.monix:monix-tail_2.12:3.0.0-RC2:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-tail_2.12/jars/monix-tail_2.12-3.0.0-RC2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-tail_2.12/srcs/monix-tail_2.12-3.0.0-RC2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: io.monix:monix-tail_sjs0.6_2.12:3.0.0-RC2:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-tail_sjs0.6_2.12/jars/monix-tail_sjs0.6_2.12-3.0.0-RC2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix-tail_sjs0.6_2.12/srcs/monix-tail_sjs0.6_2.12-3.0.0-RC2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: io.monix:monix_2.12:3.0.0-RC2:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix_2.12/jars/monix_2.12-3.0.0-RC2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix_2.12/srcs/monix_2.12-3.0.0-RC2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: io.monix:monix_sjs0.6_2.12:3.0.0-RC2:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix_sjs0.6_2.12/jars/monix_sjs0.6_2.12-3.0.0-RC2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/io.monix/monix_sjs0.6_2.12/srcs/monix_sjs0.6_2.12-3.0.0-RC2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.jctools:jctools-core:2.1.1:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.jctools/jctools-core/bundles/jctools-core-2.1.1.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.jctools/jctools-core/srcs/jctools-core-2.1.1-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.reactivestreams:reactive-streams:1.0.2:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.reactivestreams/reactive-streams/jars/reactive-streams-1.0.2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.reactivestreams/reactive-streams/srcs/reactive-streams-1.0.2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.scala-js:scalajs-library_2.12:0.6.25:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scala-js/scalajs-library_2.12/jars/scalajs-library_2.12-0.6.25.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scala-js/scalajs-library_2.12/srcs/scalajs-library_2.12-0.6.25-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.scala-js:scalajs-test-interface_2.12:0.6.25:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scala-js/scalajs-test-interface_2.12/jars/scalajs-test-interface_2.12-0.6.25.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scala-js/scalajs-test-interface_2.12/srcs/scalajs-test-interface_2.12-0.6.25-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.scala-lang.modules:scala-xml_2.12:1.0.6:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scala-lang.modules/scala-xml_2.12/bundles/scala-xml_2.12-1.0.6.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scala-lang.modules/scala-xml_2.12/srcs/scala-xml_2.12-1.0.6-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.scala-lang:scala-compiler:2.12.6:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scala-lang/scala-compiler/jars/scala-compiler-2.12.6.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scala-lang/scala-compiler/srcs/scala-compiler-2.12.6-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.scala-lang:scala-library:2.12.6:jar" type="Scala">
+      <properties>
+        <compiler-classpath>
+          <root url="file://$USER_HOME$/.ivy2/cache/jline/jline/jars/jline-2.14.6.jar" />
+          <root url="file://$USER_HOME$/.ivy2/cache/org.scala-lang.modules/scala-xml_2.12/bundles/scala-xml_2.12-1.0.6.jar" />
+          <root url="file://$USER_HOME$/.ivy2/cache/org.scala-lang/scala-compiler/jars/scala-compiler-2.12.6.jar" />
+          <root url="file://$USER_HOME$/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.6.jar" />
+          <root url="file://$USER_HOME$/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.12.6.jar" />
+        </compiler-classpath>
+      </properties>
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.6.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scala-lang/scala-library/srcs/scala-library-2.12.6-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.scala-lang:scala-reflect:2.12.6:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.12.6.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scala-lang/scala-reflect/srcs/scala-reflect-2.12.6-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.scala-sbt:test-interface:1.0:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scala-sbt/test-interface/jars/test-interface-1.0.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scala-sbt/test-interface/srcs/test-interface-1.0-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.scalacheck:scalacheck_2.12:1.14.0:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scalacheck/scalacheck_2.12/jars/scalacheck_2.12-1.14.0.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scalacheck/scalacheck_2.12/srcs/scalacheck_2.12-1.14.0-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.scalacheck:scalacheck_sjs0.6_2.12:1.14.0:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scalacheck/scalacheck_sjs0.6_2.12/jars/scalacheck_sjs0.6_2.12-1.14.0.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scalacheck/scalacheck_sjs0.6_2.12/srcs/scalacheck_sjs0.6_2.12-1.14.0-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.scalactic:scalactic_2.12:3.0.5:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scalactic/scalactic_2.12/bundles/scalactic_2.12-3.0.5.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scalactic/scalactic_2.12/srcs/scalactic_2.12-3.0.5-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.scalactic:scalactic_sjs0.6_2.12:3.0.5:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scalactic/scalactic_sjs0.6_2.12/bundles/scalactic_sjs0.6_2.12-3.0.5.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scalactic/scalactic_sjs0.6_2.12/srcs/scalactic_sjs0.6_2.12-3.0.5-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.scalatest:scalatest_2.12:3.0.5:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scalatest/scalatest_2.12/bundles/scalatest_2.12-3.0.5.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scalatest/scalatest_2.12/srcs/scalatest_2.12-3.0.5-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.scalatest:scalatest_sjs0.6_2.12:3.0.5:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scalatest/scalatest_sjs0.6_2.12/bundles/scalatest_sjs0.6_2.12-3.0.5.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.scalatest/scalatest_sjs0.6_2.12/srcs/scalatest_sjs0.6_2.12-3.0.5-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.tpolecat:tut-core_2.12:0.6.4:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.tpolecat/tut-core_2.12/jars/tut-core_2.12-0.6.4.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.tpolecat/tut-core_2.12/srcs/tut-core_2.12-0.6.4-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.typelevel:catalysts-macros_2.12:0.6:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/catalysts-macros_2.12/jars/catalysts-macros_2.12-0.6.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/catalysts-macros_2.12/srcs/catalysts-macros_2.12-0.6-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.typelevel:catalysts-macros_sjs0.6_2.12:0.6:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/catalysts-macros_sjs0.6_2.12/jars/catalysts-macros_sjs0.6_2.12-0.6.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/catalysts-macros_sjs0.6_2.12/srcs/catalysts-macros_sjs0.6_2.12-0.6-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.typelevel:catalysts-platform_2.12:0.6:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/catalysts-platform_2.12/jars/catalysts-platform_2.12-0.6.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/catalysts-platform_2.12/srcs/catalysts-platform_2.12-0.6-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.typelevel:catalysts-platform_sjs0.6_2.12:0.6:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/catalysts-platform_sjs0.6_2.12/jars/catalysts-platform_sjs0.6_2.12-0.6.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/catalysts-platform_sjs0.6_2.12/srcs/catalysts-platform_sjs0.6_2.12-0.6-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.typelevel:cats-core_2.12:1.5.0:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/cats-core_2.12/jars/cats-core_2.12-1.5.0.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/cats-core_2.12/srcs/cats-core_2.12-1.5.0-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.typelevel:cats-core_sjs0.6_2.12:1.5.0:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/cats-core_sjs0.6_2.12/jars/cats-core_sjs0.6_2.12-1.5.0.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/cats-core_sjs0.6_2.12/srcs/cats-core_sjs0.6_2.12-1.5.0-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.typelevel:cats-effect_2.12:1.0.0:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/cats-effect_2.12/jars/cats-effect_2.12-1.0.0.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/cats-effect_2.12/srcs/cats-effect_2.12-1.0.0-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.typelevel:cats-effect_sjs0.6_2.12:1.0.0:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/cats-effect_sjs0.6_2.12/jars/cats-effect_sjs0.6_2.12-1.0.0.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/cats-effect_sjs0.6_2.12/srcs/cats-effect_sjs0.6_2.12-1.0.0-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.typelevel:cats-kernel-laws_2.12:1.5.0:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/cats-kernel-laws_2.12/jars/cats-kernel-laws_2.12-1.5.0.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/cats-kernel-laws_2.12/srcs/cats-kernel-laws_2.12-1.5.0-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.typelevel:cats-kernel-laws_sjs0.6_2.12:1.5.0:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/cats-kernel-laws_sjs0.6_2.12/jars/cats-kernel-laws_sjs0.6_2.12-1.5.0.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/cats-kernel-laws_sjs0.6_2.12/srcs/cats-kernel-laws_sjs0.6_2.12-1.5.0-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.typelevel:cats-kernel_2.12:1.5.0:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/cats-kernel_2.12/jars/cats-kernel_2.12-1.5.0.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/cats-kernel_2.12/srcs/cats-kernel_2.12-1.5.0-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.typelevel:cats-kernel_sjs0.6_2.12:1.5.0:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/cats-kernel_sjs0.6_2.12/jars/cats-kernel_sjs0.6_2.12-1.5.0.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/cats-kernel_sjs0.6_2.12/srcs/cats-kernel_sjs0.6_2.12-1.5.0-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.typelevel:cats-macros_2.12:1.5.0:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/cats-macros_2.12/jars/cats-macros_2.12-1.5.0.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/cats-macros_2.12/srcs/cats-macros_2.12-1.5.0-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.typelevel:cats-macros_sjs0.6_2.12:1.5.0:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/cats-macros_sjs0.6_2.12/jars/cats-macros_sjs0.6_2.12-1.5.0.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/cats-macros_sjs0.6_2.12/srcs/cats-macros_sjs0.6_2.12-1.5.0-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.typelevel:discipline_2.12:0.9.0:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/discipline_2.12/jars/discipline_2.12-0.9.0.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/discipline_2.12/srcs/discipline_2.12-0.9.0-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.typelevel:discipline_sjs0.6_2.12:0.9.0:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/discipline_sjs0.6_2.12/jars/discipline_sjs0.6_2.12-0.9.0.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/discipline_sjs0.6_2.12/srcs/discipline_sjs0.6_2.12-0.9.0-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.typelevel:machinist_2.12:0.6.6:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/machinist_2.12/jars/machinist_2.12-0.6.6.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/machinist_2.12/srcs/machinist_2.12-0.6.6-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.typelevel:machinist_sjs0.6_2.12:0.6.6:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/machinist_sjs0.6_2.12/jars/machinist_sjs0.6_2.12-0.6.6.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/machinist_sjs0.6_2.12/srcs/machinist_sjs0.6_2.12-0.6.6-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.typelevel:macro-compat_2.12:1.1.1:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/macro-compat_2.12/jars/macro-compat_2.12-1.1.1.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/macro-compat_2.12/srcs/macro-compat_2.12-1.1.1-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="sbt: org.typelevel:macro-compat_sjs0.6_2.12:1.1.1:jar">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/macro-compat_sjs0.6_2.12/jars/macro-compat_sjs0.6_2.12-1.1.1.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ivy2/cache/org.typelevel/macro-compat_sjs0.6_2.12/srcs/macro-compat_sjs0.6_2.12-1.1.1-sources.jar!/" />
+      </SOURCES>
+    </library>
+  </component>
+</project>
