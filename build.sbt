@@ -108,6 +108,8 @@ val root = project.in(file("."))
   .aggregate(coreJVM, coreJS, catsEffectJVM, catsEffectJS, monixJVM, monixJS, docs)
   .settings(commonSettings)
   .settings(
+    crossScalaVersions             := Seq(scalaVersion.value, "2.11.12")
+    releaseCrossBuild              := true
     publishTo := sonatypePublishTo.value, // see https://github.com/sbt/sbt-release/issues/184
     publishArtifact := false,
     releaseProcess := Seq[ReleaseStep](
