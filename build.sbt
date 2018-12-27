@@ -3,6 +3,7 @@ import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
 
 val commonSettings = Seq(
   organization := "com.github.cb372",
+  scalaVersion := "2.12.8",
   crossScalaVersions := Seq(scalaVersion.value, "2.11.12"),
   publishTo := sonatypePublishTo.value,
   releaseCrossBuild := true,
@@ -59,7 +60,7 @@ val catsEffect = crossProject(JVMPlatform, JSPlatform)
   .settings(
     name := "cats-effect",
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-effect" % "1.0.0",
+      "org.typelevel" %%% "cats-effect" % "1.1.0",
       "org.scalatest" %%% "scalatest" % "3.0.5" % Test,
       "org.scalacheck" %%% "scalacheck" % "1.14.0" % Test
     )
