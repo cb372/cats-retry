@@ -6,7 +6,8 @@ import scala.concurrent.duration.FiniteDuration
 
 object Monix {
 
-  implicit val taskSleep: Sleep[Task] =
-    (delay: FiniteDuration) => Task.sleep(delay)
-
+  implicit val taskSleep: Sleep[Task] = new Sleep[Task] {
+    def sleep(delay: FiniteDuration): Task[Unit] =
+      Task.sleep(delay)
+  }
 }

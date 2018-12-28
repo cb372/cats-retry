@@ -18,8 +18,9 @@ class PackageObjectSpec extends FlatSpec {
 
     val sleeps = ArrayBuffer.empty[FiniteDuration]
 
-    implicit val dummySleep: Sleep[Id] =
-      (delay: FiniteDuration) => sleeps.append(delay)
+    implicit val dummySleep: Sleep[Id] = new Sleep[Id] {
+      def sleep(delay: FiniteDuration): Id[Unit] = sleeps.append(delay)
+    }
 
     val finalResult = retryingM[String][Id](
       policy,
@@ -42,7 +43,9 @@ class PackageObjectSpec extends FlatSpec {
     val policy = RetryPolicies.limitRetries[Id](2)
 
     implicit val dummySleep: Sleep[Id] =
-      (delay: FiniteDuration) => ()
+      new Sleep[Id] {
+        def sleep(delay: FiniteDuration): Id[Unit] = ()
+      }
 
     val finalResult = retryingM[String][Id](
       policy,
@@ -64,7 +67,9 @@ class PackageObjectSpec extends FlatSpec {
 
   it should "retry until the action succeeds" in new TestContext {
     implicit val sleepForEither: Sleep[StringOr] =
-      (delay: FiniteDuration) => Right(())
+      new Sleep[StringOr] {
+        def sleep(delay: FiniteDuration): StringOr[Unit] = Right(())
+      }
 
     val policy = RetryPolicies.constantDelay[StringOr](1.second)
 
@@ -88,7 +93,9 @@ class PackageObjectSpec extends FlatSpec {
 
   it should "retry only if the error is worth retrying" in new TestContext {
     implicit val sleepForEither: Sleep[StringOr] =
-      (delay: FiniteDuration) => Right(())
+      new Sleep[StringOr] {
+        def sleep(delay: FiniteDuration): StringOr[Unit] = Right(())
+      }
 
     val policy = RetryPolicies.constantDelay[StringOr](1.second)
 
@@ -112,7 +119,9 @@ class PackageObjectSpec extends FlatSpec {
 
   it should "retry until the policy chooses to give up" in new TestContext {
     implicit val sleepForEither: Sleep[StringOr] =
-      (delay: FiniteDuration) => Right(())
+      new Sleep[StringOr] {
+        def sleep(delay: FiniteDuration): StringOr[Unit] = Right(())
+      }
 
     val policy = RetryPolicies.limitRetries[StringOr](2)
 
@@ -136,7 +145,9 @@ class PackageObjectSpec extends FlatSpec {
 
   it should "retry until the action succeeds" in new TestContext {
     implicit val sleepForEither: Sleep[StringOr] =
-      (delay: FiniteDuration) => Right(())
+      new Sleep[StringOr] {
+        def sleep(delay: FiniteDuration): StringOr[Unit] = Right(())
+      }
 
     val policy = RetryPolicies.constantDelay[StringOr](1.second)
 
@@ -159,7 +170,9 @@ class PackageObjectSpec extends FlatSpec {
 
   it should "retry until the policy chooses to give up" in new TestContext {
     implicit val sleepForEither: Sleep[StringOr] =
-      (delay: FiniteDuration) => Right(())
+      new Sleep[StringOr] {
+        def sleep(delay: FiniteDuration): StringOr[Unit] = Right(())
+      }
 
     val policy = RetryPolicies.limitRetries[StringOr](2)
 
