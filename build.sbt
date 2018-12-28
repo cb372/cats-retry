@@ -5,6 +5,7 @@ val commonSettings = Seq(
   organization := "com.github.cb372",
   publishTo := sonatypePublishTo.value,
   releaseCrossBuild := true,
+  releaseVcsSign := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
   pomIncludeRepository := { _ =>
     false
