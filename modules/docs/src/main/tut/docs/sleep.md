@@ -43,7 +43,7 @@ The `cats-effect` module provides an instance that uses a cats-effect
 
 ```tut:book
 import cats.effect.{IO, Timer}
-import scala.concurrent.ExecutionContext.global
+import scala.concurrent.ExecutionContext.Implicits.global
 import retry.CatsEffect._
 
 implicit val timer: Timer[IO] = IO.timer(global)
