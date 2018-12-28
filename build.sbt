@@ -3,8 +3,6 @@ import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
 val commonSettings = Seq(
   organization := "com.github.cb372",
-  scalaVersion := "2.12.8",
-  crossScalaVersions := Seq(scalaVersion.value, "2.11.12"),
   publishTo := sonatypePublishTo.value,
   releaseCrossBuild := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
