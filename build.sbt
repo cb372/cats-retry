@@ -3,14 +3,16 @@ import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
 val commonSettings = Seq(
   organization := "com.github.cb372",
-  scalaVersion := "2.12.8",
-  crossScalaVersions := Seq(scalaVersion.value, "2.11.12"),
   publishTo := sonatypePublishTo.value,
   releaseCrossBuild := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-  pomIncludeRepository := { _ => false },
+  pomIncludeRepository := { _ =>
+    false
+  },
   publishMavenStyle := true,
-  licenses := Seq("Apache License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html")),
+  licenses := Seq(
+    "Apache License, Version 2.0" -> url(
+      "http://www.apache.org/licenses/LICENSE-2.0.html")),
   homepage := Some(url("https://cb372.github.io/cats-retry/")),
   developers := List(
     Developer(
@@ -29,11 +31,12 @@ val moduleSettings = commonSettings ++ Seq(
     "-Ywarn-dead-code",
     "-Ywarn-unused",
     "-deprecation",
-    "-encoding", "UTF-8",
+    "-encoding",
+    "UTF-8",
     "-language:higherKinds",
     "-unchecked",
   ),
-  scalacOptions in(Test, compile) += "-Ypartial-unification",
+  scalacOptions in (Test, compile) += "-Ypartial-unification",
   scalafmtOnCompile := true
 )
 
@@ -43,14 +46,14 @@ val core = crossProject(JVMPlatform, JSPlatform)
   .settings(moduleSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-core" % catsVersion,
-      "org.typelevel" %%% "cats-kernel-laws" % catsVersion % Test,
-      "org.scalatest" %%% "scalatest" % "3.0.5" % Test,
-      "org.scalacheck" %%% "scalacheck" % "1.14.0" % Test
+      "org.typelevel"  %%% "cats-core"        % catsVersion,
+      "org.typelevel"  %%% "cats-kernel-laws" % catsVersion % Test,
+      "org.scalatest"  %%% "scalatest"        % "3.0.5" % Test,
+      "org.scalacheck" %%% "scalacheck"       % "1.14.0" % Test
     )
   )
 val coreJVM = core.jvm
-val coreJS = core.js
+val coreJS  = core.js
 
 val catsEffect = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/cats-effect"))
@@ -60,13 +63,13 @@ val catsEffect = crossProject(JVMPlatform, JSPlatform)
   .settings(
     name := "cats-effect",
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-effect" % "1.1.0",
-      "org.scalatest" %%% "scalatest" % "3.0.5" % Test,
-      "org.scalacheck" %%% "scalacheck" % "1.14.0" % Test
+      "org.typelevel"  %%% "cats-effect" % "1.1.0",
+      "org.scalatest"  %%% "scalatest"   % "3.0.5" % Test,
+      "org.scalacheck" %%% "scalacheck"  % "1.14.0" % Test
     )
   )
 val catsEffectJVM = catsEffect.jvm
-val catsEffectJS = catsEffect.js
+val catsEffectJS  = catsEffect.js
 
 val monix = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/monix"))
@@ -75,15 +78,16 @@ val monix = crossProject(JVMPlatform, JSPlatform)
   .settings(moduleSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "io.monix" %%% "monix" % "3.0.0-RC2",
-      "org.scalatest" %%% "scalatest" % "3.0.5" % Test,
+      "io.monix"       %%% "monix"      % "3.0.0-RC2",
+      "org.scalatest"  %%% "scalatest"  % "3.0.5" % Test,
       "org.scalacheck" %%% "scalacheck" % "1.14.0" % Test
     )
   )
 val monixJVM = monix.jvm
-val monixJS = monix.js
+val monixJS  = monix.js
 
-val docs = project.in(file("modules/docs"))
+val docs = project
+  .in(file("modules/docs"))
   .dependsOn(coreJVM, catsEffectJVM, monixJVM)
   .enablePlugins(MicrositesPlugin, BuildInfoPlugin)
   .settings(moduleSettings)
@@ -106,8 +110,15 @@ val docs = project.in(file("modules/docs"))
     micrositeShareOnSocial := true
   )
 
-val root = project.in(file("."))
-  .aggregate(coreJVM, coreJS, catsEffectJVM, catsEffectJS, monixJVM, monixJS, docs)
+val root = project
+  .in(file("."))
+  .aggregate(coreJVM,
+             coreJS,
+             catsEffectJVM,
+             catsEffectJS,
+             monixJVM,
+             monixJS,
+             docs)
   .settings(commonSettings)
   .settings(
     publishTo := sonatypePublishTo.value, // see https://github.com/sbt/sbt-release/issues/184,
