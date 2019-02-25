@@ -41,10 +41,10 @@ happy with the result or you want to retry.</p>
 <span class="c1">// import scala.concurrent.duration._
 </span>
 <span class="k">val</span> <span class="n">policy</span> <span class="k">=</span> <span class="nc">RetryPolicies</span><span class="o">.</span><span class="n">constantDelay</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">)</span>
-<span class="c1">// policy: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$$Lambda$7728/1566088742@774a1fc9)
+<span class="c1">// policy: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$$Lambda$7734/1971256031@44a96b28)
 </span>
 <span class="k">val</span> <span class="n">predicate</span> <span class="k">=</span> <span class="o">(</span><span class="k">_:</span> <span class="kt">Int</span><span class="o">)</span> <span class="o">==</span> <span class="mi">6</span>
-<span class="c1">// predicate: Int =&gt; Boolean = $$Lambda$7828/604096896@69c82f15
+<span class="c1">// predicate: Int =&gt; Boolean = $$Lambda$7834/1222523911@1e629a4d
 </span>
 <span class="k">def</span> <span class="n">onFailure</span><span class="o">(</span><span class="n">failedValue</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">details</span><span class="k">:</span> <span class="kt">RetryDetails</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
   <span class="n">println</span><span class="o">(</span><span class="n">s</span><span class="s">"Rolled a $failedValue, retrying ..."</span><span class="o">)</span>
@@ -102,7 +102,7 @@ errors, but you want to retry until it returns a value that you are happy with.<
 <span class="c1">// import cats.instances.future._
 </span>
 <span class="k">val</span> <span class="n">futurePolicy</span> <span class="k">=</span> <span class="nc">RetryPolicies</span><span class="o">.</span><span class="n">constantDelay</span><span class="o">[</span><span class="kt">Future</span><span class="o">](</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">)</span>
-<span class="c1">// futurePolicy: retry.RetryPolicy[scala.concurrent.Future] = RetryPolicy(retry.RetryPolicy$$$Lambda$7728/1566088742@361a9d30)
+<span class="c1">// futurePolicy: retry.RetryPolicy[scala.concurrent.Future] = RetryPolicy(retry.RetryPolicy$$$Lambda$7734/1971256031@ac29617)
 </span>
 <span class="k">def</span> <span class="n">futureOnFailure</span><span class="o">(</span><span class="n">failedValue</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">details</span><span class="k">:</span> <span class="kt">RetryDetails</span><span class="o">)</span><span class="k">:</span> <span class="kt">Future</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
   <span class="nc">Future</span><span class="o">(</span><span class="n">println</span><span class="o">(</span><span class="n">s</span><span class="s">"Rolled a $failedValue, retrying ..."</span><span class="o">))</span>
@@ -169,6 +169,24 @@ retry on all errors.</p>
 </ul>
 
 <p>TODO example</p>
+
+<h2 id="syntactic-sugar">Syntactic sugar</h2>
+
+<p>Cats-retry include some syntactic sugar in order to reduce boilerplate.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">retry._</span>
+<span class="k">import</span> <span class="nn">cats.effect.IO</span>
+<span class="k">import</span> <span class="nn">retry.syntax.all._</span>
+
+<span class="k">implicit</span> <span class="k">def</span> <span class="n">noop</span><span class="o">[</span><span class="kt">IO</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">A</span><span class="o">]</span><span class="k">:</span> <span class="o">(</span><span class="kt">A</span><span class="o">,</span> <span class="kt">RetryDetails</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nc">IO</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="n">retry</span><span class="o">.</span><span class="n">noop</span><span class="o">[</span><span class="kt">IO</span>, <span class="kt">A</span><span class="o">]</span>
+<span class="k">implicit</span> <span class="k">val</span> <span class="n">policy</span><span class="k">:</span> <span class="kt">RetryPolicy</span><span class="o">[</span><span class="kt">IO</span><span class="o">]</span>                       <span class="k">=</span> <span class="nc">RetryPolicies</span><span class="o">.</span><span class="n">limitRetries</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mi">2</span><span class="o">)</span>
+
+<span class="k">val</span> <span class="n">httpClient</span> <span class="k">=</span> <span class="n">util</span><span class="o">.</span><span class="nc">FlakyHttpClient</span><span class="o">()</span>
+
+<span class="k">val</span> <span class="n">flakyRequest</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="nc">IO</span><span class="o">(</span><span class="n">httpClient</span><span class="o">.</span><span class="n">getCatGif</span><span class="o">())</span>
+
+<span class="n">flakyRequest</span><span class="o">.</span><span class="n">retryingOnAllErrors</span>
+</code></pre></div></div>
 </section></div></div></div></div><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script><script src="/cats-retry/highlight/highlight.pack.js"></script><script>hljs.configure({
 languages:['scala','java','bash']
 });
