@@ -147,3 +147,23 @@ You need to pass in:
 * the operation that you want to wrap with retries
 
 TODO example
+
+## Syntactic sugar
+
+Cats-retry include some syntactic sugar in order to reduce boilerplate.
+
+```scala
+import retry._
+import cats.Id
+import retry.syntax.all._
+
+implicit def noop[Id[_], A]: (A, RetryDetails) => Id[Unit] = retry.noop[Id, A]
+implicit val policy: RetryPolicy[Id]                       = RetryPolicies.limitRetries[Id](2)
+
+
+val httpClient = util.FlakyHttpClient()
+
+val flakyRequest: Id[String] = httpClient.getCatGif()
+
+flakyRequest.retryingOnAllErrors
+```
