@@ -154,16 +154,15 @@ Cats-retry include some syntactic sugar in order to reduce boilerplate.
 
 ```scala
 import retry._
-import cats.Id
+import cats.effect.IO
 import retry.syntax.all._
 
-implicit def noop[Id[_], A]: (A, RetryDetails) => Id[Unit] = retry.noop[Id, A]
-implicit val policy: RetryPolicy[Id]                       = RetryPolicies.limitRetries[Id](2)
-
+implicit def noop[IO[_], A]: (A, RetryDetails) => IO[Unit] = retry.noop[IO, A]
+implicit val policy: RetryPolicy[IO]                       = RetryPolicies.limitRetries[IO](2)
 
 val httpClient = util.FlakyHttpClient()
 
-val flakyRequest: Id[String] = httpClient.getCatGif()
+val flakyRequest: IO[String] = IO(httpClient.getCatGif())
 
 flakyRequest.retryingOnAllErrors
 ```
