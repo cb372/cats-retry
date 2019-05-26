@@ -53,5 +53,7 @@ Sleep[IO].sleep(10.milliseconds)
 
 The `monix` module provides an instance that calls `Task.sleep`.
 
+The `zio` module provides an instance that calls `ZIO.sleep`.
+
 Being able to inject your own `Sleep` instance can be handy in tests, as you
 can mock it out to avoid slowing down your unit tests.

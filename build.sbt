@@ -110,9 +110,29 @@ val monix = crossProject(JVMPlatform, JSPlatform)
 val monixJVM = monix.jvm
 val monixJS  = monix.js
 
+val zio = crossProject(JVMPlatform, JSPlatform)
+  .in(file("modules/zio"))
+  .jvmConfigure(_.dependsOn(coreJVM))
+  .settings(moduleSettings)
+  .settings(
+    resolvers += Resolver.sonatypeRepo("releases"),
+    libraryDependencies ++= Seq(
+      "dev.zio"       %%% "zio"         % "1.0.0-RC11-1",
+      "org.typelevel" %%% "cats-effect" % "2.0.0-M4",
+      compilerPlugin(
+        "org.typelevel" % "kind-projector" % "0.10.1" cross CrossVersion.binary
+      ),
+      "org.scalatest"  %%% "scalatest"        % scalatestVersion  % Test,
+      "org.scalacheck" %%% "scalacheck"       % scalacheckVersion % Test,
+      "dev.zio"        %%% "core-tests"       % "1.0.0-RC11-1"    % Test,
+      "dev.zio"        %%% "zio-interop-cats" % "2.0.0.0-RC2"     % Test
+    )
+  )
+val zioJVM = zio.jvm
+
 val docs = project
   .in(file("modules/docs"))
-  .dependsOn(coreJVM, catsEffectJVM, monixJVM)
+  .dependsOn(coreJVM, catsEffectJVM, monixJVM, zioJVM)
   .enablePlugins(MicrositesPlugin, BuildInfoPlugin)
   .settings(moduleSettings)
   .settings(
@@ -144,6 +164,7 @@ val root = project
     catsEffectJS,
     monixJVM,
     monixJS,
+    zioJVM,
     docs
   )
   .settings(commonSettings)
