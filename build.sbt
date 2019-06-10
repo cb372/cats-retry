@@ -49,7 +49,7 @@ val core = crossProject(JVMPlatform, JSPlatform)
     libraryDependencies ++= Seq(
       "org.typelevel"  %%% "cats-core"        % catsVersion,
       "org.typelevel"  %%% "cats-kernel-laws" % catsVersion % Test,
-      "org.scalatest"  %%% "scalatest"        % "3.0.7" % Test,
+      "org.scalatest"  %%% "scalatest"        % "3.0.8" % Test,
       "org.scalacheck" %%% "scalacheck"       % "1.14.0" % Test
     )
   )
@@ -65,7 +65,7 @@ val catsEffect = crossProject(JVMPlatform, JSPlatform)
     name := "cats-effect",
     libraryDependencies ++= Seq(
       "org.typelevel"  %%% "cats-effect" % "1.2.0",
-      "org.scalatest"  %%% "scalatest"   % "3.0.7" % Test,
+      "org.scalatest"  %%% "scalatest"   % "3.0.8" % Test,
       "org.scalacheck" %%% "scalacheck"  % "1.14.0" % Test
     )
   )
@@ -80,7 +80,7 @@ val monix = crossProject(JVMPlatform, JSPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "io.monix"       %%% "monix"      % "3.0.0-RC2",
-      "org.scalatest"  %%% "scalatest"  % "3.0.7" % Test,
+      "org.scalatest"  %%% "scalatest"  % "3.0.8" % Test,
       "org.scalacheck" %%% "scalacheck" % "1.14.0" % Test
     )
   )
