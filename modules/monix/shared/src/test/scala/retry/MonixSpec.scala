@@ -2,7 +2,7 @@ package retry
 
 import retry.Monix._
 
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import monix.eval.Task
 import monix.execution.schedulers.TestScheduler
 
@@ -10,7 +10,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 import scala.util.Success
 
-class MonixSpec extends FlatSpec {
+class MonixSpec extends AnyFlatSpec {
 
   behavior of "retryingM"
 

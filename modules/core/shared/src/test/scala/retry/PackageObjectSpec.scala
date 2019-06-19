@@ -2,12 +2,12 @@ package retry
 
 import cats.Id
 import cats.instances.either._
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 
-class PackageObjectSpec extends FlatSpec {
+class PackageObjectSpec extends AnyFlatSpec {
 
   type StringOr[A] = Either[String, A]
 

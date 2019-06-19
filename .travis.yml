@@ -3,10 +3,11 @@ language: scala
 scala:
   - 2.11.12
   - 2.12.8
+  - 2.13.0
 jdk:
   - oraclejdk8
 script:
-  - sbt +test +docs/tut scalafmtCheck scalafmtSbtCheck
+  - sbt +test +docs/tut scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
 cache:
   directories:
   - $HOME/.sbt

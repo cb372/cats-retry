@@ -1,4 +1,6 @@
 target
+.metals
+.bloop
 *.class
 .idea
 *.ipr

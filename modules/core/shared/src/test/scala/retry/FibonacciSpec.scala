@@ -1,8 +1,8 @@
 package retry
 
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class FibonacciSpec extends FlatSpec {
+class FibonacciSpec extends AnyFlatSpec {
 
   it should "calculate the Fibonacci sequence" in {
     assert(Fibonacci.fibonacci(0) == 0)

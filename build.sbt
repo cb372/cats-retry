@@ -1,6 +1,13 @@
 import ReleaseTransformations._
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
+lazy val scalaVersion213 = "2.13.0"
+lazy val scalaVersion212 = "2.12.8"
+lazy val scalaVersion211 = "2.11.12"
+lazy val scalaVersions   = List(scalaVersion213, scalaVersion212, scalaVersion211)
+
+ThisBuild / scalaVersion := scalaVersion212
+
 val commonSettings = Seq(
   organization := "com.github.cb372",
   publishTo := sonatypePublishTo.value,
@@ -41,16 +48,23 @@ val moduleSettings = commonSettings ++ Seq(
   scalafmtOnCompile := true
 )
 
-val catsVersion = "1.6.0"
+val catsVersion          = "2.0.0-M4"
+val scalatestVersion     = "3.1.0-SNAP13"
+val scalaTestPlusVersion = "1.0.0-SNAP8"
+val scalacheckVersion    = "1.14.0"
+val disciplineVersion    = "0.12.0-M3"
 val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/core"))
   .settings(moduleSettings)
   .settings(
+    crossScalaVersions := scalaVersions,
     libraryDependencies ++= Seq(
-      "org.typelevel"  %%% "cats-core"        % catsVersion,
-      "org.typelevel"  %%% "cats-kernel-laws" % catsVersion % Test,
-      "org.scalatest"  %%% "scalatest"        % "3.0.7" % Test,
-      "org.scalacheck" %%% "scalacheck"       % "1.14.0" % Test
+      "org.typelevel"     %%% "cats-core"                % catsVersion,
+      "org.typelevel"     %%% "cats-kernel-laws"         % catsVersion % Test,
+      "org.scalatest"     %%% "scalatest"                % scalatestVersion % Test,
+      "org.scalatestplus" %%% "scalatestplus-scalacheck" % scalaTestPlusVersion % Test,
+      "org.typelevel"     %%% "discipline-scalatest"     % disciplineVersion % Test,
+      "org.scalacheck"    %%% "scalacheck"               % scalacheckVersion % Test
     )
   )
 val coreJVM = core.jvm
@@ -62,11 +76,12 @@ val catsEffect = crossProject(JVMPlatform, JSPlatform)
   .jsConfigure(_.dependsOn(coreJS))
   .settings(moduleSettings)
   .settings(
+    crossScalaVersions := scalaVersions,
     name := "cats-effect",
     libraryDependencies ++= Seq(
-      "org.typelevel"  %%% "cats-effect" % "1.2.0",
-      "org.scalatest"  %%% "scalatest"   % "3.0.7" % Test,
-      "org.scalacheck" %%% "scalacheck"  % "1.14.0" % Test
+      "org.typelevel"  %%% "cats-effect" % "2.0.0-M4",
+      "org.scalatest"  %%% "scalatest"   % scalatestVersion % Test,
+      "org.scalacheck" %%% "scalacheck"  % scalacheckVersion % Test
     )
   )
 val catsEffectJVM = catsEffect.jvm
@@ -78,10 +93,11 @@ val monix = crossProject(JVMPlatform, JSPlatform)
   .jsConfigure(_.dependsOn(coreJS))
   .settings(moduleSettings)
   .settings(
+    crossScalaVersions := List(scalaVersion212, scalaVersion211),
     libraryDependencies ++= Seq(
-      "io.monix"       %%% "monix"      % "3.0.0-RC2",
-      "org.scalatest"  %%% "scalatest"  % "3.0.7" % Test,
-      "org.scalacheck" %%% "scalacheck" % "1.14.0" % Test
+      "io.monix"       %%% "monix"      % "3.0.0-RC3",
+      "org.scalatest"  %%% "scalatest"  % scalatestVersion % Test,
+      "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test
     )
   )
 val monixJVM = monix.jvm
@@ -95,6 +111,7 @@ val docs = project
   .settings(
     scalacOptions -= "-Ywarn-dead-code",
     scalacOptions -= "-Ywarn-unused",
+    crossScalaVersions := Nil,
     buildInfoKeys := Seq[BuildInfoKey](latestVersion),
     buildInfoPackage := "retry",
     publishArtifact := false,
@@ -124,6 +141,7 @@ val root = project
   .settings(
     publishTo := sonatypePublishTo.value, // see https://github.com/sbt/sbt-release/issues/184,
     publishArtifact := false,
+    crossScalaVersions := Nil,
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
       inquireVersions,

@@ -5,13 +5,13 @@ import java.util.concurrent.TimeUnit
 import retry.RetryPolicies._
 import cats.Id
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.FlatSpec
-import org.scalatest.prop.Checkers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatestplus.scalacheck.Checkers
 import retry.PolicyDecision.{DelayAndRetry, GiveUp}
 
 import scala.concurrent.duration._
 
-class RetryPoliciesSpec extends FlatSpec with Checkers {
+class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
 
   implicit val arbRetryStatus: Arbitrary[RetryStatus] = Arbitrary {
     for {
