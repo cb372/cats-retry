@@ -44,7 +44,12 @@ val moduleSettings = commonSettings ++ Seq(
     "-language:higherKinds",
     "-unchecked",
   ),
-  scalacOptions in (Test, compile) += "-Ypartial-unification",
+  scalacOptions in (Test, compile) ++= {
+    if (scalaVersion.value.startsWith("2.13"))
+      Nil
+    else
+      List("-Ypartial-unification")
+  },
   scalafmtOnCompile := true
 )
 
