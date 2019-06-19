@@ -7,7 +7,7 @@ scala:
 jdk:
   - oraclejdk8
 script:
-  - sbt +test +docs/tut scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
+  - sbt test docs/tut scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
 cache:
   directories:
   - $HOME/.sbt
