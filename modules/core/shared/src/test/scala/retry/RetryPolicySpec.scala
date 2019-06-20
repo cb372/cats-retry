@@ -2,11 +2,11 @@ package retry
 
 import cats.Id
 import cats.syntax.semigroup._
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.concurrent.duration._
 
-class RetryPolicySpec extends FlatSpec {
+class RetryPolicySpec extends AnyFlatSpec {
 
   behavior of "BoundedSemilattice append"
 

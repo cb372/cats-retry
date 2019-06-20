@@ -3,12 +3,12 @@ package retry
 import cats.{Eq, Id}
 import cats.kernel.laws.discipline.BoundedSemilatticeTests
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.typelevel.discipline.scalatest.Discipline
 
 import scala.concurrent.duration.Duration
 
-class RetryPolicyLawsSpec extends FunSuite with Discipline {
+class RetryPolicyLawsSpec extends AnyFunSuite with Discipline {
 
   implicit val arbRetryPolicy: Arbitrary[RetryPolicy[Id]] = Arbitrary(
     for {
