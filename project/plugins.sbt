@@ -1,5 +1,5 @@
 addSbtPlugin("com.geirsson"       % "sbt-scalafmt"             % "1.5.1")
-addSbtPlugin("com.47deg"          % "sbt-microsites"           % "0.7.18")
+addSbtPlugin("com.47deg"          % "sbt-microsites"           % "0.7.27")
 addSbtPlugin("com.dwijnand"       % "sbt-travisci"             % "1.2.0")
 addSbtPlugin("org.xerial.sbt"     % "sbt-sonatype"             % "2.3")
 addSbtPlugin("com.jsuereth"       % "sbt-pgp"                  % "1.1.2")
