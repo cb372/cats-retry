@@ -4,11 +4,12 @@ import cats.{Eq, Id}
 import cats.kernel.laws.discipline.BoundedSemilatticeTests
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.funsuite.AnyFunSuite
+import org.scalatestplus.scalacheck.Checkers
 import org.typelevel.discipline.scalatest.Discipline
 
 import scala.concurrent.duration.Duration
 
-class RetryPolicyLawsSpec extends AnyFunSuite with Discipline {
+class RetryPolicyLawsSpec extends AnyFunSuite with Discipline with Checkers {
 
   implicit val arbRetryPolicy: Arbitrary[RetryPolicy[Id]] = Arbitrary(
     for {
@@ -29,5 +30,22 @@ class RetryPolicyLawsSpec extends AnyFunSuite with Discipline {
 
   checkAll("BoundedSemilattice[RetryPolicy]",
            BoundedSemilatticeTests[RetryPolicy[Id]].boundedSemilattice)
+
+  test("onGiveUp associativity") {
+    check(
+      (p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
+        Eq[RetryPolicy[Id]].eqv(p1.onGiveUp((p2).onGiveUp(p3)),
+                                (p1.onGiveUp(p2)).onGiveUp(p3)))
+  }
+
+  test("onGiveUp left identity") {
+    check((p: RetryPolicy[Id]) =>
+      Eq[RetryPolicy[Id]].eqv(RetryPolicy.alwaysGiveUp.onGiveUp(p), p))
+  }
+
+  test("onGiveUp right identity") {
+    check((p: RetryPolicy[Id]) =>
+      Eq[RetryPolicy[Id]].eqv(p.onGiveUp(RetryPolicy.alwaysGiveUp), p))
+  }
 
 }
