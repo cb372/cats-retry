@@ -31,21 +31,21 @@ class RetryPolicyLawsSpec extends AnyFunSuite with Discipline with Checkers {
   checkAll("BoundedSemilattice[RetryPolicy]",
            BoundedSemilatticeTests[RetryPolicy[Id]].boundedSemilattice)
 
-  test("onGiveUp associativity") {
+  test("followedBy associativity") {
     check(
       (p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
-        Eq[RetryPolicy[Id]].eqv(p1.onGiveUp((p2).onGiveUp(p3)),
-                                (p1.onGiveUp(p2)).onGiveUp(p3)))
+        Eq[RetryPolicy[Id]].eqv(p1.followedBy((p2).followedBy(p3)),
+                                (p1.followedBy(p2)).followedBy(p3)))
   }
 
-  test("onGiveUp left identity") {
+  test("followedBy left identity") {
     check((p: RetryPolicy[Id]) =>
-      Eq[RetryPolicy[Id]].eqv(RetryPolicy.alwaysGiveUp.onGiveUp(p), p))
+      Eq[RetryPolicy[Id]].eqv(RetryPolicy.alwaysGiveUp.followedBy(p), p))
   }
 
-  test("onGiveUp right identity") {
+  test("followedBy right identity") {
     check((p: RetryPolicy[Id]) =>
-      Eq[RetryPolicy[Id]].eqv(p.onGiveUp(RetryPolicy.alwaysGiveUp), p))
+      Eq[RetryPolicy[Id]].eqv(p.followedBy(RetryPolicy.alwaysGiveUp), p))
   }
 
 }

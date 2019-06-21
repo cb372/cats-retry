@@ -70,6 +70,25 @@ import retry.RetryPolicies._
 val policy = limitRetries[Id](5) |+| capDelay(1.second, exponentialBackoff[Id](10.milliseconds))
 ```
 
+There is also an operator `followedBy` to sequentially compose policies, i.e. if the first one wants to give up, use the second one.
+As an example, we can retry with a 100ms delay 5 times and then retry every minute:
+
+```tut:book
+val retry5times100millis = constantDelay[Id](100.millis) |+| limitRetries[Id](5)
+
+retry5times100millis.followedBy(constantDelay[Id](1.minute))
+```
+
+`followedBy` is an associative operation and forms a `Monoid` with a policy that always gives up as its identity:
+
+```tut:book
+// This is equal to just calling constantDelay[Id](200.millis)
+constantDelay[Id](200.millis).followedBy(RetryPolicy.alwaysGiveUp)
+```
+
+Currently we don't provide such an instance as it would clash with the `BoundedSemilattice` instance described earlier.
+
+
 ## Writing your own policy
 
 The easiest way to define a custom retry policy is to use `RetryPolicy.lift`,

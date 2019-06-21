@@ -8,7 +8,7 @@ import scala.concurrent.duration.Duration
 
 case class RetryPolicy[M[_]](
     decideNextRetry: RetryStatus => M[PolicyDecision]) {
-  def onGiveUp(rp: RetryPolicy[M])(implicit M: Apply[M]): RetryPolicy[M] =
+  def followedBy(rp: RetryPolicy[M])(implicit M: Apply[M]): RetryPolicy[M] =
     RetryPolicy(status =>
       M.map2(decideNextRetry(status), rp.decideNextRetry(status)) {
         case (GiveUp, pd) => pd
