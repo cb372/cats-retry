@@ -2,21 +2,33 @@ package retry
 
 import cats.{Eq, Id}
 import cats.kernel.laws.discipline.BoundedSemilatticeTests
-import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.{Arbitrary, Cogen, Gen}
 import org.scalatest.funsuite.AnyFunSuite
 import org.typelevel.discipline.scalatest.Discipline
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 
 class RetryPolicyLawsSpec extends AnyFunSuite with Discipline {
 
-  implicit val arbRetryPolicy: Arbitrary[RetryPolicy[Id]] = Arbitrary(
-    for {
+  implicit val cogenStatus: Cogen[RetryStatus] =
+    Cogen { (seed, status) =>
+      val a = Cogen[Int].perturb(seed, status.retriesSoFar)
+      val b = Cogen[FiniteDuration].perturb(a, status.cumulativeDelay)
+      Cogen[Option[FiniteDuration]].perturb(b, status.previousDelay)
+    }
+
+  implicit val arbitraryPolicyDecision: Arbitrary[PolicyDecision] =
+    Arbitrary(for {
       delay <- Gen.choose(0, Long.MaxValue).map(Duration.fromNanos)
       decision <- Gen.oneOf(PolicyDecision.GiveUp,
                             PolicyDecision.DelayAndRetry(delay))
-    } yield RetryPolicy[Id](_ => decision)
-  )
+    } yield decision)
+
+  implicit val arbRetryPolicy: Arbitrary[RetryPolicy[Id]] =
+    Arbitrary(
+      Arbitrary
+        .arbitrary[RetryStatus => PolicyDecision]
+        .map(RetryPolicy.apply[Id]))
 
   implicit val eqForRetryPolicy: Eq[RetryPolicy[Id]] = Eq.instance {
     case (a, b) =>
