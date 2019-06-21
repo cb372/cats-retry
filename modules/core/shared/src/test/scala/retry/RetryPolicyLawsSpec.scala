@@ -42,6 +42,27 @@ class RetryPolicyLawsSpec extends AnyFunSuite with Discipline with Checkers {
     check((p: RetryPolicy[Id]) => Eq[RetryPolicy[Id]].eqv(p.meet(p), p))
   }
 
+  test("meet absorption") {
+    check(
+      (p: RetryPolicy[Id]) =>
+        Eq[RetryPolicy[Id]].eqv(p.meet(Monoid[RetryPolicy[Id]].empty),
+                                Monoid[RetryPolicy[Id]].empty))
+  }
+
+  test("join meet distributivity") {
+    check(
+      (p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
+        Eq[RetryPolicy[Id]].eqv(p1.meet(p2.join(p3)),
+                                (p1.meet(p2)).join(p1.meet(p3))))
+  }
+
+  test("meet join distributivity") {
+    check(
+      (p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
+        Eq[RetryPolicy[Id]].eqv(p1.join(p2.meet(p3)),
+                                (p1.join(p2)).meet(p1.join(p3))))
+  }
+
   checkAll("BoundedSemilattice[RetryPolicy]",
            BoundedSemilatticeTests[RetryPolicy[Id]].boundedSemilattice)
 
