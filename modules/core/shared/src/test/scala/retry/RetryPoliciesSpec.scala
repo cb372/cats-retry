@@ -90,7 +90,7 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
       val status = RetryStatus(retriesSoFar,
                                arbitraryCumulativeDelay,
                                arbitraryPreviousDelay)
-      for (i <- 1 to 1000) {
+      for (_ <- 1 to 1000) {
         val verdict = policy.decideNextRetry(status)
         val delay   = verdict.asInstanceOf[PolicyDecision.DelayAndRetry].delay
         assert(delay >= Duration.Zero)
