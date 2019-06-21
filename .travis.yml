@@ -4,7 +4,7 @@ jdk:
 scala:
   - 2.13.0
 script:
-  - sbt +test docs/tut scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
+  - sbt -J-Xms4G -J-Xmx4G +test docs/tut scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
 cache:
   directories:
   - $HOME/.sbt
