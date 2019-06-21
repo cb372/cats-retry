@@ -6,7 +6,7 @@ scala:
   - 2.12.8
   - 2.13.0
 script:
-  - sbt test docs/tut scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
+  - sbt ++$TRAVIS_SCALA_VERSION test docs/tut scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
 cache:
   directories:
   - $HOME/.sbt
