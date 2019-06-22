@@ -56,7 +56,7 @@ That is to say, `join` is associative, commutative and idempotent, which makes i
 Furthermore, it also forms a `BoundedSemilattice`, as there is also a neutral element for combining with `join`, which is a simple policy that retries with no delay and never gives up.
 This makes it very useful for combining two policies with a lower bounded delay.
 
-For an example of composing policies like this, we can use `join` to create a polciy that retries up to 5 times, starting with a 10 ms delay and increasing
+For an example of composing policies like this, we can use `join` to create a policy that retries up to 5 times, starting with a 10 ms delay and increasing
 exponentially:
 
 ```tut:book
