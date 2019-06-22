@@ -65,6 +65,7 @@ exponentially up to a maximum of 1 second:
 import cats.Id
 import cats.syntax.semigroup._
 import scala.concurrent.duration._
+import retry.RetryPolicy
 import retry.RetryPolicies._
 
 val policy = limitRetries[Id](5) |+| capDelay(1.second, exponentialBackoff[Id](10.milliseconds))
