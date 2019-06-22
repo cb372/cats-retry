@@ -39,12 +39,9 @@ There are also a few combinators to transform policies, including:
 
 ## Composing policies
 
-Retry policies form a bounded semilattice (also known as commutative semilattice).
+`cats-retry` offers several ways of composing policies together.
 
-The empty element is a simple policy that retries with no delay and never gives
-up.
-
-The `combine` operation has the following semantics:
+First up is the `join` operation, it has the following semantics:
 
 * If either of the policies wants to give up, the combined policy gives up.
 * If both policies want to delay and retry, the *longer* of the two delays is
@@ -55,19 +52,53 @@ This way of combining policies implies:
 * That combining two identical policies result in this same policy.
 * That the order you combine policies doesn't affect the resulted policy.
 
-A `BoundedSemilattice` instance is provided in the companion object, so you can compose
-policies easily.
+That is to say, `join` is associative, commutative and idempotent, which makes it a `Semilattice`.
+Furthermore, it also forms a `BoundedSemilattice`, as there is also a neutral element for combining with `join`, which is a simple policy that retries with no delay and never gives up.
+This makes it very useful for combining two policies with a lower bounded delay.
 
-For example, to retry up to 5 times, starting with a 10 ms delay and increasing
-exponentially up to a maximum of 1 second:
+For an example of composing policies like this, we can use `join` to create a policy that retries up to 5 times, starting with a 10 ms delay and increasing
+exponentially:
 
 ```tut:book
-import cats.Id
-import cats.syntax.semigroup._
+import cats._
 import scala.concurrent.duration._
+import retry.RetryPolicy
 import retry.RetryPolicies._
 
-val policy = limitRetries[Id](5) |+| capDelay(1.second, exponentialBackoff[Id](10.milliseconds))
+val policy = limitRetries[Id](5) join exponentialBackoff[Id](10.milliseconds)
+```
+
+The next operation is `meet`, it is the dual of `join` and has the following semantics:
+
+* If *both* of the policies wants to give up, the combined policy gives up.
+* If both policies want to delay and retry, the *shorter* of the two delays is
+  chosen.
+
+Just like `join`, `meet` is also associative, commutative and idempotent, which implies:
+
+* That combining two identical policies result in this same policy.
+* That the order you combine policies doesn't affect the resulted policy.
+
+You can use `meet` to compose policies where you want an upper bound on the delay.
+As an example the `capDelay` combinator is implemented using `meet`:
+
+```tut:book
+def capDelay[M[_]: Applicative](cap: FiniteDuration, policy: RetryPolicy[M]): RetryPolicy[M] =
+  policy meet constantDelay[M](cap)
+
+val neverAbove5Minutes = capDelay(5.minutes, exponentialBackoff[Id](10.milliseconds))
+```
+
+Retry policies form a distributive lattice, as `meet` and `join` both distribute over each other.
+
+As we feel that the `join` operation is more common,
+we use it as the canonical `BoundedSemilattice` instance found in the companion object.
+This means you can use it with the standard Cats semigroup syntax like this:
+
+```tut:book
+import cats.syntax.semigroup._
+
+limitRetries[Id](5) |+| constantDelay[Id](100.milliseconds)
 ```
 
 ## Writing your own policy
