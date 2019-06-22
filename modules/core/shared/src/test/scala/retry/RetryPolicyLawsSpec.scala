@@ -1,12 +1,15 @@
 package retry
 
 import cats.{Eq, Id}
+import cats.instances.all._
 import cats.kernel.laws.discipline.BoundedSemilatticeTests
 import org.scalacheck.{Arbitrary, Cogen, Gen}
 import org.scalatest.funsuite.AnyFunSuite
 import org.typelevel.discipline.scalatest.Discipline
 
-import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.concurrent.duration._
+import cats.laws.discipline.ExhaustiveCheck
+import cats.laws.discipline.eq.catsLawsEqForFn1Exhaustive
 
 class RetryPolicyLawsSpec extends AnyFunSuite with Discipline {
 
@@ -30,14 +33,24 @@ class RetryPolicyLawsSpec extends AnyFunSuite with Discipline {
         .arbitrary[RetryStatus => PolicyDecision]
         .map(RetryPolicy.apply[Id]))
 
-  implicit val eqForRetryPolicy: Eq[RetryPolicy[Id]] = Eq.instance {
-    case (a, b) =>
-      // this Eq instance is pretty dodgy, but it matches the behaviour of the Arbitrary instance above:
-      // the generated policies return the same decision for any RetryStatus value
-      // so we can use any arbitrary value when testing them for equality.
-      a.decideNextRetry(RetryStatus.NoRetriesYet) == b.decideNextRetry(
-        RetryStatus.NoRetriesYet)
-  }
+  implicit val eqPolicyDecision: Eq[PolicyDecision] = Eq.by(_ match {
+    case PolicyDecision.GiveUp           => None
+    case PolicyDecision.DelayAndRetry(d) => Some(d)
+  })
+
+  implicit val retryStatusExhaustiveCheck: ExhaustiveCheck[RetryStatus] =
+    ExhaustiveCheck.instance(
+      Stream(
+        RetryStatus.NoRetriesYet,
+        RetryStatus(1, 10.millis, Some(10.millis)),
+        RetryStatus(2, 20.millis, Some(10.millis)),
+        RetryStatus(2, 30.millis, Some(20.millis)),
+        RetryStatus(3, 70.millis, Some(40.millis)),
+        RetryStatus(4, 150.millis, Some(80.millis))
+      ))
+
+  implicit val eqForRetryPolicy: Eq[RetryPolicy[Id]] =
+    Eq.by(_.decideNextRetry)
 
   checkAll("BoundedSemilattice[RetryPolicy]",
            BoundedSemilatticeTests[RetryPolicy[Id]].boundedSemilattice)

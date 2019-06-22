@@ -65,7 +65,7 @@ val core = crossProject(JVMPlatform, JSPlatform)
     crossScalaVersions := scalaVersions,
     libraryDependencies ++= Seq(
       "org.typelevel"     %%% "cats-core"                % catsVersion,
-      "org.typelevel"     %%% "cats-kernel-laws"         % catsVersion % Test,
+      "org.typelevel"     %%% "cats-laws"                % catsVersion % Test,
       "org.scalatest"     %%% "scalatest"                % scalatestVersion % Test,
       "org.scalatestplus" %%% "scalatestplus-scalacheck" % scalaTestPlusVersion % Test,
       "org.typelevel"     %%% "discipline-scalatest"     % disciplineVersion % Test,
