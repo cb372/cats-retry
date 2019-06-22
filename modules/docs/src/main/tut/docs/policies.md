@@ -61,8 +61,8 @@ exponentially:
 
 ```tut:book
 import cats._
-import cats.syntax.semigroup._
 import scala.concurrent.duration._
+import retry.RetryPolicy
 import retry.RetryPolicies._
 
 val policy = limitRetries[Id](5) join exponentialBackoff[Id](10.milliseconds)
@@ -93,6 +93,13 @@ Retry policies form a distributive lattice, as `meet` and `join` both distribute
 
 As we feel that the `join` operation is more common,
 we use it as the canonical `BoundedSemilattice` instance found in the companion object.
+This means you can use it with the standard Cats semigroup syntax like this:
+
+```tut:book
+import cats.syntax.semigroup._
+
+limitRetries[Id](5) |+| constantDelay[Id](100.milliseconds)
+```
 
 ## Writing your own policy
 
