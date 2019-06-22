@@ -11,9 +11,9 @@ ThisBuild / scalaVersion := scalaVersion212
 val commonSettings = Seq(
   organization := "com.github.cb372",
   publishTo := sonatypePublishTo.value,
-  releaseCrossBuild := true,
+  //releaseCrossBuild := true,
   releaseVcsSign := true,
-  releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+  //releasePublishArtifactsAction := PgpKeys.publishSigned.value,
   pomIncludeRepository := { _ =>
     false
   },
@@ -151,12 +151,12 @@ val root = project
       checkSnapshotDependencies,
       inquireVersions,
       runClean,
-      runTest,
+      releaseStepCommandAndRemaining("+test"),
       setReleaseVersion,
       setLatestVersion,
       commitReleaseVersion,
       tagRelease,
-      publishArtifacts,
+      releaseStepCommandAndRemaining("+publishSigned"),
       setNextVersion,
       commitNextVersion,
       releaseStepCommand("sonatypeReleaseAll"),
