@@ -83,8 +83,8 @@ You can use `meet` to compose policies where you want an upper bound on the dela
 As an example the `capDelay` combinator is implemented using `meet`:
 
 ```tut:book
-def capDelay[M[_]: Apply](cap: FiniteDuration, policy: RetryPolicy[M]): RetryPolicy[M] =
-  policy meet constantDelay(cap)
+def capDelay[M[_]: Applicative](cap: FiniteDuration, policy: RetryPolicy[M]): RetryPolicy[M] =
+  policy meet constantDelay[M](cap)
 
 val neverAbove5Minutes = capDelay(5.minutes, exponentialBackoff[Id](10.milliseconds))
 ```
