@@ -69,16 +69,8 @@ object RetryPolicies {
   def capDelay[M[_]: Applicative](
       cap: FiniteDuration,
       policy: RetryPolicy[M]
-  ): RetryPolicy[M] = {
-
-    def decideNextRetry(status: RetryStatus): M[PolicyDecision] =
-      policy.decideNextRetry(status).map {
-        case DelayAndRetry(delay) => DelayAndRetry(delay min cap)
-        case GiveUp               => GiveUp
-      }
-
-    RetryPolicy[M](decideNextRetry)
-  }
+  ): RetryPolicy[M] =
+    policy.meet(constantDelay(cap))
 
   /**
     * Add an upper bound to a policy such that once the given time-delay

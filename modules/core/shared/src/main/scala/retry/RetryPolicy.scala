@@ -9,6 +9,12 @@ import cats.Apply
 
 case class RetryPolicy[M[_]](
     decideNextRetry: RetryStatus => M[PolicyDecision]) {
+
+  /**
+    * Combine this schedule with another schedule, giving up when either of the schedules want to give up
+    * and choosing the maximum of the two delays when both of the schedules want to delay the next retry.
+    * The dual of the `meet` operation.
+    */
   def join(rp: RetryPolicy[M])(implicit M: Apply[M]): RetryPolicy[M] =
     RetryPolicy[M](status =>
       M.map2(decideNextRetry(status), rp.decideNextRetry(status)) {
@@ -16,6 +22,11 @@ case class RetryPolicy[M[_]](
         case _                                    => GiveUp
     })
 
+  /**
+    * Combine this schedule with another schedule, giving up when both of the schedules want to give up
+    * and choosing the minimum of the two delays when both of the schedules want to delay the next retry.
+    * The dual of the `join` operation.
+    */
   def meet(rp: RetryPolicy[M])(implicit M: Apply[M]): RetryPolicy[M] =
     RetryPolicy[M](status =>
       M.map2(decideNextRetry(status), rp.decideNextRetry(status)) {
