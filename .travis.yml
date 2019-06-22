@@ -2,11 +2,9 @@ language: scala
 jdk:
   - openjdk8
 scala:
-  - 2.11.12
-  - 2.12.8
   - 2.13.0
 script:
-  - sbt test docs/tut scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
+  - sbt -J-Xms4G -J-Xmx4G +test docs/tut scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
 cache:
   directories:
   - $HOME/.sbt
