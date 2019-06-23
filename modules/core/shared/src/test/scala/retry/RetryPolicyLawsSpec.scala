@@ -1,17 +1,18 @@
 package retry
 
-import cats.{Eq, Id}
 import cats.instances.all._
+import cats.{Eq, Monoid, Id}
 import cats.kernel.laws.discipline.BoundedSemilatticeTests
 import org.scalacheck.{Arbitrary, Cogen, Gen}
 import org.scalatest.funsuite.AnyFunSuite
+import org.scalatestplus.scalacheck.Checkers
 import org.typelevel.discipline.scalatest.Discipline
 
 import scala.concurrent.duration._
 import cats.laws.discipline.ExhaustiveCheck
 import cats.laws.discipline.eq.catsLawsEqForFn1Exhaustive
 
-class RetryPolicyLawsSpec extends AnyFunSuite with Discipline {
+class RetryPolicyLawsSpec extends AnyFunSuite with Discipline with Checkers {
 
   implicit val cogenStatus: Cogen[RetryStatus] =
     Cogen { (seed, status) =>
@@ -51,6 +52,41 @@ class RetryPolicyLawsSpec extends AnyFunSuite with Discipline {
 
   implicit val eqForRetryPolicy: Eq[RetryPolicy[Id]] =
     Eq.by(_.decideNextRetry)
+
+  test("meet associativity") {
+    check((p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
+      Eq[RetryPolicy[Id]].eqv(p1.meet((p2).meet(p3)), (p1.meet(p2)).meet(p3)))
+  }
+
+  test("meet commutativity") {
+    check((p1: RetryPolicy[Id], p2: RetryPolicy[Id]) =>
+      Eq[RetryPolicy[Id]].eqv(p1.meet(p2), p2.meet(p1)))
+  }
+
+  test("meet idempotence") {
+    check((p: RetryPolicy[Id]) => Eq[RetryPolicy[Id]].eqv(p.meet(p), p))
+  }
+
+  test("meet absorption") {
+    check(
+      (p: RetryPolicy[Id]) =>
+        Eq[RetryPolicy[Id]].eqv(p.meet(Monoid[RetryPolicy[Id]].empty),
+                                Monoid[RetryPolicy[Id]].empty))
+  }
+
+  test("join meet distributivity") {
+    check(
+      (p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
+        Eq[RetryPolicy[Id]].eqv(p1.meet(p2.join(p3)),
+                                (p1.meet(p2)).join(p1.meet(p3))))
+  }
+
+  test("meet join distributivity") {
+    check(
+      (p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
+        Eq[RetryPolicy[Id]].eqv(p1.join(p2.meet(p3)),
+                                (p1.join(p2)).meet(p1.join(p3))))
+  }
 
   checkAll("BoundedSemilattice[RetryPolicy]",
            BoundedSemilatticeTests[RetryPolicy[Id]].boundedSemilattice)
