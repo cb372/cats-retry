@@ -11,6 +11,8 @@ import org.typelevel.discipline.scalatest.Discipline
 import scala.concurrent.duration._
 import cats.laws.discipline.ExhaustiveCheck
 import cats.laws.discipline.eq.catsLawsEqForFn1Exhaustive
+import cats.arrow.FunctionK
+import cats.Monad
 
 class RetryPolicyLawsSpec extends AnyFunSuite with Discipline with Checkers {
 
@@ -86,6 +88,39 @@ class RetryPolicyLawsSpec extends AnyFunSuite with Discipline with Checkers {
       (p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
         Eq[RetryPolicy[Id]].eqv(p1.join(p2.meet(p3)),
                                 (p1.join(p2)).meet(p1.join(p3))))
+  }
+
+  test("mapK identity") {
+    check(
+      (p: RetryPolicy[Id]) => Eq[RetryPolicy[Id]].eqv(p.mapK(FunctionK.id), p))
+  }
+
+  test("mapDelay identity") {
+    check(
+      (p: RetryPolicy[Id]) => Eq[RetryPolicy[Id]].eqv(p.mapDelay(identity), p))
+  }
+
+  test("mapDelay composition") {
+    check(
+      (p: RetryPolicy[Id],
+       f: FiniteDuration => FiniteDuration,
+       g: FiniteDuration => FiniteDuration) =>
+        Eq[RetryPolicy[Id]].eqv(p.mapDelay(f).mapDelay(g),
+                                p.mapDelay(f andThen g)))
+  }
+
+  test("flatMapDelay identity") {
+    check((p: RetryPolicy[Id]) =>
+      Eq[RetryPolicy[Id]].eqv(p.flatMapDelay(Monad[Id].pure), p))
+  }
+
+  test("flatMapDelay composition") {
+    check(
+      (p: RetryPolicy[Id],
+       f: FiniteDuration => FiniteDuration,
+       g: FiniteDuration => FiniteDuration) =>
+        Eq[RetryPolicy[Id]].eqv(p.flatMapDelay(f).flatMapDelay(g),
+                                p.flatMapDelay(f andThen g)))
   }
 
   checkAll("BoundedSemilattice[RetryPolicy]",

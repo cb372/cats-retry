@@ -1,11 +1,13 @@
 package retry
 
-import cats.{Apply, Applicative}
+
+import cats.{Apply, Applicative, Monad, Functor}
 import cats.kernel.BoundedSemilattice
 import retry.PolicyDecision._
 
 import scala.concurrent.duration.Duration
-import cats.Apply
+import scala.concurrent.duration.FiniteDuration
+import cats.arrow.FunctionK
 
 case class RetryPolicy[M[_]](
     decideNextRetry: RetryStatus => M[PolicyDecision]) {
@@ -41,6 +43,26 @@ case class RetryPolicy[M[_]](
         case (GiveUp, s @ DelayAndRetry(_))       => s
         case _                                    => GiveUp
     })
+
+  def mapDelay(f: FiniteDuration => FiniteDuration)(
+      implicit M: Functor[M]): RetryPolicy[M] =
+    RetryPolicy(status =>
+      M.map(decideNextRetry(status)) {
+        case GiveUp           => GiveUp
+        case DelayAndRetry(d) => DelayAndRetry(f(d))
+    })
+
+  def flatMapDelay(f: FiniteDuration => M[FiniteDuration])(
+      implicit M: Monad[M]): RetryPolicy[M] =
+    RetryPolicy(status =>
+      M.flatMap(decideNextRetry(status)) {
+        case GiveUp           => M.pure(GiveUp)
+        case DelayAndRetry(d) => M.map(f(d))(DelayAndRetry(_))
+    })
+
+  def mapK[N[_]](nt: FunctionK[M, N]): RetryPolicy[N] =
+    RetryPolicy(status => nt(decideNextRetry(status)))
+
 }
 
 object RetryPolicy {
