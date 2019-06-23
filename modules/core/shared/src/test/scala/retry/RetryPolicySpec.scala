@@ -16,10 +16,12 @@ class RetryPolicySpec extends AnyFlatSpec {
 
     assert(
       (alwaysGiveUp |+| alwaysRetry)
-        .decideNextRetry(RetryStatus.NoRetriesYet) == PolicyDecision.GiveUp)
+        .decideNextRetry(RetryStatus.NoRetriesYet) == PolicyDecision.GiveUp
+    )
     assert(
       (alwaysRetry |+| alwaysGiveUp)
-        .decideNextRetry(RetryStatus.NoRetriesYet) == PolicyDecision.GiveUp)
+        .decideNextRetry(RetryStatus.NoRetriesYet) == PolicyDecision.GiveUp
+    )
   }
 
   it should "choose the maximum of the delays if both of the composed policies decides to retry" in {
@@ -30,10 +32,14 @@ class RetryPolicySpec extends AnyFlatSpec {
 
     assert(
       (delayOneSecond |+| delayTwoSeconds).decideNextRetry(
-        RetryStatus.NoRetriesYet) == PolicyDecision.DelayAndRetry(2.seconds))
+        RetryStatus.NoRetriesYet
+      ) == PolicyDecision.DelayAndRetry(2.seconds)
+    )
     assert(
       (delayTwoSeconds |+| delayOneSecond).decideNextRetry(
-        RetryStatus.NoRetriesYet) == PolicyDecision.DelayAndRetry(2.seconds))
+        RetryStatus.NoRetriesYet
+      ) == PolicyDecision.DelayAndRetry(2.seconds)
+    )
   }
 
 }
