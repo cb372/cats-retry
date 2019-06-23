@@ -14,6 +14,7 @@ case class RetryPolicy[M[_]](
       M.map2(decideNextRetry(status), rp.decideNextRetry(status)) {
         case (GiveUp, pd) => pd
         case (pd, _)      => pd
+    })
 
   /**
     * Combine this schedule with another schedule, giving up when either of the schedules want to give up
@@ -43,9 +44,6 @@ case class RetryPolicy[M[_]](
 }
 
 object RetryPolicy {
-
-  def alwaysGiveUp[M[_]: Applicative]: RetryPolicy[M] =
-    RetryPolicy(Function.const(Applicative[M].pure(GiveUp)))
 
   def lift[M[_]](
       f: RetryStatus => PolicyDecision

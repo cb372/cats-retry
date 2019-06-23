@@ -114,7 +114,7 @@ retry5times100millis.followedBy(constantDelay[Id](1.minute))
 
 ```tut:book
 // This is equal to just calling constantDelay[Id](200.millis)
-constantDelay[Id](200.millis).followedBy(RetryPolicy.alwaysGiveUp)
+constantDelay[Id](200.millis).followedBy(alwaysGiveUp)
 ```
 
 Currently we don't provide such an instance as it would clash with the `BoundedSemilattice` instance described earlier.

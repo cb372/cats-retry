@@ -100,12 +100,12 @@ class RetryPolicyLawsSpec extends AnyFunSuite with Discipline with Checkers {
 
   test("followedBy left identity") {
     check((p: RetryPolicy[Id]) =>
-      Eq[RetryPolicy[Id]].eqv(RetryPolicy.alwaysGiveUp.followedBy(p), p))
+      Eq[RetryPolicy[Id]].eqv(RetryPolicies.alwaysGiveUp[Id].followedBy(p), p))
   }
 
   test("followedBy right identity") {
     check((p: RetryPolicy[Id]) =>
-      Eq[RetryPolicy[Id]].eqv(p.followedBy(RetryPolicy.alwaysGiveUp), p))
+      Eq[RetryPolicy[Id]].eqv(p.followedBy(RetryPolicies.alwaysGiveUp), p))
   }
 
 }
