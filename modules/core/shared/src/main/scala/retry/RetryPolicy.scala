@@ -1,5 +1,6 @@
 package retry
 
+
 import cats.{Apply, Applicative, Monad, Functor}
 import cats.kernel.BoundedSemilattice
 import retry.PolicyDecision._
@@ -10,6 +11,12 @@ import cats.arrow.FunctionK
 
 case class RetryPolicy[M[_]](
     decideNextRetry: RetryStatus => M[PolicyDecision]) {
+  def followedBy(rp: RetryPolicy[M])(implicit M: Apply[M]): RetryPolicy[M] =
+    RetryPolicy(status =>
+      M.map2(decideNextRetry(status), rp.decideNextRetry(status)) {
+        case (GiveUp, pd) => pd
+        case (pd, _)      => pd
+    })
 
   /**
     * Combine this schedule with another schedule, giving up when either of the schedules want to give up
