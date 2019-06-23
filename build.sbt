@@ -20,7 +20,9 @@ val commonSettings = Seq(
   publishMavenStyle := true,
   licenses := Seq(
     "Apache License, Version 2.0" -> url(
-      "http://www.apache.org/licenses/LICENSE-2.0.html")),
+      "http://www.apache.org/licenses/LICENSE-2.0.html"
+    )
+  ),
   homepage := Some(url("https://cb372.github.io/cats-retry/")),
   developers := List(
     Developer(
@@ -42,7 +44,7 @@ val moduleSettings = commonSettings ++ Seq(
     "-encoding",
     "UTF-8",
     "-language:higherKinds",
-    "-unchecked",
+    "-unchecked"
   ),
   scalacOptions in (Test, compile) ++= {
     if (scalaVersion.value.startsWith("2.13"))
@@ -135,13 +137,15 @@ val docs = project
 
 val root = project
   .in(file("."))
-  .aggregate(coreJVM,
-             coreJS,
-             catsEffectJVM,
-             catsEffectJS,
-             monixJVM,
-             monixJS,
-             docs)
+  .aggregate(
+    coreJVM,
+    coreJS,
+    catsEffectJVM,
+    catsEffectJS,
+    monixJVM,
+    monixJS,
+    docs
+  )
   .settings(commonSettings)
   .settings(
     publishTo := sonatypePublishTo.value, // see https://github.com/sbt/sbt-release/issues/184,

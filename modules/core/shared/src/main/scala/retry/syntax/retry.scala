@@ -5,7 +5,8 @@ import retry.{RetryDetails, RetryPolicy, Sleep}
 
 trait RetrySyntax {
   implicit final def retrySyntaxBase[M[_], A](
-      action: => M[A]): RetryingOps[M, A] =
+      action: => M[A]
+  ): RetryingOps[M, A] =
     new RetryingOps[M, A](action)
 
 }
@@ -16,17 +17,20 @@ final class RetryingOps[M[_], A](action: => M[A]) {
       implicit policy: RetryPolicy[M],
       onFailure: (A, RetryDetails) => M[Unit],
       Mo: Monad[M],
-      S: Sleep[M]): M[A] =
+      S: Sleep[M]
+  ): M[A] =
     retry.retryingM(
       policy = policy,
       wasSuccessful = wasSuccessful,
       onFailure = onFailure
     )(action)
 
-  def retryingOnAllErrors[E](implicit policy: RetryPolicy[M],
-                             onError: (E, RetryDetails) => M[Unit],
-                             ME: MonadError[M, E],
-                             S: Sleep[M]): M[A] =
+  def retryingOnAllErrors[E](
+      implicit policy: RetryPolicy[M],
+      onError: (E, RetryDetails) => M[Unit],
+      ME: MonadError[M, E],
+      S: Sleep[M]
+  ): M[A] =
     retry.retryingOnAllErrors(
       policy = policy,
       onError = onError
@@ -36,7 +40,8 @@ final class RetryingOps[M[_], A](action: => M[A]) {
       implicit policy: RetryPolicy[M],
       onError: (E, RetryDetails) => M[Unit],
       ME: MonadError[M, E],
-      S: Sleep[M]): M[A] =
+      S: Sleep[M]
+  ): M[A] =
     retry.retryingOnSomeErrors(
       policy = policy,
       isWorthRetrying = isWorthRetrying,

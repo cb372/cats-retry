@@ -27,7 +27,8 @@ object RetryPolicies {
     * Each delay is twice as long as the previous one. Never give up.
     */
   def exponentialBackoff[M[_]: Applicative](
-      baseDelay: FiniteDuration): RetryPolicy[M] =
+      baseDelay: FiniteDuration
+  ): RetryPolicy[M] =
     RetryPolicy.lift { status =>
       DelayAndRetry(baseDelay * Math.pow(2, status.retriesSoFar).toLong)
     }
@@ -51,7 +52,8 @@ object RetryPolicies {
     * 10 ms, 10 ms, 20 ms, 30ms, 50ms, 80ms, 130ms, ...
     */
   def fibonacciBackoff[M[_]: Applicative](
-      baseDelay: FiniteDuration): RetryPolicy[M] =
+      baseDelay: FiniteDuration
+  ): RetryPolicy[M] =
     RetryPolicy.lift { status =>
       val delay = baseDelay * Fibonacci.fibonacci(status.retriesSoFar + 1)
       DelayAndRetry(delay)

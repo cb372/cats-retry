@@ -137,7 +137,8 @@ class PackageObjectSpec extends AnyFlatSpec {
     assert(finalResult == Left("one more time"))
     assert(attempts == 3)
     assert(
-      errors.toList == List("one more time", "one more time", "one more time"))
+      errors.toList == List("one more time", "one more time", "one more time")
+    )
     assert(gaveUp)
   }
 
@@ -187,7 +188,8 @@ class PackageObjectSpec extends AnyFlatSpec {
     assert(finalResult == Left("one more time"))
     assert(attempts == 3)
     assert(
-      errors.toList == List("one more time", "one more time", "one more time"))
+      errors.toList == List("one more time", "one more time", "one more time")
+    )
     assert(gaveUp)
   }
 

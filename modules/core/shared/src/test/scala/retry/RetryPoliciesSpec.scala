@@ -18,12 +18,11 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
       a <- Gen.choose(0, 1000)
       b <- Gen.choose(0, 1000)
       c <- Gen.option(Gen.choose(b, 10000))
-    } yield
-      RetryStatus(
-        a,
-        FiniteDuration(b, TimeUnit.MILLISECONDS),
-        c.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
-      )
+    } yield RetryStatus(
+      a,
+      FiniteDuration(b, TimeUnit.MILLISECONDS),
+      c.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
+    )
   }
 
   behavior of "constantDelay"
@@ -41,9 +40,11 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
     val arbitraryPreviousDelay   = Some(999.milliseconds)
 
     def test(retriesSoFar: Int, expectedDelay: FiniteDuration) = {
-      val status = RetryStatus(retriesSoFar,
-                               arbitraryCumulativeDelay,
-                               arbitraryPreviousDelay)
+      val status = RetryStatus(
+        retriesSoFar,
+        arbitraryCumulativeDelay,
+        arbitraryPreviousDelay
+      )
       val verdict = policy.decideNextRetry(status)
       assert(verdict == PolicyDecision.DelayAndRetry(expectedDelay))
     }
@@ -62,9 +63,11 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
     val arbitraryPreviousDelay   = Some(999.milliseconds)
 
     def test(retriesSoFar: Int, expectedDelay: FiniteDuration) = {
-      val status = RetryStatus(retriesSoFar,
-                               arbitraryCumulativeDelay,
-                               arbitraryPreviousDelay)
+      val status = RetryStatus(
+        retriesSoFar,
+        arbitraryCumulativeDelay,
+        arbitraryPreviousDelay
+      )
       val verdict = policy.decideNextRetry(status)
       assert(verdict == PolicyDecision.DelayAndRetry(expectedDelay))
     }
@@ -87,9 +90,11 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
     val arbitraryPreviousDelay   = Some(999.milliseconds)
 
     def test(retriesSoFar: Int, expectedMaximumDelay: FiniteDuration): Unit = {
-      val status = RetryStatus(retriesSoFar,
-                               arbitraryCumulativeDelay,
-                               arbitraryPreviousDelay)
+      val status = RetryStatus(
+        retriesSoFar,
+        arbitraryCumulativeDelay,
+        arbitraryPreviousDelay
+      )
       for (_ <- 1 to 1000) {
         val verdict = policy.decideNextRetry(status)
         val delay   = verdict.asInstanceOf[PolicyDecision.DelayAndRetry].delay
@@ -154,14 +159,18 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
     val cumulativeDelay        = 400.milliseconds
     val arbitraryRetriesSoFar  = 5
     val arbitraryPreviousDelay = Some(123.milliseconds)
-    val status = RetryStatus(arbitraryRetriesSoFar,
-                             cumulativeDelay,
-                             arbitraryPreviousDelay)
+    val status = RetryStatus(
+      arbitraryRetriesSoFar,
+      cumulativeDelay,
+      arbitraryPreviousDelay
+    )
 
     val threshold = 500.milliseconds
 
-    def test(underlyingPolicy: RetryPolicy[Id],
-             expectedDecision: PolicyDecision) = {
+    def test(
+        underlyingPolicy: RetryPolicy[Id],
+        expectedDecision: PolicyDecision
+    ) = {
       val policy = limitRetriesByCumulativeDelay(threshold, underlyingPolicy)
       assert(policy.decideNextRetry(status) == expectedDecision)
     }
