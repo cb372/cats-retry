@@ -12,6 +12,12 @@ import scala.util.Random
 object RetryPolicies {
 
   /**
+    * Don't retry at all and always give up. Only really useful for combining with other policies.
+    */
+  def alwaysGiveUp[M[_]: Applicative]: RetryPolicy[M] =
+    RetryPolicy(Function.const(Applicative[M].pure(GiveUp)))
+
+  /**
     * Delay by a constant amount before each retry. Never give up.
     */
   def constantDelay[M[_]: Applicative](delay: FiniteDuration): RetryPolicy[M] =
