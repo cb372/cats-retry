@@ -75,12 +75,29 @@ class RetryPolicyLawsSpec extends AnyFunSuite with Discipline with Checkers {
     check((p: RetryPolicy[Id]) => Eq[RetryPolicy[Id]].eqv(p.meet(p), p))
   }
 
+  test("meet identity") {
+    check(
+      (p: RetryPolicy[Id]) =>
+        Eq[RetryPolicy[Id]].eqv(p.meet(RetryPolicies.alwaysGiveUp[Id]), p)
+    )
+  }
+
   test("meet absorption") {
     check(
       (p: RetryPolicy[Id]) =>
         Eq[RetryPolicy[Id]].eqv(
           p.meet(Monoid[RetryPolicy[Id]].empty),
           Monoid[RetryPolicy[Id]].empty
+        )
+    )
+  }
+
+  test("join absorption") {
+    check(
+      (p: RetryPolicy[Id]) =>
+        Eq[RetryPolicy[Id]].eqv(
+          p.join(RetryPolicies.alwaysGiveUp[Id]),
+          RetryPolicies.alwaysGiveUp[Id]
         )
     )
   }
