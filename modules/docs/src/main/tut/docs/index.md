@@ -3,7 +3,7 @@ layout: docs
 title: Getting started
 ---
 
-```tut:invisible
+```scala mdoc:invisible
 import retry.BuildInfo.latestVersion
 ```
 
@@ -19,7 +19,7 @@ high probability it will fail.
 
 We'll be working with the cats-effect `IO` monad, but any monad will do.
 
-```tut:book
+```scala mdoc
 import cats.effect.IO
 
 val httpClient = util.FlakyHttpClient()
@@ -34,7 +34,7 @@ some retry logic.
 
 We'll add dependencies on the `core` and `cats-effect` modules:
 
-```tut:evaluated
+```scala mdoc:passthrough
 println(
   s"""
   |val catsRetryVersion = "$latestVersion"
@@ -52,7 +52,7 @@ First we'll need a retry policy. We'll keep it simple: retry up to 5 times, with
 no delay between attempts. (See the [retry policies page](policies.html) for
 information on more powerful policies).
 
-```tut:book
+```scala mdoc
 import retry._
 
 val retryFiveTimes = RetryPolicies.limitRetries[IO](5)
@@ -62,7 +62,7 @@ We'll also provide an error handler that does some logging before every retry.
 Note how this also happens within whatever monad you're working in, in this case
 the `IO` monad.
 
-```tut:book
+```scala mdoc:silent
 import scala.concurrent.duration.FiniteDuration
 import retry.RetryDetails._
 
@@ -89,7 +89,7 @@ def logError(err: Throwable, details: RetryDetails): IO[Unit] = details match {
 Now we have a retry policy and an error handler, we can wrap our `IO` in
 retries.
 
-```tut:book
+```scala mdoc:silent
 // We need an implicit cats.effect.Timer
 import cats.effect.Timer
 import scala.concurrent.ExecutionContext.global
@@ -107,7 +107,7 @@ val flakyRequestWithRetry: IO[String] =
 
 Let's see it in action.
 
-```tut
+```scala mdoc
 flakyRequestWithRetry.unsafeRunSync()
 
 logMessages.foreach(println)

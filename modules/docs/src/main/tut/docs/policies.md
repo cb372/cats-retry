@@ -59,7 +59,7 @@ This makes it very useful for combining two policies with a lower bounded delay.
 For an example of composing policies like this, we can use `join` to create a policy that retries up to 5 times, starting with a 10 ms delay and increasing
 exponentially:
 
-```tut:book
+```scala mdoc:silent
 import cats._
 import scala.concurrent.duration._
 import retry.RetryPolicy
@@ -82,7 +82,7 @@ Just like `join`, `meet` is also associative, commutative and idempotent, which 
 You can use `meet` to compose policies where you want an upper bound on the delay.
 As an example the `capDelay` combinator is implemented using `meet`:
 
-```tut:book
+```scala mdoc:silent
 def capDelay[M[_]: Applicative](cap: FiniteDuration, policy: RetryPolicy[M]): RetryPolicy[M] =
   policy meet constantDelay[M](cap)
 
@@ -95,7 +95,7 @@ As we feel that the `join` operation is more common,
 we use it as the canonical `BoundedSemilattice` instance found in the companion object.
 This means you can use it with the standard Cats semigroup syntax like this:
 
-```tut:book
+```scala mdoc:silent
 import cats.syntax.semigroup._
 
 limitRetries[Id](5) |+| constantDelay[Id](100.milliseconds)
@@ -104,7 +104,7 @@ limitRetries[Id](5) |+| constantDelay[Id](100.milliseconds)
 There is also an operator `followedBy` to sequentially compose policies, i.e. if the first one wants to give up, use the second one.
 As an example, we can retry with a 100ms delay 5 times and then retry every minute:
 
-```tut:book
+```scala mdoc
 val retry5times100millis = constantDelay[Id](100.millis) |+| limitRetries[Id](5)
 
 retry5times100millis.followedBy(constantDelay[Id](1.minute))
@@ -112,7 +112,7 @@ retry5times100millis.followedBy(constantDelay[Id](1.minute))
 
 `followedBy` is an associative operation and forms a `Monoid` with a policy that always gives up as its identity:
 
-```tut:book
+```scala mdoc:silent
 // This is equal to just calling constantDelay[Id](200.millis)
 constantDelay[Id](200.millis).followedBy(alwaysGiveUp)
 ```
@@ -125,7 +125,7 @@ Currently we don't provide such an instance as it would clash with the `BoundedS
 The easiest way to define a custom retry policy is to use `RetryPolicy.lift`,
 specifying the monad you need to work in:
 
-```tut:book
+```scala mdoc
 import retry.{RetryPolicy, PolicyDecision}
 import cats.effect.IO
 import java.time.{LocalDate, DayOfWeek}

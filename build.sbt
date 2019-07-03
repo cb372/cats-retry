@@ -118,6 +118,7 @@ val docs = project
   .settings(
     scalacOptions -= "-Ywarn-dead-code",
     scalacOptions -= "-Ywarn-unused",
+    scalacOptions += "-Ydelambdafy:inline",
     crossScalaVersions := Nil,
     buildInfoKeys := Seq[BuildInfoKey](latestVersion),
     buildInfoPackage := "retry",
@@ -132,6 +133,8 @@ val docs = project
     micrositeGithubRepo := "cats-retry",
     micrositeGitterChannel := true,
     micrositeTwitterCreator := "@cbirchall",
+    micrositeCompilingDocsTool := WithMdoc,
+    mdocIn := (sourceDirectory in Compile).value / "tut",
     micrositeShareOnSocial := true
   )
 

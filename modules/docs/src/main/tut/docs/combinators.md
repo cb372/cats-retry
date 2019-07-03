@@ -35,7 +35,7 @@ You need to pass in:
 
 For example, let's keep rolling a die until we get a six.
 
-```tut:book
+```scala mdoc
 import cats.Id
 import retry._
 import scala.concurrent.duration._
@@ -49,7 +49,7 @@ def onFailure(failedValue: Int, details: RetryDetails): Unit = {
 }
 ```
 
-```tut
+```scala mdoc
 val loadedDie = util.LoadedDie(2, 5, 4, 1, 3, 2, 6)
 
 retrying(policy, predicate, onFailure){
@@ -79,27 +79,34 @@ You need to pass in:
 * a failure handler, often used for logging
 * the operation that you want to wrap with retries
 
-For example, let's redo the rolling-a-six example, this time using `Future`.
+For example, let's redo the rolling-a-six example, this time using `IO`.
 
-```tut:book
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-import cats.instances.future._
+```scala mdoc
+import cats.effect.IO
 
-val futurePolicy = RetryPolicies.constantDelay[Future](10.milliseconds)
+val ioPolicy = RetryPolicies.constantDelay[IO](10.milliseconds)
 
-def futureOnFailure(failedValue: Int, details: RetryDetails): Future[Unit] = {
-  Future(println(s"Rolled a $failedValue, retrying ..."))
+def ioOnFailure(failedValue: Int, details: RetryDetails): IO[Unit] = {
+  IO(println(s"Rolled a $failedValue, retrying ..."))
 }
 ```
 
-```tut
-import scala.concurrent.Await
+```scala mdoc
+// We need an implicit cats.effect.Timer
+import cats.effect._
+import scala.concurrent.ExecutionContext.global
+import retry.CatsEffect._
 
-val future = retryingM(futurePolicy, predicate, futureOnFailure){
-  Future(loadedDie.roll())
+implicit val timer: Timer[IO] = IO.timer(global)
+
+val io = retryingM(ioPolicy, predicate, ioOnFailure){
+  IO(loadedDie.roll())
 }
-Await.result(future, 1.minute)
+
+// We need ContextShift for calling `.timeout`
+implicit def ctx: ContextShift[IO] = IO.contextShift(global)
+
+io.timeout(1.minute)
 ```
 
 ## `retryingOnSomeErrors`
