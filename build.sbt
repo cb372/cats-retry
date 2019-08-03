@@ -59,7 +59,7 @@ val catsVersion          = "2.0.0-M4"
 val scalatestVersion     = "3.1.0-SNAP13"
 val scalaTestPlusVersion = "1.0.0-SNAP8"
 val scalacheckVersion    = "1.14.0"
-val disciplineVersion    = "0.12.0-M3"
+val disciplineVersion    = "1.0.0-M1"
 val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/core"))
   .settings(moduleSettings)
