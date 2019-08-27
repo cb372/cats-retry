@@ -86,7 +86,7 @@ val catsEffect = crossProject(JVMPlatform, JSPlatform)
     crossScalaVersions := scalaVersions,
     name := "cats-effect",
     libraryDependencies ++= Seq(
-      "org.typelevel"  %%% "cats-effect" % "2.0.0-M4",
+      "org.typelevel"  %%% "cats-effect" % "2.0.0-RC2",
       "org.scalatest"  %%% "scalatest"   % scalatestVersion % Test,
       "org.scalacheck" %%% "scalacheck"  % scalacheckVersion % Test
     )
