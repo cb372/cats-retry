@@ -44,7 +44,7 @@ class RetryPolicyLawsSpec extends AnyFunSuite with Discipline with Checkers {
 
   implicit val retryStatusExhaustiveCheck: ExhaustiveCheck[RetryStatus] =
     ExhaustiveCheck.instance(
-      Stream(
+      List(
         RetryStatus.NoRetriesYet,
         RetryStatus(1, 10.millis, Some(10.millis)),
         RetryStatus(2, 20.millis, Some(10.millis)),
