@@ -76,7 +76,7 @@ exponentially:</p>
 <span class="c1">// import retry.RetryPolicies._
 </span>
 <span class="k">val</span> <span class="nv">policy</span> <span class="k">=</span> <span class="n">limitRetries</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mi">5</span><span class="o">)</span> <span class="n">join</span> <span class="n">exponentialBackoff</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">)</span>
-<span class="c1">// policy: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$Lambda$8265/2023426281@2b4e2324)
+<span class="c1">// policy: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$Lambda$9805/270410783@100539d2)
 </span></code></pre></div></div>
 
 <p>The next operation is <code class="highlighter-rouge">meet</code>, it is the dual of <code class="highlighter-rouge">join</code> and has the following semantics:</p>
@@ -102,7 +102,7 @@ As an example the <code class="highlighter-rouge">capDelay</code> combinator is 
 <span class="c1">// capDelay: [M[_]](cap: scala.concurrent.duration.FiniteDuration, policy: retry.RetryPolicy[M])(implicit evidence$1: cats.Applicative[M])retry.RetryPolicy[M]
 </span>
 <span class="k">val</span> <span class="nv">neverAbove5Minutes</span> <span class="k">=</span> <span class="nf">capDelay</span><span class="o">(</span><span class="mf">5.</span><span class="n">minutes</span><span class="o">,</span> <span class="n">exponentialBackoff</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">))</span>
-<span class="c1">// neverAbove5Minutes: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$Lambda$8288/686365385@275dcc88)
+<span class="c1">// neverAbove5Minutes: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$Lambda$9828/606051603@307ae20b)
 </span></code></pre></div></div>
 
 <p>Retry policies form a distributive lattice, as <code class="highlighter-rouge">meet</code> and <code class="highlighter-rouge">join</code> both distribute over each other.</p>
@@ -115,24 +115,24 @@ This means you can use it with the standard Cats semigroup syntax like this:</p>
 <span class="c1">// import cats.syntax.semigroup._
 </span>
 <span class="n">limitRetries</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mi">5</span><span class="o">)</span> <span class="o">|+|</span> <span class="n">constantDelay</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mf">100.</span><span class="n">milliseconds</span><span class="o">)</span>
-<span class="c1">// res0: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$Lambda$8265/2023426281@44ce9a4d)
+<span class="c1">// res0: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$Lambda$9805/270410783@26be42ad)
 </span></code></pre></div></div>
 
 <p>There is also an operator <code class="highlighter-rouge">followedBy</code> to sequentially compose policies, i.e. if the first one wants to give up, use the second one.
 As an example, we can retry with a 100ms delay 5 times and then retry every minute:</p>
 
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">retry5times100millis</span> <span class="k">=</span> <span class="n">constantDelay</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mf">100.</span><span class="n">millis</span><span class="o">)</span> <span class="o">|+|</span> <span class="n">limitRetries</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mi">5</span><span class="o">)</span>
-<span class="c1">// retry5times100millis: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$Lambda$8265/2023426281@1e3e5db2)
+<span class="c1">// retry5times100millis: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$Lambda$9805/270410783@6026a397)
 </span>
 <span class="nv">retry5times100millis</span><span class="o">.</span><span class="py">followedBy</span><span class="o">(</span><span class="n">constantDelay</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mf">1.</span><span class="n">minute</span><span class="o">))</span>
-<span class="c1">// res1: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$Lambda$8330/577349999@43f68a0)
+<span class="c1">// res1: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$Lambda$9829/768165231@3444d2b1)
 </span></code></pre></div></div>
 
 <p><code class="highlighter-rouge">followedBy</code> is an associative operation and forms a <code class="highlighter-rouge">Monoid</code> with a policy that always gives up as its identity:</p>
 
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// This is equal to just calling constantDelay[Id](200.millis)
 </span><span class="n">constantDelay</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mf">200.</span><span class="n">millis</span><span class="o">).</span><span class="py">followedBy</span><span class="o">(</span><span class="n">alwaysGiveUp</span><span class="o">)</span>
-<span class="c1">// res3: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$Lambda$8330/577349999@41cf58a5)
+<span class="c1">// res3: retry.RetryPolicy[cats.Id] = RetryPolicy(retry.RetryPolicy$$Lambda$9829/768165231@40c8f084)
 </span></code></pre></div></div>
 
 <p>Currently we don’t provide such an instance as it would clash with the <code class="highlighter-rouge">BoundedSemilattice</code> instance described earlier.</p>
@@ -158,7 +158,7 @@ specifying the monad you need to work in:</p>
     <span class="nv">PolicyDecision</span><span class="o">.</span><span class="py">GiveUp</span>
   <span class="o">}</span>
 <span class="o">}</span>
-<span class="c1">// onlyRetryOnTuesdays: retry.RetryPolicy[cats.effect.IO] = RetryPolicy(retry.RetryPolicy$$$Lambda$8263/208113654@7e4a4477)
+<span class="c1">// onlyRetryOnTuesdays: retry.RetryPolicy[cats.effect.IO] = RetryPolicy(retry.RetryPolicy$$$Lambda$9803/1245787504@4c0e3b1a)
 </span></code></pre></div></div>
 </section></div></div></div></div><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script><script src="/cats-retry/highlight/highlight.pack.js"></script><script>hljs.configure({languages:['scala','java','bash']});
 hljs.initHighlighting();

@@ -53,10 +53,10 @@ simply do a <code class="highlighter-rouge">Thread.sleep(...)</code>.</p>
 <span class="c1">// import retry.CatsEffect._
 </span>
 <span class="k">implicit</span> <span class="k">val</span> <span class="nv">timer</span><span class="k">:</span> <span class="kt">Timer</span><span class="o">[</span><span class="kt">IO</span><span class="o">]</span> <span class="k">=</span> <span class="nv">IO</span><span class="o">.</span><span class="py">timer</span><span class="o">(</span><span class="n">global</span><span class="o">)</span>
-<span class="c1">// timer: cats.effect.Timer[cats.effect.IO] = cats.effect.internals.IOTimer@333a29d3
+<span class="c1">// timer: cats.effect.Timer[cats.effect.IO] = cats.effect.internals.IOTimer@1870e470
 </span>
 <span class="nc">Sleep</span><span class="o">[</span><span class="kt">IO</span><span class="o">].</span><span class="py">sleep</span><span class="o">(</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">)</span>
-<span class="c1">// res2: cats.effect.IO[Unit] = IO$2135601695
+<span class="c1">// res2: cats.effect.IO[Unit] = IO$204925303
 </span></code></pre></div></div>
 
 <p>The <code class="highlighter-rouge">monix</code> module provides an instance that calls <code class="highlighter-rouge">Task.sleep</code>.</p>

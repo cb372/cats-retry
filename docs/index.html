@@ -19,7 +19,7 @@ high probability it will fail.</p>
 <span class="k">val</span> <span class="nv">flakyRequest</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="nc">IO</span> <span class="o">{</span>
   <span class="nv">httpClient</span><span class="o">.</span><span class="py">getCatGif</span><span class="o">()</span>
 <span class="o">}</span>
-<span class="c1">// flakyRequest: cats.effect.IO[String] = IO$1605827754
+<span class="c1">// flakyRequest: cats.effect.IO[String] = IO$2053047364
 </span></code></pre></div></div>
 
 <p>To improve the chance of successfully downloading the file, let’s wrap this with
@@ -27,7 +27,7 @@ some retry logic.</p>
 
 <p>We’ll add dependencies on the <code class="highlighter-rouge">core</code> and <code class="highlighter-rouge">cats-effect</code> modules:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>val catsRetryVersion = "0.2.7"
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>val catsRetryVersion = "0.3.0"
 libraryDependencies ++= Seq(
   "com.github.cb372" %% "cats-retry-core"        % catsRetryVersion,
   "com.github.cb372" %% "cats-retry-cats-effect" % catsRetryVersion
@@ -44,7 +44,7 @@ information on more powerful policies).</p>
 <span class="c1">// import retry._
 </span>
 <span class="k">val</span> <span class="nv">retryFiveTimes</span> <span class="k">=</span> <span class="nv">RetryPolicies</span><span class="o">.</span><span class="py">limitRetries</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mi">5</span><span class="o">)</span>
-<span class="c1">// retryFiveTimes: retry.RetryPolicy[cats.effect.IO] = RetryPolicy(retry.RetryPolicy$$$Lambda$8263/208113654@6a65b6ed)
+<span class="c1">// retryFiveTimes: retry.RetryPolicy[cats.effect.IO] = RetryPolicy(retry.RetryPolicy$$$Lambda$9803/1245787504@204cab2d)
 </span></code></pre></div></div>
 
 <p>We’ll also provide an error handler that does some logging before every retry.
@@ -90,7 +90,7 @@ retries.</p>
 <span class="c1">// import scala.concurrent.ExecutionContext.global
 </span>
 <span class="k">implicit</span> <span class="k">val</span> <span class="nv">timer</span><span class="k">:</span> <span class="kt">Timer</span><span class="o">[</span><span class="kt">IO</span><span class="o">]</span> <span class="k">=</span> <span class="nv">IO</span><span class="o">.</span><span class="py">timer</span><span class="o">(</span><span class="n">global</span><span class="o">)</span>
-<span class="c1">// timer: cats.effect.Timer[cats.effect.IO] = cats.effect.internals.IOTimer@653ca552
+<span class="c1">// timer: cats.effect.Timer[cats.effect.IO] = cats.effect.internals.IOTimer@141bf88a
 </span>
 <span class="c1">// This is so we can use that Timer to perform delays between retries
 </span><span class="k">import</span> <span class="nn">retry.CatsEffect._</span>
@@ -101,7 +101,7 @@ retries.</p>
     <span class="n">policy</span> <span class="k">=</span> <span class="n">retryFiveTimes</span><span class="o">,</span>
     <span class="n">onError</span> <span class="k">=</span> <span class="n">logError</span>
   <span class="o">)(</span><span class="n">flakyRequest</span><span class="o">)</span>
-<span class="c1">// flakyRequestWithRetry: cats.effect.IO[String] = IO$913716240
+<span class="c1">// flakyRequestWithRetry: cats.effect.IO[String] = IO$1533515250
 </span></code></pre></div></div>
 
 <p>Let’s see it in action.</p>
