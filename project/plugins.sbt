@@ -1,5 +1,5 @@
 addSbtPlugin("org.scalameta" % "sbt-scalafmt"   % "2.0.4")
-addSbtPlugin("com.47deg"     % "sbt-microsites" % "0.9.4")
+addSbtPlugin("com.47deg"     % "sbt-microsites" % "0.9.6")
 //addSbtPlugin("com.dwijnand"       % "sbt-travisci"             % "1.2.0")
 addSbtPlugin("org.xerial.sbt"     % "sbt-sonatype"             % "2.6")
 addSbtPlugin("com.jsuereth"       % "sbt-pgp"                  % "1.1.2")
