@@ -13,6 +13,9 @@ import scala.concurrent.duration._
 
 class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
 
+  override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
+    PropertyCheckConfiguration(minSuccessful = 100)
+
   implicit val arbRetryStatus: Arbitrary[RetryStatus] = Arbitrary {
     for {
       a <- Gen.choose(0, 1000)

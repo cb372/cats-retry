@@ -16,6 +16,9 @@ import cats.Monad
 
 class RetryPolicyLawsSpec extends AnyFunSuite with Discipline with Checkers {
 
+  override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
+    PropertyCheckConfiguration(minSuccessful = 100)
+
   implicit val cogenStatus: Cogen[RetryStatus] =
     Cogen { (seed, status) =>
       val a = Cogen[Int].perturb(seed, status.retriesSoFar)
