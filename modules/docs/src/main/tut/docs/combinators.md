@@ -66,7 +66,7 @@ errors, but you want to retry until it returns a value that you are happy with.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retrying[A, M: Monad](policy: RetryPolicy[M],
+def retryingM[A, M: Monad](policy: RetryPolicy[M],
                           wasSuccessful: A => Boolean,
                           onFailure: (A, RetryDetails) => M[Unit])
                          (action: => M[A])
@@ -113,7 +113,7 @@ The API (modulo some type-inference trickery) looks like this:
 
 ```scala
 def retryingOnSomeErrors[A, E, M: Monad](policy: RetryPolicy[M],
-                                         isWorthRetrying: A => Boolean,
+                                         isWorthRetrying: E => Boolean,
                                          onError: (E, RetryDetails) => M[Unit])
                                         (action: => M[A])
 ```
