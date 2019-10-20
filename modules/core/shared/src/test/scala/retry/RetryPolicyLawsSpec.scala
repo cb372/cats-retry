@@ -50,7 +50,8 @@ class RetryPolicyLawsSpec extends AnyFunSuite with Discipline with Checkers {
         RetryStatus(2, 20.millis, Some(10.millis)),
         RetryStatus(2, 30.millis, Some(20.millis)),
         RetryStatus(3, 70.millis, Some(40.millis)),
-        RetryStatus(4, 150.millis, Some(80.millis))
+        RetryStatus(4, 150.millis, Some(80.millis)),
+        RetryStatus(5, Long.MaxValue.nanos, Some(100.millis))
       )
     )
 
