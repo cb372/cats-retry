@@ -11,6 +11,26 @@ import scala.util.Random
 
 object RetryPolicies {
 
+  private val LongMax: BigInt = BigInt(Long.MaxValue)
+
+  /*
+   * Multiply the given duration by the given multiplier, but cap the result to
+   * ensure we don't try to create a FiniteDuration longer than 2^63 - 1 nanoseconds.
+   *
+   * Note: despite the "safe" in the name, we can still create an invalid
+   * FiniteDuration if the multiplier is negative. But an assumption of the library
+   * as a whole is that nobody would be silly enough to use negative delays.
+   */
+  private def safeMultiply(
+      duration: FiniteDuration,
+      multiplier: Long
+  ): FiniteDuration = {
+    val durationNanos   = BigInt(duration.toNanos)
+    val resultNanos     = durationNanos * BigInt(multiplier)
+    val safeResultNanos = resultNanos min LongMax
+    FiniteDuration(safeResultNanos.toLong, TimeUnit.NANOSECONDS)
+  }
+
   /**
     * Don't retry at all and always give up. Only really useful for combining with other policies.
     */
@@ -30,7 +50,9 @@ object RetryPolicies {
       baseDelay: FiniteDuration
   ): RetryPolicy[M] =
     RetryPolicy.lift { status =>
-      DelayAndRetry(baseDelay * Math.pow(2, status.retriesSoFar).toLong)
+      val delay =
+        safeMultiply(baseDelay, Math.pow(2, status.retriesSoFar).toLong)
+      DelayAndRetry(delay)
     }
 
   /**
@@ -55,7 +77,8 @@ object RetryPolicies {
       baseDelay: FiniteDuration
   ): RetryPolicy[M] =
     RetryPolicy.lift { status =>
-      val delay = baseDelay * Fibonacci.fibonacci(status.retriesSoFar + 1)
+      val delay =
+        safeMultiply(baseDelay, Fibonacci.fibonacci(status.retriesSoFar + 1))
       DelayAndRetry(delay)
     }
 
@@ -66,7 +89,7 @@ object RetryPolicies {
   def fullJitter[M[_]: Applicative](baseDelay: FiniteDuration): RetryPolicy[M] =
     RetryPolicy.lift { status =>
       val e          = Math.pow(2, status.retriesSoFar).toLong
-      val maxDelay   = baseDelay * e
+      val maxDelay   = safeMultiply(baseDelay, e)
       val delayNanos = (maxDelay.toNanos * Random.nextDouble()).toLong
       DelayAndRetry(new FiniteDuration(delayNanos, TimeUnit.NANOSECONDS))
     }
