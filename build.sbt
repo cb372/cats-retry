@@ -56,7 +56,7 @@ val moduleSettings = commonSettings ++ Seq(
 )
 
 val catsVersion          = "2.0.0"
-val scalatestVersion     = "3.1.0-RC2"
+val scalatestVersion     = "3.1.0-RC3"
 val scalaTestPlusVersion = "3.1.0.0-RC2"
 val scalacheckVersion    = "1.14.0"
 val disciplineVersion    = "1.0.0-M1"
