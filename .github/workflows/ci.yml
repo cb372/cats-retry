@@ -2,10 +2,24 @@ name: CI
 on:
   push:
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
     - uses: olafurpg/setup-scala@v5
     - name: Test
-      run: sbt -J-Xms4G -J-Xmx4G +test docs/tut scalafmtCheckAll scalafmtSbtCheck
+      run: sbt -J-Xms4G -J-Xmx4G +test
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: olafurpg/setup-scala@v5
+    - name: Compile documentation
+      run: sbt -J-Xms4G -J-Xmx4G docs/tut
+  format:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: olafurpg/setup-scala@v5
+    - name: Check formatting
+      run: sbt -J-Xms4G -J-Xmx4G scalafmtCheckAll scalafmtSbtCheck
