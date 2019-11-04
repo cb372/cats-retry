@@ -13,6 +13,9 @@ import scala.concurrent.duration._
 
 class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
 
+  override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
+    PropertyCheckConfiguration(minSuccessful = 100)
+
   implicit val arbRetryStatus: Arbitrary[RetryStatus] = Arbitrary {
     for {
       a <- Gen.choose(0, 1000)
@@ -22,6 +25,56 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
       a,
       FiniteDuration(b, TimeUnit.MILLISECONDS),
       c.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
+    )
+  }
+
+  val genFiniteDuration: Gen[FiniteDuration] =
+    Gen.posNum[Long].map(FiniteDuration(_, TimeUnit.NANOSECONDS))
+
+  case class LabelledRetryPolicy(policy: RetryPolicy[Id], description: String) {
+    override def toString: String = description
+  }
+
+  implicit val arbRetryPolicy: Arbitrary[LabelledRetryPolicy] = Arbitrary {
+    Gen.oneOf(
+      Gen.const(LabelledRetryPolicy(alwaysGiveUp[Id], "alwaysGiveUp")),
+      genFiniteDuration.map(
+        delay =>
+          LabelledRetryPolicy(
+            constantDelay[Id](delay),
+            s"constantDelay($delay)"
+          )
+      ),
+      genFiniteDuration.map(
+        baseDelay =>
+          LabelledRetryPolicy(
+            exponentialBackoff[Id](baseDelay),
+            s"exponentialBackoff($baseDelay)"
+          )
+      ),
+      Gen
+        .posNum[Int]
+        .map(
+          maxRetries =>
+            LabelledRetryPolicy(
+              limitRetries(maxRetries),
+              s"limitRetries($maxRetries)"
+            )
+        ),
+      genFiniteDuration.map(
+        baseDelay =>
+          LabelledRetryPolicy(
+            fibonacciBackoff[Id](baseDelay),
+            s"fibonacciBackoff($baseDelay)"
+          )
+      ),
+      genFiniteDuration.map(
+        baseDelay =>
+          LabelledRetryPolicy(
+            fullJitter[Id](baseDelay),
+            s"fullJitter($baseDelay)"
+          )
+      )
     )
   }
 
@@ -109,6 +162,17 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
     test(3, 800.milliseconds)
     test(4, 1600.milliseconds)
     test(5, 3200.milliseconds)
+  }
+
+  behavior of "all built-in policies"
+
+  it should "never try to create a FiniteDuration of more than Long.MaxValue nanoseconds" in check {
+    (labelledPolicy: LabelledRetryPolicy, status: RetryStatus) =>
+      labelledPolicy.policy.decideNextRetry(status) match {
+        case PolicyDecision.DelayAndRetry(nextDelay) =>
+          nextDelay.toNanos <= Long.MaxValue
+        case PolicyDecision.GiveUp => true
+      }
   }
 
   behavior of "limitRetries"

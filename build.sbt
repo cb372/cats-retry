@@ -2,7 +2,7 @@ import ReleaseTransformations._
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
 lazy val scalaVersion213 = "2.13.0"
-lazy val scalaVersion212 = "2.12.8"
+lazy val scalaVersion212 = "2.12.10"
 lazy val scalaVersion211 = "2.11.12"
 lazy val scalaVersions   = List(scalaVersion213, scalaVersion212, scalaVersion211)
 
@@ -55,11 +55,12 @@ val moduleSettings = commonSettings ++ Seq(
   scalafmtOnCompile := true
 )
 
-val catsVersion          = "2.0.0-M4"
-val scalatestVersion     = "3.1.0-SNAP13"
-val scalaTestPlusVersion = "1.0.0-SNAP8"
-val scalacheckVersion    = "1.14.0"
-val disciplineVersion    = "0.12.0-M3"
+val catsVersion          = "2.0.0"
+val scalatestVersion     = "3.1.0-RC3"
+val scalaTestPlusVersion = "3.1.0.0-RC2"
+val scalacheckVersion    = "1.14.2"
+val disciplineVersion    = "1.0.0-RC1"
+
 val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/core"))
   .settings(moduleSettings)
@@ -86,7 +87,7 @@ val catsEffect = crossProject(JVMPlatform, JSPlatform)
     crossScalaVersions := scalaVersions,
     name := "cats-effect",
     libraryDependencies ++= Seq(
-      "org.typelevel"  %%% "cats-effect" % "2.0.0-M4",
+      "org.typelevel"  %%% "cats-effect" % "2.0.0",
       "org.scalatest"  %%% "scalatest"   % scalatestVersion % Test,
       "org.scalacheck" %%% "scalacheck"  % scalacheckVersion % Test
     )
@@ -102,7 +103,7 @@ val monix = crossProject(JVMPlatform, JSPlatform)
   .settings(
     crossScalaVersions := List(scalaVersion212, scalaVersion211),
     libraryDependencies ++= Seq(
-      "io.monix"       %%% "monix"      % "3.0.0-RC3",
+      "io.monix"       %%% "monix"      % "3.0.0",
       "org.scalatest"  %%% "scalatest"  % scalatestVersion % Test,
       "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test
     )
@@ -119,7 +120,9 @@ val docs = project
     scalacOptions -= "-Ywarn-dead-code",
     scalacOptions -= "-Ywarn-unused",
     scalacOptions += "-Ydelambdafy:inline",
-    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full),
+    addCompilerPlugin(
+      "org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full
+    ),
     crossScalaVersions := Nil,
     buildInfoKeys := Seq[BuildInfoKey](latestVersion),
     buildInfoPackage := "retry",

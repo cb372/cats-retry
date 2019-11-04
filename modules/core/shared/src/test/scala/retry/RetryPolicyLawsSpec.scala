@@ -16,6 +16,9 @@ import cats.Monad
 
 class RetryPolicyLawsSpec extends AnyFunSuite with Discipline with Checkers {
 
+  override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
+    PropertyCheckConfiguration(minSuccessful = 100)
+
   implicit val cogenStatus: Cogen[RetryStatus] =
     Cogen { (seed, status) =>
       val a = Cogen[Int].perturb(seed, status.retriesSoFar)
@@ -44,13 +47,14 @@ class RetryPolicyLawsSpec extends AnyFunSuite with Discipline with Checkers {
 
   implicit val retryStatusExhaustiveCheck: ExhaustiveCheck[RetryStatus] =
     ExhaustiveCheck.instance(
-      Stream(
+      List(
         RetryStatus.NoRetriesYet,
         RetryStatus(1, 10.millis, Some(10.millis)),
         RetryStatus(2, 20.millis, Some(10.millis)),
         RetryStatus(2, 30.millis, Some(20.millis)),
         RetryStatus(3, 70.millis, Some(40.millis)),
-        RetryStatus(4, 150.millis, Some(80.millis))
+        RetryStatus(4, 150.millis, Some(80.millis)),
+        RetryStatus(5, Long.MaxValue.nanos, Some(100.millis))
       )
     )
 
@@ -79,6 +83,20 @@ class RetryPolicyLawsSpec extends AnyFunSuite with Discipline with Checkers {
     check(
       (p: RetryPolicy[Id]) =>
         Eq[RetryPolicy[Id]].eqv(p.meet(RetryPolicies.alwaysGiveUp[Id]), p)
+    )
+  }
+
+  test("join meet absorption") {
+    check(
+      (p1: RetryPolicy[Id], p2: RetryPolicy[Id]) =>
+        Eq[RetryPolicy[Id]].eqv(p1.meet(p1.join(p2)), p1)
+    )
+  }
+
+  test("meet join absorption") {
+    check(
+      (p1: RetryPolicy[Id], p2: RetryPolicy[Id]) =>
+        Eq[RetryPolicy[Id]].eqv(p1.join(p1.meet(p2)), p1)
     )
   }
 
