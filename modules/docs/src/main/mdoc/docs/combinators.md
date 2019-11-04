@@ -23,7 +23,7 @@ The API looks like this:
 def retrying[A](policy: RetryPolicy[Id],
                 wasSuccessful: A => Boolean,
                 onFailure: (A, RetryDetails) => Unit)
-               (action: => A)
+               (action: => A): A
 ```
 
 You need to pass in:
@@ -35,7 +35,7 @@ You need to pass in:
 
 For example, let's keep rolling a die until we get a six.
 
-```scala mdoc
+```scala mdoc:reset-class
 import cats.Id
 import retry._
 import scala.concurrent.duration._
@@ -47,9 +47,7 @@ val predicate = (_: Int) == 6
 def onFailure(failedValue: Int, details: RetryDetails): Unit = {
   println(s"Rolled a $failedValue, retrying ...")
 }
-```
 
-```scala mdoc
 val loadedDie = util.LoadedDie(2, 5, 4, 1, 3, 2, 6)
 
 retrying(policy, predicate, onFailure){
@@ -66,10 +64,10 @@ errors, but you want to retry until it returns a value that you are happy with.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retrying[A, M: Monad](policy: RetryPolicy[M],
-                          wasSuccessful: A => Boolean,
-                          onFailure: (A, RetryDetails) => M[Unit])
-                         (action: => M[A])
+def retryingM[M[_]: Monad, A](policy: RetryPolicy[M],
+                              wasSuccessful: A => Boolean,
+                              onFailure: (A, RetryDetails) => M[Unit])
+                             (action: => M[A]): M[A]
 ```
 
 You need to pass in:
@@ -81,25 +79,24 @@ You need to pass in:
 
 For example, let's redo the rolling-a-six example, this time using `IO`.
 
-```scala mdoc
-import cats.effect.IO
+```scala mdoc:reset-class
+import cats.effect.{ContextShift, IO, Timer}
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.global
+import retry._
+import retry.CatsEffect._
+
+// We need an implicit cats.effect.Timer
+implicit val timer: Timer[IO] = IO.timer(global)
 
 val ioPolicy = RetryPolicies.constantDelay[IO](10.milliseconds)
 
 def ioOnFailure(failedValue: Int, details: RetryDetails): IO[Unit] = {
   IO(println(s"Rolled a $failedValue, retrying ..."))
 }
-```
+val loadedDie = util.LoadedDie(2, 5, 4, 1, 3, 2, 6)
 
-```scala mdoc
-// We need an implicit cats.effect.Timer
-import cats.effect._
-import scala.concurrent.ExecutionContext.global
-import retry.CatsEffect._
-
-implicit val timer: Timer[IO] = IO.timer(global)
-
-val io = retryingM(ioPolicy, predicate, ioOnFailure){
+val io = retryingM(ioPolicy, (_: Int) == 6, ioOnFailure){
   IO(loadedDie.roll())
 }
 
@@ -111,7 +108,7 @@ io.timeout(1.minute)
 
 ## `retryingOnSomeErrors`
 
-This is useful when you are working with a `MonadError[A, E]` but you only want
+This is useful when you are working with a `MonadError[M, E]` but you only want
 to retry on some errors.
 
 To use `retryingOnSomeErrors`, you need to pass in a predicate that decides whether a given error is worth retrying.
@@ -119,10 +116,10 @@ To use `retryingOnSomeErrors`, you need to pass in a predicate that decides whet
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnSomeErrors[A, E, M: Monad](policy: RetryPolicy[M],
-                                         isWorthRetrying: A => Boolean,
-                                         onError: (E, RetryDetails) => M[Unit])
-                                        (action: => M[A])
+def retryingOnSomeErrors[M[_]: Monad, A, E](policy: RetryPolicy[M],
+                                            isWorthRetrying: E => Boolean,
+                                            onError: (E, RetryDetails) => M[Unit])
+                                           (action: => M[A]): M[A]
 ```
 
 You need to pass in:
@@ -136,15 +133,15 @@ TODO example
 
 ## `retryingOnAllErrors`
 
-This is useful when you are working with a `MonadError[A, E]` and you want to
+This is useful when you are working with a `MonadError[M, E]` and you want to
 retry on all errors.
 
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnAllErrors[A, E, M: Monad](policy: RetryPolicy[M],
-                                        onError: (E, RetryDetails) => M[Unit])
-                                       (action: => M[A])
+def retryingOnAllErrors[M[_]: Monad, A, E](policy: RetryPolicy[M],
+                                           onError: (E, RetryDetails) => M[Unit])
+                                          (action: => M[A]): M[A]
 ```
 
 You need to pass in:
@@ -164,8 +161,8 @@ import retry._
 import cats.effect.IO
 import retry.syntax.all._
 
-implicit def noop[IO[_], A]: (A, RetryDetails) => IO[Unit] = retry.noop[IO, A]
-implicit val policy: RetryPolicy[IO]                       = RetryPolicies.limitRetries[IO](2)
+implicit def noop[A]: (A, RetryDetails) => IO[Unit] = retry.noop[IO, A]
+implicit val policy: RetryPolicy[IO]                = RetryPolicies.limitRetries[IO](2)
 
 val httpClient = util.FlakyHttpClient()
 
