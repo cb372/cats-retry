@@ -103,7 +103,7 @@ val monix = crossProject(JVMPlatform, JSPlatform)
   .settings(
     crossScalaVersions := List(scalaVersion212, scalaVersion211),
     libraryDependencies ++= Seq(
-      "io.monix"       %%% "monix"      % "3.0.0",
+      "io.monix"       %%% "monix"      % "3.1.0",
       "org.scalatest"  %%% "scalatest"  % scalatestVersion % Test,
       "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test
     )
