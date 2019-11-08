@@ -7,7 +7,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 import scala.concurrent.duration._
 
 class RetryPolicySpec extends AnyFlatSpec {
-
   behavior of "BoundedSemilattice append"
 
   it should "give up if either of the composed policies decides to give up" in {
@@ -41,5 +40,4 @@ class RetryPolicySpec extends AnyFlatSpec {
       ) == PolicyDecision.DelayAndRetry(2.seconds)
     )
   }
-
 }

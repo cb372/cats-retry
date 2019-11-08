@@ -1,7 +1,6 @@
 package retry
 
 object Fibonacci {
-
   def fibonacci(n: Int): Long = {
     if (n > 0)
       fib(n)._1
@@ -22,5 +21,4 @@ object Fibonacci {
       else
         (d, c + d)
   }
-
 }

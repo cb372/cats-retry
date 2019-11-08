@@ -15,7 +15,6 @@ import cats.arrow.FunctionK
 import cats.Monad
 
 class RetryPolicyLawsSpec extends AnyFunSuite with Discipline with Checkers {
-
   override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSuccessful = 100)
 
@@ -207,5 +206,4 @@ class RetryPolicyLawsSpec extends AnyFunSuite with Discipline with Checkers {
         Eq[RetryPolicy[Id]].eqv(p.followedBy(RetryPolicies.alwaysGiveUp), p)
     )
   }
-
 }
