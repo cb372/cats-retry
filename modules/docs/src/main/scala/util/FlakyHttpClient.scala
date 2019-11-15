@@ -3,7 +3,6 @@ package util
 import java.io.IOException
 
 case class FlakyHttpClient() {
-
   private var i = 0
 
   def getCatGif(): String = {
@@ -14,5 +13,4 @@ case class FlakyHttpClient() {
       throw new IOException("Failed to download")
     }
   }
-
 }

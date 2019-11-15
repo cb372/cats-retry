@@ -10,7 +10,6 @@ import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.util.Random
 
 object RetryPolicies {
-
   private val LongMax: BigInt = BigInt(Long.MaxValue)
 
   /*
@@ -113,7 +112,6 @@ object RetryPolicies {
       threshold: FiniteDuration,
       policy: RetryPolicy[M]
   ): RetryPolicy[M] = {
-
     def decideNextRetry(status: RetryStatus): M[PolicyDecision] =
       policy.decideNextRetry(status).map {
         case r @ DelayAndRetry(delay) =>
@@ -133,7 +131,6 @@ object RetryPolicies {
       threshold: FiniteDuration,
       policy: RetryPolicy[M]
   ): RetryPolicy[M] = {
-
     def decideNextRetry(status: RetryStatus): M[PolicyDecision] =
       policy.decideNextRetry(status).map {
         case r @ DelayAndRetry(delay) =>
@@ -143,5 +140,4 @@ object RetryPolicies {
 
     RetryPolicy[M](decideNextRetry)
   }
-
 }

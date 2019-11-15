@@ -74,11 +74,9 @@ case class RetryPolicy[M[_]](
 
   def mapK[N[_]](nt: FunctionK[M, N]): RetryPolicy[N] =
     RetryPolicy(status => nt(decideNextRetry(status)))
-
 }
 
 object RetryPolicy {
-
   def lift[M[_]](
       f: RetryStatus => PolicyDecision
   )(
@@ -91,7 +89,6 @@ object RetryPolicy {
       implicit M: Applicative[M]
   ): BoundedSemilattice[RetryPolicy[M]] =
     new BoundedSemilattice[RetryPolicy[M]] {
-
       override def empty: RetryPolicy[M] =
         RetryPolicies.constantDelay[M](Duration.Zero)
 
@@ -100,5 +97,4 @@ object RetryPolicy {
           y: RetryPolicy[M]
       ): RetryPolicy[M] = x.join(y)
     }
-
 }

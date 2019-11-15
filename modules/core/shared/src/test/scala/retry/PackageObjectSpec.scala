@@ -8,7 +8,6 @@ import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 
 class PackageObjectSpec extends AnyFlatSpec {
-
   type StringOr[A] = Either[String, A]
 
   behavior of "retryingM"
@@ -194,7 +193,6 @@ class PackageObjectSpec extends AnyFlatSpec {
   }
 
   private class TestContext {
-
     var attempts = 0
     val errors   = ArrayBuffer.empty[String]
     val delays   = ArrayBuffer.empty[FiniteDuration]
@@ -208,6 +206,5 @@ class PackageObjectSpec extends AnyFlatSpec {
       }
       Right(())
     }
-
   }
 }

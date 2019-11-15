@@ -11,7 +11,6 @@ import scala.concurrent.duration._
 import scala.util.Success
 
 class MonixSpec extends AnyFlatSpec {
-
   behavior of "retryingM"
 
   it should "retry until the action succeeds" in new TestContext {
@@ -41,7 +40,6 @@ class MonixSpec extends AnyFlatSpec {
   }
 
   private class TestContext {
-
     var attempts = 0
     val errors   = ArrayBuffer.empty[Int]
     val delays   = ArrayBuffer.empty[FiniteDuration]
@@ -55,6 +53,5 @@ class MonixSpec extends AnyFlatSpec {
       }
       Task(())
     }
-
   }
 }

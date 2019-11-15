@@ -8,11 +8,9 @@ trait RetrySyntax {
       action: => M[A]
   ): RetryingOps[M, A] =
     new RetryingOps[M, A](action)
-
 }
 
 final class RetryingOps[M[_], A](action: => M[A]) {
-
   def retryingM[E](wasSuccessful: A => Boolean)(
       implicit policy: RetryPolicy[M],
       onFailure: (A, RetryDetails) => M[Unit],
@@ -47,5 +45,4 @@ final class RetryingOps[M[_], A](action: => M[A]) {
       isWorthRetrying = isWorthRetrying,
       onError = onError
     )(action)
-
 }

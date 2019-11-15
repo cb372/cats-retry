@@ -3,7 +3,6 @@ package retry
 import org.scalatest.flatspec.AnyFlatSpec
 
 class FibonacciSpec extends AnyFlatSpec {
-
   it should "calculate the Fibonacci sequence" in {
     assert(Fibonacci.fibonacci(0) == 0)
     assert(Fibonacci.fibonacci(1) == 1)
@@ -15,5 +14,4 @@ class FibonacciSpec extends AnyFlatSpec {
     assert(Fibonacci.fibonacci(7) == 13)
     assert(Fibonacci.fibonacci(75) == 2111485077978050L)
   }
-
 }
