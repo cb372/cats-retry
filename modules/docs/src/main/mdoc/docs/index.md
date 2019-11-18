@@ -37,11 +37,13 @@ We'll add dependencies on the `core` and `cats-effect` modules:
 ```scala mdoc:passthrough
 println(
   s"""
+  |```
   |val catsRetryVersion = "$latestVersion"
   |libraryDependencies ++= Seq(
   |  "com.github.cb372" %% "cats-retry-core"        % catsRetryVersion,
   |  "com.github.cb372" %% "cats-retry-cats-effect" % catsRetryVersion
   |)
+  |```
   |""".stripMargin.trim
 )
 ```
