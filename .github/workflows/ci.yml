@@ -18,7 +18,7 @@ jobs:
     - uses: actions/checkout@v1
     - uses: olafurpg/setup-scala@v5
     - name: Compile documentation
-      run: sbt -J-Xms4G -J-Xmx4G docs/tut
+      run: sbt -J-Xms4G -J-Xmx4G docs/mdoc
   format:
     runs-on: ubuntu-latest
     steps:

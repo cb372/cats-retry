@@ -23,7 +23,7 @@ simply do a `Thread.sleep(...)`.
 Note: these instances are not provided if you are using Scala.js, as
 `Thread.sleep` doesn't make any sense in JavaScript.
 
-```tut:book
+```scala mdoc:silent:reset-class
 import retry.Sleep
 import cats.Id
 import scala.concurrent.duration._
@@ -31,8 +31,10 @@ import scala.concurrent.duration._
 Sleep[Id].sleep(10.milliseconds)
 ```
 
-```tut:book
+```scala mdoc:silent:reset-class
+import retry.Sleep
 import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 Sleep[Future].sleep(10.milliseconds)
@@ -41,8 +43,10 @@ Sleep[Future].sleep(10.milliseconds)
 The `cats-effect` module provides an instance that uses a cats-effect
 [`Timer`](https://typelevel.org/cats-effect/datatypes/timer.html).
 
-```tut:book
+```scala mdoc:silent:reset-class
+import retry.Sleep
 import cats.effect.{IO, Timer}
+import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import retry.CatsEffect._
 

@@ -41,6 +41,8 @@ There are also a few combinators to transform policies, including:
 
 `cats-retry` offers several ways of composing policies together.
 
+### join
+
 First up is the `join` operation, it has the following semantics:
 
 * If either of the policies wants to give up, the combined policy gives up.
@@ -59,14 +61,18 @@ This makes it very useful for combining two policies with a lower bounded delay.
 For an example of composing policies like this, we can use `join` to create a policy that retries up to 5 times, starting with a 10 ms delay and increasing
 exponentially:
 
-```tut:book
+```scala mdoc:silent
 import cats._
+import cats.effect.IO
+import cats.implicits._
 import scala.concurrent.duration._
 import retry.RetryPolicy
 import retry.RetryPolicies._
 
-val policy = limitRetries[Id](5) join exponentialBackoff[Id](10.milliseconds)
+val policy = limitRetries[IO](5) join exponentialBackoff[IO](10.milliseconds)
 ```
+
+### meet
 
 The next operation is `meet`, it is the dual of `join` and has the following semantics:
 
@@ -82,11 +88,11 @@ Just like `join`, `meet` is also associative, commutative and idempotent, which 
 You can use `meet` to compose policies where you want an upper bound on the delay.
 As an example the `capDelay` combinator is implemented using `meet`:
 
-```tut:book
+```scala mdoc:silent
 def capDelay[M[_]: Applicative](cap: FiniteDuration, policy: RetryPolicy[M]): RetryPolicy[M] =
   policy meet constantDelay[M](cap)
 
-val neverAbove5Minutes = capDelay(5.minutes, exponentialBackoff[Id](10.milliseconds))
+val neverAbove5Minutes = capDelay(5.minutes, exponentialBackoff[IO](10.milliseconds))
 ```
 
 Retry policies form a distributive lattice, as `meet` and `join` both distribute over each other.
@@ -95,29 +101,68 @@ As we feel that the `join` operation is more common,
 we use it as the canonical `BoundedSemilattice` instance found in the companion object.
 This means you can use it with the standard Cats semigroup syntax like this:
 
-```tut:book
-import cats.syntax.semigroup._
+```scala mdoc:silent
 
-limitRetries[Id](5) |+| constantDelay[Id](100.milliseconds)
+limitRetries[IO](5) |+| constantDelay[IO](100.milliseconds)
 ```
+
+### followedBy
 
 There is also an operator `followedBy` to sequentially compose policies, i.e. if the first one wants to give up, use the second one.
 As an example, we can retry with a 100ms delay 5 times and then retry every minute:
 
-```tut:book
-val retry5times100millis = constantDelay[Id](100.millis) |+| limitRetries[Id](5)
+```scala mdoc
+val retry5times100millis = constantDelay[IO](100.millis) |+| limitRetries[IO](5)
 
-retry5times100millis.followedBy(constantDelay[Id](1.minute))
+retry5times100millis.followedBy(constantDelay[IO](1.minute))
 ```
 
 `followedBy` is an associative operation and forms a `Monoid` with a policy that always gives up as its identity:
 
-```tut:book
-// This is equal to just calling constantDelay[Id](200.millis)
-constantDelay[Id](200.millis).followedBy(alwaysGiveUp)
+```scala mdoc:silent
+// This is equal to just calling constantDelay[IO](200.millis)
+constantDelay[IO](200.millis).followedBy(alwaysGiveUp)
 ```
 
-Currently we don't provide such an instance as it would clash with the `BoundedSemilattice` instance described earlier.
+Currently we don't provide such an instance, as it would clash with the `BoundedSemilattice` instance described earlier.
+
+### mapDelay, flatMapDelay
+
+The `mapDelay` and `flatMapDelay` operators work just like `map` and `flatMap`, but allow you to map on the `FiniteDuration` that represents the retry delay.
+
+As a simple example, it allows us to add a specific delay of 10ms on top of an existing policy:
+
+```scala mdoc
+fibonacciBackoff[IO](200.millis).mapDelay(_ + 10.millis)
+```
+
+Furthermore, `flatMapDelay` also allows us to depend on certain effects to evaluate how to modify the delay:
+
+```scala mdoc
+
+def determineDelay: IO[FiniteDuration] = ???
+
+fibonacciBackoff[IO](200.millis).flatMapDelay { currentDelay =>
+  if (currentDelay < 500.millis) currentDelay.pure[IO]
+  else determineDelay
+}
+```
+
+### mapK
+
+If you've defined a `RetryPolicy[F]`, but you need a `RetryPolicy` for another effect type `G[_]`, you can use `mapK` to convert from one to the other.
+For example, you might have defined a custom `RetryPolicy[cats.effect.IO]` and for another part of the app you might need a `RetryPolicy[Kleisli[monix.eval.Task]]`:
+
+```scala mdoc
+import cats.effect.LiftIO
+import cats.data.Kleisli
+import monix.eval.Task
+
+val customPolicy: RetryPolicy[IO] = 
+  limitRetries[IO](5).join(constantDelay[IO](100.milliseconds))
+
+customPolicy.mapK[Kleisli[Task, String, ?]](LiftIO.liftK[Kleisli[Task, String, ?]])
+```
 
 
 ## Writing your own policy
@@ -125,9 +170,8 @@ Currently we don't provide such an instance as it would clash with the `BoundedS
 The easiest way to define a custom retry policy is to use `RetryPolicy.lift`,
 specifying the monad you need to work in:
 
-```tut:book
+```scala mdoc
 import retry.{RetryPolicy, PolicyDecision}
-import cats.effect.IO
 import java.time.{LocalDate, DayOfWeek}
 
 val onlyRetryOnTuesdays = RetryPolicy.lift[IO] { _ =>
