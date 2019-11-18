@@ -10,5 +10,4 @@ case class LoadedDie(rolls: Int*) {
     }
     rolls(i)
   }
-
 }

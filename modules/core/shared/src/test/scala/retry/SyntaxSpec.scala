@@ -200,7 +200,6 @@ class SyntaxSpec extends AnyFlatSpec {
   }
 
   private class TestContext {
-
     var attempts = 0
     val errors   = ArrayBuffer.empty[String]
     val delays   = ArrayBuffer.empty[FiniteDuration]
@@ -214,6 +213,5 @@ class SyntaxSpec extends AnyFlatSpec {
       }
       Right(())
     }
-
   }
 }

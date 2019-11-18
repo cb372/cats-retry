@@ -6,13 +6,10 @@ import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future, blocking}
 
 trait Sleep[M[_]] {
-
   def sleep(delay: FiniteDuration): M[Unit]
-
 }
 
 object Sleep {
-
   def apply[M[_]](implicit sleep: Sleep[M]): Sleep[M] = sleep
 
   implicit val threadSleepId: Sleep[Id] = new Sleep[Id] {

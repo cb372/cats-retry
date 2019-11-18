@@ -5,7 +5,6 @@ import scala.concurrent.duration.FiniteDuration
 sealed trait RetryDetails
 
 object RetryDetails {
-
   final case class GivingUp(
       totalRetries: Int,
       totalDelay: FiniteDuration
@@ -16,5 +15,4 @@ object RetryDetails {
       retriesSoFar: Int,
       cumulativeDelay: FiniteDuration
   ) extends RetryDetails
-
 }

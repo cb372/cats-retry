@@ -6,7 +6,6 @@ import cats.syntax.apply._
 import scala.concurrent.duration.FiniteDuration
 
 package object retry {
-
   def retrying[A](
       policy: RetryPolicy[Id],
       wasSuccessful: A => Boolean,
@@ -23,7 +22,6 @@ package object retry {
   def retryingM[A] = new RetryingPartiallyApplied[A]
 
   private[retry] class RetryingPartiallyApplied[A] {
-
     def apply[M[_]](
         policy: RetryPolicy[M],
         wasSuccessful: A => Boolean,
@@ -35,7 +33,6 @@ package object retry {
         M: Monad[M],
         S: Sleep[M]
     ): M[A] = {
-
       def performNextStep(failedResult: A, nextStep: NextStep): M[A] =
         nextStep match {
           case NextStep.RetryAfterDelay(delay, updatedStatus) =>
@@ -61,13 +58,11 @@ package object retry {
 
       performAction(RetryStatus.NoRetriesYet)
     }
-
   }
 
   def retryingOnSomeErrors[A] = new RetryingOnSomeErrorsPartiallyApplied[A]
 
   private[retry] class RetryingOnSomeErrorsPartiallyApplied[A] {
-
     def apply[M[_], E](
         policy: RetryPolicy[M],
         isWorthRetrying: E => Boolean,
@@ -79,7 +74,6 @@ package object retry {
         ME: MonadError[M, E],
         S: Sleep[M]
     ): M[A] = {
-
       def performNextStep(error: E, nextStep: NextStep): M[A] =
         nextStep match {
           case NextStep.RetryAfterDelay(delay, updatedStatus) =>
@@ -103,13 +97,11 @@ package object retry {
 
       performAction(RetryStatus.NoRetriesYet)
     }
-
   }
 
   def retryingOnAllErrors[A] = new RetryingOnAllErrorsPartiallyApplied[A]
 
   private[retry] class RetryingOnAllErrorsPartiallyApplied[A] {
-
     def apply[M[_], E](
         policy: RetryPolicy[M],
         onError: (E, RetryDetails) => M[Unit]
@@ -120,7 +112,6 @@ package object retry {
         ME: MonadError[M, E],
         S: Sleep[M]
     ): M[A] = {
-
       def performNextStep(error: E, nextStep: NextStep): M[A] =
         nextStep match {
           case NextStep.RetryAfterDelay(delay, updatedStatus) =>
@@ -142,7 +133,6 @@ package object retry {
 
       performAction(RetryStatus.NoRetriesYet)
     }
-
   }
 
   def noop[M[_]: Monad, A]: (A, RetryDetails) => M[Unit] =
@@ -180,14 +170,11 @@ package object retry {
   private sealed trait NextStep
 
   private object NextStep {
-
     case object GiveUp extends NextStep
 
     final case class RetryAfterDelay(
         delay: FiniteDuration,
         updatedStatus: RetryStatus
     ) extends NextStep
-
   }
-
 }

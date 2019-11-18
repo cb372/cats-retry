@@ -12,7 +12,6 @@ import retry.PolicyDecision.{DelayAndRetry, GiveUp}
 import scala.concurrent.duration._
 
 class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
-
   override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSuccessful = 100)
 
@@ -244,5 +243,4 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
     test(constantDelay(100.milliseconds), GiveUp)
     test(constantDelay(101.milliseconds), GiveUp)
   }
-
 }
