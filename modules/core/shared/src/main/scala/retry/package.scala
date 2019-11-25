@@ -1,7 +1,6 @@
 import cats.{Id, Monad, MonadError}
 import cats.syntax.functor._
 import cats.syntax.flatMap._
-import cats.syntax.apply._
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -36,7 +35,7 @@ package object retry {
       def performNextStep(failedResult: A, nextStep: NextStep): M[A] =
         nextStep match {
           case NextStep.RetryAfterDelay(delay, updatedStatus) =>
-            S.sleep(delay) *> performAction(updatedStatus)
+            S.sleep(delay) >> performAction(updatedStatus)
           case NextStep.GiveUp =>
             M.pure(failedResult)
         }
@@ -77,7 +76,7 @@ package object retry {
       def performNextStep(error: E, nextStep: NextStep): M[A] =
         nextStep match {
           case NextStep.RetryAfterDelay(delay, updatedStatus) =>
-            S.sleep(delay) *> performAction(updatedStatus)
+            S.sleep(delay) >> performAction(updatedStatus)
           case NextStep.GiveUp =>
             ME.raiseError[A](error)
         }
@@ -115,7 +114,7 @@ package object retry {
       def performNextStep(error: E, nextStep: NextStep): M[A] =
         nextStep match {
           case NextStep.RetryAfterDelay(delay, updatedStatus) =>
-            S.sleep(delay) *> performAction(updatedStatus)
+            S.sleep(delay) >> performAction(updatedStatus)
           case NextStep.GiveUp =>
             ME.raiseError[A](error)
         }
