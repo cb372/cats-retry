@@ -3,10 +3,6 @@ layout: docs
 title: Getting started
 ---
 
-```scala mdoc:invisible
-import retry.BuildInfo.latestVersion
-```
-
 # Getting started
 
 Let's start with a realistic example.
@@ -38,7 +34,7 @@ We'll add dependencies on the `core` and `cats-effect` modules:
 println(
   s"""
   |```
-  |val catsRetryVersion = "$latestVersion"
+  |val catsRetryVersion = "${retry.BuildInfo.version.replaceFirst("\\+.*", "")}"
   |libraryDependencies ++= Seq(
   |  "com.github.cb372" %% "cats-retry-core"        % catsRetryVersion,
   |  "com.github.cb372" %% "cats-retry-cats-effect" % catsRetryVersion
