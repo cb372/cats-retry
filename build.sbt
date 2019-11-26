@@ -9,7 +9,7 @@ ThisBuild / scalaVersion := scalaVersion212
 
 val commonSettings = Seq(
   organization := "com.github.cb372",
-  publishTo := sonatypePublishTo.value,
+  publishTo := sonatypePublishToBundle.value,
   pomIncludeRepository := { _ =>
     false
   },
