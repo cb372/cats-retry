@@ -8,6 +8,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.duration.FiniteDuration
 import cats.arrow.FunctionK
 import cats.implicits._
+import cats.Show
 
 case class RetryPolicy[M[_]](
     decideNextRetry: RetryStatus => M[PolicyDecision]
@@ -123,4 +124,7 @@ object RetryPolicy {
       pretty: => String
   ): RetryPolicy[M] =
     withShow(rs => Applicative[M].pure(decideNextRetry(rs)), pretty)
+
+  implicit def showForRetryPolicy[M[_]]: Show[RetryPolicy[M]] =
+    Show.show(_.show)
 }
