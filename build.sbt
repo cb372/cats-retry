@@ -157,13 +157,5 @@ val root = project
   .settings(commonSettings)
   .settings(
     publishArtifact := false,
-    crossScalaVersions := Nil,
-    commands ++= Seq(
-      Command.command("test-and-publish") { currentState =>
-        "+test" :: "+publish" :: currentState
-      },
-      Command.command("test-and-publish-signed") { currentState =>
-        "+test" :: "+publishSigned" :: currentState
-      }
-    )
+    crossScalaVersions := Nil
   )
