@@ -7,17 +7,21 @@ import retry.PolicyDecision._
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration.FiniteDuration
 import cats.arrow.FunctionK
+import cats.implicits._
 
 case class RetryPolicy[M[_]](
     decideNextRetry: RetryStatus => M[PolicyDecision]
 ) {
+  def show: String = toString
+
   def followedBy(rp: RetryPolicy[M])(implicit M: Apply[M]): RetryPolicy[M] =
-    RetryPolicy(
+    RetryPolicy.withShow(
       status =>
         M.map2(decideNextRetry(status), rp.decideNextRetry(status)) {
           case (GiveUp, pd) => pd
           case (pd, _)      => pd
-        }
+        },
+      show"$show.followedBy(${rp.show})"
     )
 
   /**
@@ -26,12 +30,13 @@ case class RetryPolicy[M[_]](
     * The dual of the `meet` operation.
     */
   def join(rp: RetryPolicy[M])(implicit M: Apply[M]): RetryPolicy[M] =
-    RetryPolicy[M](
+    RetryPolicy.withShow[M](
       status =>
         M.map2(decideNextRetry(status), rp.decideNextRetry(status)) {
           case (DelayAndRetry(a), DelayAndRetry(b)) => DelayAndRetry(a max b)
           case _                                    => GiveUp
-        }
+        },
+      show"$show.join(${rp.show})"
     )
 
   /**
@@ -40,40 +45,46 @@ case class RetryPolicy[M[_]](
     * The dual of the `join` operation.
     */
   def meet(rp: RetryPolicy[M])(implicit M: Apply[M]): RetryPolicy[M] =
-    RetryPolicy[M](
+    RetryPolicy.withShow[M](
       status =>
         M.map2(decideNextRetry(status), rp.decideNextRetry(status)) {
           case (DelayAndRetry(a), DelayAndRetry(b)) => DelayAndRetry(a min b)
           case (s @ DelayAndRetry(_), GiveUp)       => s
           case (GiveUp, s @ DelayAndRetry(_))       => s
           case _                                    => GiveUp
-        }
+        },
+      show"$show.meet(${rp.show})"
     )
 
   def mapDelay(
       f: FiniteDuration => FiniteDuration
   )(implicit M: Functor[M]): RetryPolicy[M] =
-    RetryPolicy(
+    RetryPolicy.withShow(
       status =>
         M.map(decideNextRetry(status)) {
           case GiveUp           => GiveUp
           case DelayAndRetry(d) => DelayAndRetry(f(d))
-        }
+        },
+      show"$show.mapDelay(<function>)"
     )
 
   def flatMapDelay(
       f: FiniteDuration => M[FiniteDuration]
   )(implicit M: Monad[M]): RetryPolicy[M] =
-    RetryPolicy(
+    RetryPolicy.withShow(
       status =>
         M.flatMap(decideNextRetry(status)) {
           case GiveUp           => M.pure(GiveUp)
           case DelayAndRetry(d) => M.map(f(d))(DelayAndRetry(_))
-        }
+        },
+      show"$show.flatMapDelay(<function>)"
     )
 
   def mapK[N[_]](nt: FunctionK[M, N]): RetryPolicy[N] =
-    RetryPolicy(status => nt(decideNextRetry(status)))
+    RetryPolicy.withShow(
+      status => nt(decideNextRetry(status)),
+      show"$show.mapK(<FunctionK>)"
+    )
 }
 
 object RetryPolicy {
@@ -97,4 +108,19 @@ object RetryPolicy {
           y: RetryPolicy[M]
       ): RetryPolicy[M] = x.join(y)
     }
+
+  def withShow[M[_]](
+      decideNextRetry: RetryStatus => M[PolicyDecision],
+      pretty: => String
+  ): RetryPolicy[M] =
+    new RetryPolicy[M](decideNextRetry) {
+      override def show: String     = pretty
+      override def toString: String = pretty
+    }
+
+  def liftWithShow[M[_]: Applicative](
+      decideNextRetry: RetryStatus => PolicyDecision,
+      pretty: => String
+  ): RetryPolicy[M] =
+    withShow(rs => Applicative[M].pure(decideNextRetry(rs)), pretty)
 }
