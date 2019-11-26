@@ -1,4 +1,3 @@
-import ReleaseTransformations._
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
 lazy val scalaVersion213 = "2.13.0"
@@ -11,9 +10,6 @@ ThisBuild / scalaVersion := scalaVersion212
 val commonSettings = Seq(
   organization := "com.github.cb372",
   publishTo := sonatypePublishTo.value,
-  //releaseCrossBuild := true,
-  releaseVcsSign := true,
-  //releasePublishArtifactsAction := PgpKeys.publishSigned.value,
   pomIncludeRepository := { _ =>
     false
   },
@@ -30,6 +26,12 @@ val commonSettings = Seq(
       name = "Chris Birchall",
       email = "chris.birchall@gmail.com",
       url = url("https://github.com/cb372")
+    ),
+    Developer(
+      id = "LukaJCB",
+      name = "Luka Jacobowitz",
+      email = "luka.jacobowitz@gmail.com",
+      url = url("https://github.com/LukaJCB")
     )
   )
 )
@@ -124,7 +126,6 @@ val docs = project
       "org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full
     ),
     crossScalaVersions := Nil,
-    buildInfoKeys := Seq[BuildInfoKey](latestVersion),
     buildInfoPackage := "retry",
     publishArtifact := false,
     micrositeName := "cats-retry",
@@ -155,22 +156,14 @@ val root = project
   )
   .settings(commonSettings)
   .settings(
-    publishTo := sonatypePublishTo.value, // see https://github.com/sbt/sbt-release/issues/184,
     publishArtifact := false,
     crossScalaVersions := Nil,
-    releaseProcess := Seq[ReleaseStep](
-      checkSnapshotDependencies,
-      inquireVersions,
-      runClean,
-      releaseStepCommandAndRemaining("+test"),
-      setReleaseVersion,
-      setLatestVersion,
-      commitReleaseVersion,
-      tagRelease,
-      releaseStepCommandAndRemaining("+publishSigned"),
-      setNextVersion,
-      commitNextVersion,
-      releaseStepCommand("sonatypeReleaseAll"),
-      pushChanges
+    commands ++= Seq(
+      Command.command("test-and-publish") { currentState =>
+        "+test" :: "+publish" :: currentState
+      },
+      Command.command("test-and-publish-signed") { currentState =>
+        "+test" :: "+publishSigned" :: currentState
+      }
     )
   )
