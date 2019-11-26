@@ -26,6 +26,12 @@ val commonSettings = Seq(
       name = "Chris Birchall",
       email = "chris.birchall@gmail.com",
       url = url("https://github.com/cb372")
+    ),
+    Developer(
+      id = "LukaJCB",
+      name = "Luka Jacobowitz",
+      email = "luka.jacobowitz@gmail.com",
+      url = url("https://github.com/LukaJCB")
     )
   )
 )
