@@ -97,19 +97,6 @@ object RetryPolicy {
   ): RetryPolicy[M] =
     RetryPolicy[M](decideNextRetry = retryStatus => M.pure(f(retryStatus)))
 
-  implicit def boundedSemilatticeForRetryPolicy[M[_]](
-      implicit M: Applicative[M]
-  ): BoundedSemilattice[RetryPolicy[M]] =
-    new BoundedSemilattice[RetryPolicy[M]] {
-      override def empty: RetryPolicy[M] =
-        RetryPolicies.constantDelay[M](Duration.Zero)
-
-      override def combine(
-          x: RetryPolicy[M],
-          y: RetryPolicy[M]
-      ): RetryPolicy[M] = x.join(y)
-    }
-
   def withShow[M[_]](
       decideNextRetry: RetryStatus => M[PolicyDecision],
       pretty: => String
@@ -124,6 +111,19 @@ object RetryPolicy {
       pretty: => String
   ): RetryPolicy[M] =
     withShow(rs => Applicative[M].pure(decideNextRetry(rs)), pretty)
+
+  implicit def boundedSemilatticeForRetryPolicy[M[_]](
+      implicit M: Applicative[M]
+  ): BoundedSemilattice[RetryPolicy[M]] =
+    new BoundedSemilattice[RetryPolicy[M]] {
+      override def empty: RetryPolicy[M] =
+        RetryPolicies.constantDelay[M](Duration.Zero)
+
+      override def combine(
+          x: RetryPolicy[M],
+          y: RetryPolicy[M]
+      ): RetryPolicy[M] = x.join(y)
+    }
 
   implicit def showForRetryPolicy[M[_]]: Show[RetryPolicy[M]] =
     Show.show(_.show)

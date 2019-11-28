@@ -3,7 +3,10 @@ package retry
 import java.util.concurrent.TimeUnit
 
 import cats.Applicative
-import cats.implicits._
+import cats.syntax.functor._
+import cats.syntax.show._
+import cats.instances.finiteDuration._
+import cats.instances.int._
 import retry.PolicyDecision._
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
@@ -130,7 +133,7 @@ object RetryPolicies {
 
     RetryPolicy.withShow[M](
       decideNextRetry,
-      show"limitRetriesByDelay(threshold=$threshold, ${policy.show})"
+      show"limitRetriesByDelay(threshold=$threshold, $policy)"
     )
   }
 
@@ -152,7 +155,7 @@ object RetryPolicies {
 
     RetryPolicy.withShow[M](
       decideNextRetry,
-      show"limitRetriesByCumulativeDelay(threshold=$threshold, ${policy.show})"
+      show"limitRetriesByCumulativeDelay(threshold=$threshold, $policy)"
     )
   }
 }
