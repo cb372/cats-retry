@@ -22,7 +22,7 @@ case class RetryPolicy[M[_]](
           case (GiveUp, pd) => pd
           case (pd, _)      => pd
         },
-      show"$show.followedBy(${rp.show})"
+      show"$show.followedBy($rp)"
     )
 
   /**
@@ -37,7 +37,7 @@ case class RetryPolicy[M[_]](
           case (DelayAndRetry(a), DelayAndRetry(b)) => DelayAndRetry(a max b)
           case _                                    => GiveUp
         },
-      show"$show.join(${rp.show})"
+      show"$show.join($rp)"
     )
 
   /**
@@ -54,7 +54,7 @@ case class RetryPolicy[M[_]](
           case (GiveUp, s @ DelayAndRetry(_))       => s
           case _                                    => GiveUp
         },
-      show"$show.meet(${rp.show})"
+      show"$show.meet($rp)"
     )
 
   def mapDelay(
