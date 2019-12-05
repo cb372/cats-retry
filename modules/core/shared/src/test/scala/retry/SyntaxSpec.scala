@@ -14,11 +14,11 @@ class SyntaxSpec extends AnyFlatSpec {
   behavior of "retryingM"
 
   it should "retry until the action succeeds" in new TestContext {
-    implicit val policy: RetryPolicy[Id] =
+    val policy: RetryPolicy[Id] =
       RetryPolicies.constantDelay[Id](1.second)
-    implicit def onFailure: (String, RetryDetails) => Id[Unit] = onError
-    def wasSuccessful(res: String): Id[Boolean]                = res.toInt > 3
-    val sleeps                                                 = ArrayBuffer.empty[FiniteDuration]
+    def onFailure: (String, RetryDetails) => Id[Unit] = onError
+    def wasSuccessful(res: String): Id[Boolean]       = res.toInt > 3
+    val sleeps                                        = ArrayBuffer.empty[FiniteDuration]
 
     implicit val dummySleep: Sleep[Id] = new Sleep[Id] {
       def sleep(delay: FiniteDuration): Id[Unit] = sleeps.append(delay)
@@ -29,7 +29,8 @@ class SyntaxSpec extends AnyFlatSpec {
       attempts.toString
     }
 
-    val finalResult: Id[String] = action.retryingM(wasSuccessful)
+    val finalResult: Id[String] =
+      action.retryingM(wasSuccessful, policy, onFailure)
 
     assert(finalResult == "4")
     assert(attempts == 4)
@@ -40,9 +41,7 @@ class SyntaxSpec extends AnyFlatSpec {
   }
 
   it should "retry until the policy chooses to give up" in new TestContext {
-    implicit val policy: RetryPolicy[Id]                       = RetryPolicies.limitRetries[Id](2)
-    implicit def onFailure: (String, RetryDetails) => Id[Unit] = onError
-    def wasSuccessful(res: String): Id[Boolean]                = res.toInt > 3
+    val policy: RetryPolicy[Id] = RetryPolicies.limitRetries[Id](2)
     implicit val dummySleep: Sleep[Id] =
       new Sleep[Id] {
         def sleep(delay: FiniteDuration): Id[Unit] = ()
@@ -53,7 +52,7 @@ class SyntaxSpec extends AnyFlatSpec {
       attempts.toString
     }
 
-    val finalResult: Id[String] = action.retryingM(wasSuccessful)
+    val finalResult: Id[String] = action.retryingM(_.toInt > 3, policy, onError)
 
     assert(finalResult == "3")
     assert(attempts == 3)
@@ -70,10 +69,8 @@ class SyntaxSpec extends AnyFlatSpec {
         def sleep(delay: FiniteDuration): StringOr[Unit] = Right(())
       }
 
-    implicit val policy: RetryPolicy[StringOr] =
+    val policy: RetryPolicy[StringOr] =
       RetryPolicies.constantDelay[StringOr](1.second)
-    val isWorthRetrying: String => Boolean                          = (_: String) == "one more time"
-    implicit val onErrors: (String, RetryDetails) => StringOr[Unit] = onError
 
     def action: StringOr[String] = {
       attempts = attempts + 1
@@ -84,7 +81,11 @@ class SyntaxSpec extends AnyFlatSpec {
     }
 
     val finalResult: StringOr[String] =
-      action.retryingOnSomeErrors(isWorthRetrying)
+      action.retryingOnSomeErrors(
+        _ == "one more time",
+        policy,
+        (err, rd) => onError(err, rd)
+      )
 
     assert(finalResult == Right("yay"))
     assert(attempts == 3)
@@ -98,9 +99,8 @@ class SyntaxSpec extends AnyFlatSpec {
         def sleep(delay: FiniteDuration): StringOr[Unit] = Right(())
       }
 
-    implicit val policy: RetryPolicy[StringOr] =
+    val policy: RetryPolicy[StringOr] =
       RetryPolicies.constantDelay[StringOr](1.second)
-    implicit val onErrors: (String, RetryDetails) => StringOr[Unit] = onError
 
     def action: StringOr[Nothing] = {
       attempts = attempts + 1
@@ -111,7 +111,11 @@ class SyntaxSpec extends AnyFlatSpec {
     }
 
     val finalResult =
-      action.retryingOnSomeErrors((_: String) == "one more time")
+      action.retryingOnSomeErrors(
+        _ == "one more time",
+        policy,
+        (err, rd) => onError(err, rd)
+      )
 
     assert(finalResult == Left("nope"))
     assert(attempts == 3)
@@ -125,9 +129,8 @@ class SyntaxSpec extends AnyFlatSpec {
         def sleep(delay: FiniteDuration): StringOr[Unit] = Right(())
       }
 
-    implicit val policy: RetryPolicy[StringOr] =
+    val policy: RetryPolicy[StringOr] =
       RetryPolicies.limitRetries[StringOr](2)
-    implicit val onErrors: (String, RetryDetails) => StringOr[Unit] = onError
 
     def action: StringOr[Nothing] = {
       attempts = attempts + 1
@@ -136,7 +139,11 @@ class SyntaxSpec extends AnyFlatSpec {
     }
 
     val finalResult: StringOr[Nothing] =
-      action.retryingOnSomeErrors((_: String) == "one more time")
+      action.retryingOnSomeErrors(
+        _ == "one more time",
+        policy,
+        (err, rd) => onError(err, rd)
+      )
 
     assert(finalResult == Left("one more time"))
     assert(attempts == 3)
@@ -154,9 +161,8 @@ class SyntaxSpec extends AnyFlatSpec {
         def sleep(delay: FiniteDuration): StringOr[Unit] = Right(())
       }
 
-    implicit val policy: RetryPolicy[StringOr] =
+    val policy: RetryPolicy[StringOr] =
       RetryPolicies.constantDelay[StringOr](1.second)
-    implicit val onErrors: (String, RetryDetails) => StringOr[Unit] = onError
 
     def action: StringOr[String] = {
       attempts = attempts + 1
@@ -166,7 +172,8 @@ class SyntaxSpec extends AnyFlatSpec {
         Right("yay")
     }
 
-    val finalResult: StringOr[String] = action.retryingOnAllErrors
+    val finalResult: StringOr[String] =
+      action.retryingOnAllErrors(policy, (err, rd) => onError(err, rd))
 
     assert(finalResult == Right("yay"))
     assert(attempts == 3)
@@ -180,16 +187,16 @@ class SyntaxSpec extends AnyFlatSpec {
         def sleep(delay: FiniteDuration): StringOr[Unit] = Right(())
       }
 
-    implicit val policy: RetryPolicy[StringOr] =
+    val policy: RetryPolicy[StringOr] =
       RetryPolicies.limitRetries[StringOr](2)
-    implicit val onErrors: (String, RetryDetails) => StringOr[Unit] = onError
 
     def action: StringOr[Nothing] = {
       attempts = attempts + 1
       Left("one more time")
     }
 
-    val finalResult: StringOr[Nothing] = action.retryingOnAllErrors
+    val finalResult =
+      action.retryingOnAllErrors(policy, (err, rd) => onError(err, rd))
 
     assert(finalResult == Left("one more time"))
     assert(attempts == 3)
