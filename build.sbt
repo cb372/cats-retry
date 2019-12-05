@@ -58,6 +58,7 @@ val moduleSettings = commonSettings ++ Seq(
 )
 
 val catsVersion          = "2.0.0"
+val catsEffectVersion    = "2.0.0"
 val scalatestVersion     = "3.1.0"
 val scalaTestPlusVersion = "3.1.0.0-RC2"
 val scalacheckVersion    = "1.14.2"
@@ -67,9 +68,13 @@ val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/core"))
   .settings(moduleSettings)
   .settings(
+    name := "cats-retry",
     crossScalaVersions := scalaVersions,
     libraryDependencies ++= Seq(
       "org.typelevel"     %%% "cats-core"                % catsVersion,
+      "org.typelevel"     %%% "cats-effect"              % "2.0.0",
+      "org.scalatest"     %%% "scalatest"                % scalatestVersion % Test,
+      "org.scalacheck"    %%% "scalacheck"               % scalacheckVersion % Test,
       "org.typelevel"     %%% "cats-laws"                % catsVersion % Test,
       "org.scalatest"     %%% "scalatest"                % scalatestVersion % Test,
       "org.scalatestplus" %%% "scalatestplus-scalacheck" % scalaTestPlusVersion % Test,
@@ -80,42 +85,21 @@ val core = crossProject(JVMPlatform, JSPlatform)
 val coreJVM = core.jvm
 val coreJS  = core.js
 
-val catsEffect = crossProject(JVMPlatform, JSPlatform)
-  .in(file("modules/cats-effect"))
+val alleycatsRetry = crossProject(JVMPlatform, JSPlatform)
+  .in(file("modules/alleycats"))
   .jvmConfigure(_.dependsOn(coreJVM))
   .jsConfigure(_.dependsOn(coreJS))
   .settings(moduleSettings)
   .settings(
-    crossScalaVersions := scalaVersions,
-    name := "cats-effect",
-    libraryDependencies ++= Seq(
-      "org.typelevel"  %%% "cats-effect" % "2.0.0",
-      "org.scalatest"  %%% "scalatest"   % scalatestVersion % Test,
-      "org.scalacheck" %%% "scalacheck"  % scalacheckVersion % Test
-    )
+    name := "alleycats-retry",
+    crossScalaVersions := scalaVersions
   )
-val catsEffectJVM = catsEffect.jvm
-val catsEffectJS  = catsEffect.js
-
-val monix = crossProject(JVMPlatform, JSPlatform)
-  .in(file("modules/monix"))
-  .jvmConfigure(_.dependsOn(coreJVM))
-  .jsConfigure(_.dependsOn(coreJS))
-  .settings(moduleSettings)
-  .settings(
-    crossScalaVersions := List(scalaVersion212, scalaVersion211),
-    libraryDependencies ++= Seq(
-      "io.monix"       %%% "monix"      % "3.1.0",
-      "org.scalatest"  %%% "scalatest"  % scalatestVersion % Test,
-      "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test
-    )
-  )
-val monixJVM = monix.jvm
-val monixJS  = monix.js
+val alleycatsJVM = alleycatsRetry.jvm
+val alleycatsJS  = alleycatsRetry.js
 
 val docs = project
   .in(file("modules/docs"))
-  .dependsOn(coreJVM, catsEffectJVM, monixJVM)
+  .dependsOn(coreJVM, alleycatsJVM)
   .enablePlugins(MicrositesPlugin, BuildInfoPlugin)
   .settings(moduleSettings)
   .settings(
@@ -124,6 +108,9 @@ val docs = project
     scalacOptions += "-Ydelambdafy:inline",
     addCompilerPlugin(
       "org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full
+    ),
+    libraryDependencies ++= Seq(
+      "io.monix" %%% "monix" % "3.1.0"
     ),
     crossScalaVersions := Nil,
     buildInfoPackage := "retry",
@@ -148,10 +135,6 @@ val root = project
   .aggregate(
     coreJVM,
     coreJS,
-    catsEffectJVM,
-    catsEffectJS,
-    monixJVM,
-    monixJS,
     docs
   )
   .settings(commonSettings)

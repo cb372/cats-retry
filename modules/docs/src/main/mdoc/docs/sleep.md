@@ -17,22 +17,48 @@ trait Sleep[M[_]] {
 }
 ```
 
-Out of the box, the core module provides instances for `Id` and `Future` that
-simply do a `Thread.sleep(...)`.
+Out of the box, the core module provides instances for any type with an implicit cats-effect
+[`Timer`](https://typelevel.org/cats-effect/datatypes/timer.html) in scope.
 
-Note: these instances are not provided if you are using Scala.js, as
-`Thread.sleep` doesn't make any sense in JavaScript.
+For example using `cats.effect.IO`:
 
 ```scala mdoc:silent:reset-class
 import retry.Sleep
-import cats.Id
+import cats.effect.{IO, Timer}
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.global
 
-Sleep[Id].sleep(10.milliseconds)
+implicit val timer: Timer[IO] = IO.timer(global)
+
+Sleep[IO].sleep(10.milliseconds)
 ```
 
+Or if you're using an abstract `F[_]`:
+
 ```scala mdoc:silent:reset-class
 import retry.Sleep
+import cats.effect.Timer
+import scala.concurrent.duration._
+
+def sleepWell[F[_]: Timer] =
+  Sleep[F].sleep(10.milliseconds)
+```
+
+
+Being able to inject your own `Sleep` instance can be handy in tests, as you
+can mock it out to avoid slowing down your unit tests.
+
+
+## alleycats-retry
+
+The `alleycats-retry` module provides instances for `cats.Id`, `cats.Eval` and `Future` that
+simply do a `Thread.sleep(...)`.
+
+To use them, simply import `retry.alleycats.instances`:
+
+```scala mdoc:silent:reset-class
+import retry.Sleep
+import retry.alleycats.instances._
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -40,22 +66,16 @@ import scala.concurrent.ExecutionContext.Implicits.global
 Sleep[Future].sleep(10.milliseconds)
 ```
 
-The `cats-effect` module provides an instance that uses a cats-effect
-[`Timer`](https://typelevel.org/cats-effect/datatypes/timer.html).
-
 ```scala mdoc:silent:reset-class
 import retry.Sleep
-import cats.effect.{IO, Timer}
+import retry.alleycats.instances._
+import cats.Id
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
-import retry.CatsEffect._
 
-implicit val timer: Timer[IO] = IO.timer(global)
-
-Sleep[IO].sleep(10.milliseconds)
+Sleep[Id].sleep(10.milliseconds)
 ```
 
-The `monix` module provides an instance that calls `Task.sleep`.
 
-Being able to inject your own `Sleep` instance can be handy in tests, as you
-can mock it out to avoid slowing down your unit tests.
+Note: these instances are not provided if you are using Scala.js, as
+`Thread.sleep` doesn't make any sense in JavaScript.
+
