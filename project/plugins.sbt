@@ -1,4 +1,4 @@
-addSbtPlugin("com.47deg"          % "sbt-microsites"           % "1.0.1")
+addSbtPlugin("com.47deg"          % "sbt-microsites"           % "1.0.2")
 addSbtPlugin("org.scalameta"      % "sbt-scalafmt"             % "2.2.1")
 addSbtPlugin("com.geirsson"       % "sbt-ci-release"           % "1.4.31")
 addSbtPlugin("org.scala-js"       % "sbt-scalajs"              % "0.6.31")
