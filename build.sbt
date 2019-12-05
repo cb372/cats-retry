@@ -92,7 +92,16 @@ val alleycatsRetry = crossProject(JVMPlatform, JSPlatform)
   .settings(moduleSettings)
   .settings(
     name := "alleycats-retry",
-    crossScalaVersions := scalaVersions
+    crossScalaVersions := scalaVersions,
+    libraryDependencies ++= Seq(
+      "org.scalatest"     %%% "scalatest"                % scalatestVersion     % Test,
+      "org.scalacheck"    %%% "scalacheck"               % scalacheckVersion    % Test,
+      "org.typelevel"     %%% "cats-laws"                % catsVersion          % Test,
+      "org.scalatest"     %%% "scalatest"                % scalatestVersion     % Test,
+      "org.scalatestplus" %%% "scalatestplus-scalacheck" % scalaTestPlusVersion % Test,
+      "org.typelevel"     %%% "discipline-scalatest"     % disciplineVersion    % Test,
+      "org.scalacheck"    %%% "scalacheck"               % scalacheckVersion    % Test
+    )
   )
 val alleycatsJVM = alleycatsRetry.jvm
 val alleycatsJS  = alleycatsRetry.js

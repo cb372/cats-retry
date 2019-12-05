@@ -1,7 +1,9 @@
-package retry
+package retry.alleycats
 
 import cats.instances.future._
 import org.scalatest.flatspec.AnyFlatSpec
+import retry._
+import retry.alleycats.instances._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._

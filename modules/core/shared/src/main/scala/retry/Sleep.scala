@@ -1,9 +1,7 @@
 package retry
 
-import cats.{Eval, Id}
 import cats.effect.Timer
 import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{ExecutionContext, Future, blocking}
 
 trait Sleep[M[_]] {
   def sleep(delay: FiniteDuration): M[Unit]
