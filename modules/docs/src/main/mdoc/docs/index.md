@@ -35,10 +35,7 @@ println(
   s"""
   |```
   |val catsRetryVersion = "${retry.BuildInfo.version.replaceFirst("\\+.*", "")}"
-  |libraryDependencies ++= Seq(
-  |  "com.github.cb372" %% "cats-retry-core"        % catsRetryVersion,
-  |  "com.github.cb372" %% "cats-retry-cats-effect" % catsRetryVersion
-  |)
+  |libraryDependencies += "com.github.cb372" %% "cats-retry" % catsRetryVersion,
   |```
   |""".stripMargin.trim
 )

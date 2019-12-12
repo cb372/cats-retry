@@ -37,7 +37,6 @@ val commonSettings = Seq(
 )
 
 val moduleSettings = commonSettings ++ Seq(
-  moduleName := s"cats-retry-${name.value}",
   scalacOptions ++= Seq(
     "-Xfuture",
     "-Ywarn-dead-code",
@@ -72,7 +71,7 @@ val core = crossProject(JVMPlatform, JSPlatform)
     crossScalaVersions := scalaVersions,
     libraryDependencies ++= Seq(
       "org.typelevel"     %%% "cats-core"                % catsVersion,
-      "org.typelevel"     %%% "cats-effect"              % "2.0.0",
+      "org.typelevel"     %%% "cats-effect"              % catsEffectVersion,
       "org.scalatest"     %%% "scalatest"                % scalatestVersion % Test,
       "org.scalacheck"    %%% "scalacheck"               % scalacheckVersion % Test,
       "org.typelevel"     %%% "cats-laws"                % catsVersion % Test,
@@ -144,6 +143,8 @@ val root = project
   .aggregate(
     coreJVM,
     coreJS,
+    alleycatsJVM,
+    alleycatsJS,
     docs
   )
   .settings(commonSettings)

@@ -54,7 +54,18 @@ can mock it out to avoid slowing down your unit tests.
 The `alleycats-retry` module provides instances for `cats.Id`, `cats.Eval` and `Future` that
 simply do a `Thread.sleep(...)`.
 
-To use them, simply import `retry.alleycats.instances`:
+You can add it to your `build.sbt` as follows:
+```scala mdoc:passthrough
+println(
+  s"""
+  |```
+  |libraryDependencies += "com.github.cb372" %% "alleycats-retry" % "${retry.BuildInfo.version.replaceFirst("\\+.*", "")}"
+  |```
+  |""".stripMargin.trim
+)
+```
+
+To use them, simply import `retry.alleycats.instances._`:
 
 ```scala mdoc:silent:reset-class
 import retry.Sleep
