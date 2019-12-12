@@ -1,9 +1,11 @@
 package retry
 
+import java.util.concurrent.Executors
+
 import cats.{Eval, Id}
 
 import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{ExecutionContext, Future, blocking}
+import scala.concurrent.{Future, Promise}
 
 trait Sleep[M[_]] {
   def sleep(delay: FiniteDuration): M[Unit]
@@ -21,9 +23,19 @@ object Sleep {
       Eval.later(Thread.sleep(delay.toMillis))
   }
 
-  implicit def threadSleepFuture(implicit ec: ExecutionContext): Sleep[Future] =
+  private lazy val scheduler = Executors.newSingleThreadScheduledExecutor
+
+  implicit val threadSleepFuture: Sleep[Future] =
     new Sleep[Future] {
-      def sleep(delay: FiniteDuration): Future[Unit] =
-        Future(blocking(Thread.sleep(delay.toMillis)))(ec)
+      def sleep(delay: FiniteDuration): Future[Unit] = {
+        val promise = Promise[Unit]()
+        scheduler.schedule(new Runnable {
+          def run: Unit = {
+            promise.success(())
+            ()
+          }
+        }, delay.length, delay.unit)
+        promise.future
+      }
     }
 }
