@@ -23,7 +23,13 @@ object Sleep {
       Eval.later(Thread.sleep(delay.toMillis))
   }
 
-  private lazy val scheduler = Executors.newSingleThreadScheduledExecutor
+  private lazy val scheduler = Executors.newSingleThreadScheduledExecutor({
+    runnable =>
+      val t = new Thread(runnable)
+      t.setDaemon(true)
+      t.setName("cats-retry scheduler")
+      t
+  })
 
   implicit val threadSleepFuture: Sleep[Future] =
     new Sleep[Future] {
