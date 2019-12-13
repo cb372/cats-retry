@@ -3,70 +3,12 @@
 <p>The library offers a few slightly different ways to wrap your operations with
 retries.</p>
 
-<h2 id="retrying"><code class="highlighter-rouge">retrying</code></h2>
-
-<p>This is useful when you are not working in a monadic context.  You have an
-operation that simply returns a value of some type <code class="highlighter-rouge">A</code>, and you want to retry
-until it returns a value that you are happy with.</p>
-
-<p>To use <code class="highlighter-rouge">retrying</code>, you pass in a predicate that decides whether you are
-happy with the result or you want to retry.</p>
-
-<p>The API looks like this:</p>
-
-<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">retrying</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">policy</span><span class="k">:</span> <span class="kt">RetryPolicy</span><span class="o">[</span><span class="kt">Id</span><span class="o">],</span>
-                <span class="n">wasSuccessful</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="nc">Boolean</span><span class="o">,</span>
-                <span class="n">onFailure</span><span class="k">:</span> <span class="o">(</span><span class="kt">A</span><span class="o">,</span> <span class="kt">RetryDetails</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nc">Unit</span><span class="o">)</span>
-               <span class="o">(</span><span class="n">action</span><span class="k">:</span> <span class="o">=&gt;</span> <span class="n">A</span><span class="o">)</span><span class="k">:</span> <span class="kt">A</span>
-</code></pre></div></div>
-
-<p>You need to pass in:</p>
-
-<ul>
-  <li>a retry policy</li>
-  <li>a predicate that decides whether the operation was successful</li>
-  <li>a failure handler, often used for logging</li>
-  <li>the operation that you want to wrap with retries</li>
-</ul>
-
-<p>For example, let’s keep rolling a die until we get a six.</p>
-
-<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">cats.Id</span>
-<span class="k">import</span> <span class="nn">retry._</span>
-<span class="k">import</span> <span class="nn">scala.concurrent.duration._</span>
-
-<span class="k">val</span> <span class="nv">policy</span> <span class="k">=</span> <span class="nv">RetryPolicies</span><span class="o">.</span><span class="py">constantDelay</span><span class="o">[</span><span class="kt">Id</span><span class="o">](</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">)</span>
-<span class="c1">// policy: RetryPolicy[Id] = RetryPolicy(
-//   retry.RetryPolicy$$$Lambda$11738/740857596@6287fd15
-// )
-</span>
-<span class="k">val</span> <span class="nv">predicate</span> <span class="k">=</span> <span class="o">(</span><span class="k">_:</span> <span class="kt">Int</span><span class="o">)</span> <span class="o">==</span> <span class="mi">6</span>
-<span class="c1">// predicate: Int =&gt; Boolean = &lt;function1&gt;
-</span>
-<span class="k">def</span> <span class="nf">onFailure</span><span class="o">(</span><span class="n">failedValue</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">details</span><span class="k">:</span> <span class="kt">RetryDetails</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
-  <span class="nf">println</span><span class="o">(</span><span class="n">s</span><span class="s">"Rolled a $failedValue, retrying ..."</span><span class="o">)</span>
-<span class="o">}</span>
-
-<span class="k">val</span> <span class="nv">loadedDie</span> <span class="k">=</span> <span class="nv">util</span><span class="o">.</span><span class="py">LoadedDie</span><span class="o">(</span><span class="mi">2</span><span class="o">,</span> <span class="mi">5</span><span class="o">,</span> <span class="mi">4</span><span class="o">,</span> <span class="mi">1</span><span class="o">,</span> <span class="mi">3</span><span class="o">,</span> <span class="mi">2</span><span class="o">,</span> <span class="mi">6</span><span class="o">)</span>
-<span class="c1">// loadedDie: util.LoadedDie = LoadedDie(WrappedArray(2, 5, 4, 1, 3, 2, 6))
-</span>
-<span class="nf">retrying</span><span class="o">(</span><span class="n">policy</span><span class="o">,</span> <span class="n">predicate</span><span class="o">,</span> <span class="n">onFailure</span><span class="o">){</span>
-  <span class="nv">loadedDie</span><span class="o">.</span><span class="py">roll</span><span class="o">()</span>
-<span class="o">}</span>
-<span class="c1">// Rolled a 2, retrying ...
-// Rolled a 5, retrying ...
-// Rolled a 4, retrying ...
-// Rolled a 1, retrying ...
-// Rolled a 3, retrying ...
-// Rolled a 2, retrying ...
-// res1: Int = 6
-</span></code></pre></div></div>
-
 <h2 id="retryingm"><code class="highlighter-rouge">retryingM</code></h2>
 
-<p>This is similar to <code class="highlighter-rouge">retrying</code>, but is useful when you are working in an
-arbitrary <code class="highlighter-rouge">Monad</code> that is not a <code class="highlighter-rouge">MonadError</code>. Your operation doesn’t throw
-errors, but you want to retry until it returns a value that you are happy with.</p>
+<p>To use <code class="highlighter-rouge">retryingM</code>, you pass in a predicate that decides whether you are
+happy with the result or you want to retry.
+It is useful when you are working in an arbitrary <code class="highlighter-rouge">Monad</code> that is not a <code class="highlighter-rouge">MonadError</code>.
+Your operation doesn’t throw errors, but you want to retry until it returns a value that you are happy with.</p>
 
 <p>The API (modulo some type-inference trickery) looks like this:</p>
 
@@ -91,15 +33,14 @@ errors, but you want to retry until it returns a value that you are happy with.<
 <span class="k">import</span> <span class="nn">scala.concurrent.duration._</span>
 <span class="k">import</span> <span class="nn">scala.concurrent.ExecutionContext.global</span>
 <span class="k">import</span> <span class="nn">retry._</span>
-<span class="k">import</span> <span class="nn">retry.CatsEffect._</span>
 
 <span class="c1">// We need an implicit cats.effect.Timer
 </span><span class="k">implicit</span> <span class="k">val</span> <span class="nv">timer</span><span class="k">:</span> <span class="kt">Timer</span><span class="o">[</span><span class="kt">IO</span><span class="o">]</span> <span class="k">=</span> <span class="nv">IO</span><span class="o">.</span><span class="py">timer</span><span class="o">(</span><span class="n">global</span><span class="o">)</span>
-<span class="c1">// timer: Timer[IO] = cats.effect.internals.IOTimer@406bf877
+<span class="c1">// timer: Timer[IO] = cats.effect.internals.IOTimer@7530bab3
 </span>
 <span class="k">val</span> <span class="nv">ioPolicy</span> <span class="k">=</span> <span class="nv">RetryPolicies</span><span class="o">.</span><span class="py">constantDelay</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">)</span>
 <span class="c1">// ioPolicy: RetryPolicy[IO] = RetryPolicy(
-//   retry.RetryPolicy$$$Lambda$11738/740857596@2a5239d4
+//   retry.RetryPolicy$$$Lambda$11403/819459870@64c81d79
 // )
 </span>
 <span class="k">def</span> <span class="nf">ioOnFailure</span><span class="o">(</span><span class="n">failedValue</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">details</span><span class="k">:</span> <span class="kt">RetryDetails</span><span class="o">)</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
@@ -113,16 +54,16 @@ errors, but you want to retry until it returns a value that you are happy with.<
 <span class="o">}</span>
 <span class="c1">// io: IO[Int] = Bind(
 //   Delay(&lt;function0&gt;),
-//   retry.package$RetryingPartiallyApplied$$Lambda$11871/1140418278@1c3e2e0b
+//   retry.package$RetryingPartiallyApplied$$Lambda$11528/1622061997@3136406a
 // )
 </span>
 <span class="c1">// We need ContextShift for calling `.timeout`
 </span><span class="k">implicit</span> <span class="k">def</span> <span class="nf">ctx</span><span class="k">:</span> <span class="kt">ContextShift</span><span class="o">[</span><span class="kt">IO</span><span class="o">]</span> <span class="k">=</span> <span class="nv">IO</span><span class="o">.</span><span class="py">contextShift</span><span class="o">(</span><span class="n">global</span><span class="o">)</span>
 
 <span class="nv">io</span><span class="o">.</span><span class="py">timeout</span><span class="o">(</span><span class="mf">1.</span><span class="n">minute</span><span class="o">)</span>
-<span class="c1">// res3: IO[Int] = Bind(
-//   Async(cats.effect.internals.IORace$$$Lambda$11879/1565520296@1414e715, true),
-//   cats.effect.Concurrent$$$Lambda$11880/1080530432@6e384f0a
+<span class="c1">// res1: IO[Int] = Bind(
+//   Async(cats.effect.internals.IORace$$$Lambda$11529/1321052844@1e7f1eab, true),
+//   cats.effect.Concurrent$$$Lambda$11530/1410592643@f4ee641
 // )
 </span></code></pre></div></div>
 
@@ -182,15 +123,20 @@ retry on all errors.</p>
 <span class="k">import</span> <span class="nn">cats.effect.IO</span>
 <span class="k">import</span> <span class="nn">retry.syntax.all._</span>
 
-<span class="k">implicit</span> <span class="k">def</span> <span class="nf">noop</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span><span class="k">:</span> <span class="o">(</span><span class="kt">A</span><span class="o">,</span> <span class="kt">RetryDetails</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nc">IO</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="nv">retry</span><span class="o">.</span><span class="py">noop</span><span class="o">[</span><span class="kt">IO</span>, <span class="kt">A</span><span class="o">]</span>
-<span class="k">implicit</span> <span class="k">val</span> <span class="nv">policy</span><span class="k">:</span> <span class="kt">RetryPolicy</span><span class="o">[</span><span class="kt">IO</span><span class="o">]</span>                <span class="k">=</span> <span class="nv">RetryPolicies</span><span class="o">.</span><span class="py">limitRetries</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mi">2</span><span class="o">)</span>
-
+<span class="k">val</span> <span class="nv">policy</span> <span class="k">=</span> <span class="nv">RetryPolicies</span><span class="o">.</span><span class="py">limitRetries</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mi">2</span><span class="o">)</span>
+<span class="c1">// policy: RetryPolicy[IO] = RetryPolicy(
+//   retry.RetryPolicy$$$Lambda$11403/819459870@46730bab
+// )
+</span>
 <span class="k">val</span> <span class="nv">httpClient</span> <span class="k">=</span> <span class="nv">util</span><span class="o">.</span><span class="py">FlakyHttpClient</span><span class="o">()</span>
-
+<span class="c1">// httpClient: util.FlakyHttpClient = FlakyHttpClient()
+</span>
 <span class="k">val</span> <span class="nv">flakyRequest</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="nc">IO</span><span class="o">(</span><span class="nv">httpClient</span><span class="o">.</span><span class="py">getCatGif</span><span class="o">())</span>
-
-<span class="nv">flakyRequest</span><span class="o">.</span><span class="py">retryingOnAllErrors</span>
-</code></pre></div></div>
+<span class="c1">// flakyRequest: IO[String] = Delay(&lt;function0&gt;)
+</span>
+<span class="nv">flakyRequest</span><span class="o">.</span><span class="py">retryingOnAllErrors</span><span class="o">(</span><span class="n">policy</span><span class="o">,</span> <span class="n">onError</span> <span class="k">=</span> <span class="nv">retry</span><span class="o">.</span><span class="py">noop</span><span class="o">[</span><span class="kt">IO</span>, <span class="kt">Throwable</span><span class="o">])</span>
+<span class="c1">// res2: IO[String] = Bind(Delay(&lt;function0&gt;), &lt;function1&gt;)
+</span></code></pre></div></div>
 </section></div></div></div></div><script src="/cats-retry/highlight/highlight.pack.js"></script><script>hljs.configure({languages:['scala','java','bash']});
 hljs.initHighlightingOnLoad();
               </script><script>console.info('\x57\x65\x62\x73\x69\x74\x65\x20\x62\x75\x69\x6c\x74\x20\x77\x69\x74\x68\x3a\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x5f\x5f\x20\x20\x20\x20\x5f\x5f\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x5f\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x5f\x20\x5f\x5f\x0a\x20\x20\x20\x5f\x5f\x5f\x5f\x5f\x2f\x20\x2f\x5f\x20\x20\x2f\x20\x2f\x5f\x20\x20\x20\x20\x20\x20\x5f\x5f\x5f\x5f\x20\x5f\x5f\x5f\x20\x20\x28\x5f\x29\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x20\x20\x5f\x5f\x5f\x5f\x5f\x28\x5f\x29\x20\x2f\x5f\x5f\x5f\x5f\x20\x20\x5f\x5f\x5f\x5f\x5f\x0a\x20\x20\x2f\x20\x5f\x5f\x5f\x2f\x20\x5f\x5f\x20\x5c\x2f\x20\x5f\x5f\x2f\x5f\x5f\x5f\x5f\x5f\x2f\x20\x5f\x5f\x20\x60\x5f\x5f\x20\x5c\x2f\x20\x2f\x20\x5f\x5f\x5f\x2f\x20\x5f\x5f\x5f\x2f\x20\x5f\x5f\x20\x5c\x2f\x20\x5f\x5f\x5f\x2f\x20\x2f\x20\x5f\x5f\x2f\x20\x5f\x20\x5c\x2f\x20\x5f\x5f\x5f\x2f\x0a\x20\x28\x5f\x5f\x20\x20\x29\x20\x2f\x5f\x2f\x20\x2f\x20\x2f\x5f\x2f\x5f\x5f\x5f\x5f\x5f\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x5f\x5f\x2f\x20\x2f\x20\x20\x2f\x20\x2f\x5f\x2f\x20\x28\x5f\x5f\x20\x20\x29\x20\x2f\x20\x2f\x5f\x2f\x20\x20\x5f\x5f\x28\x5f\x5f\x20\x20\x29\x0a\x2f\x5f\x5f\x5f\x5f\x2f\x5f\x2e\x5f\x5f\x5f\x2f\x5c\x5f\x5f\x2f\x20\x20\x20\x20\x20\x2f\x5f\x2f\x20\x2f\x5f\x2f\x20\x2f\x5f\x2f\x5f\x2f\x5c\x5f\x5f\x5f\x2f\x5f\x2f\x20\x20\x20\x5c\x5f\x5f\x5f\x5f\x2f\x5f\x5f\x5f\x5f\x2f\x5f\x2f\x5c\x5f\x5f\x2f\x5c\x5f\x5f\x5f\x2f\x5f\x5f\x5f\x5f\x2f\x0a\x0a\x68\x74\x74\x70\x73\x3a\x2f\x2f\x34\x37\x64\x65\x67\x2e\x67\x69\x74\x68\x75\x62\x2e\x69\x6f\x2f\x73\x62\x74\x2d\x6d\x69\x63\x72\x6f\x73\x69\x74\x65\x73')</script><script>((window.gitter = {}).chat = {}).options = {

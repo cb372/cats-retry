@@ -26,11 +26,8 @@ some retry logic.</p>
 
 <p>We’ll add dependencies on the <code class="highlighter-rouge">core</code> and <code class="highlighter-rouge">cats-effect</code> modules:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>val catsRetryVersion = "0.3.2"
-libraryDependencies ++= Seq(
-  "com.github.cb372" %% "cats-retry-core"        % catsRetryVersion,
-  "com.github.cb372" %% "cats-retry-cats-effect" % catsRetryVersion
-)
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>val catsRetryVersion = "1.0.0"
+libraryDependencies += "com.github.cb372" %% "cats-retry" % catsRetryVersion,
 </code></pre></div></div>
 
 <p>(Note: if you’re using Scala.js, you’ll need a <code class="highlighter-rouge">%%%</code> instead of <code class="highlighter-rouge">%%</code>.)</p>
@@ -43,7 +40,7 @@ information on more powerful policies).</p>
 
 <span class="k">val</span> <span class="nv">retryFiveTimes</span> <span class="k">=</span> <span class="nv">RetryPolicies</span><span class="o">.</span><span class="py">limitRetries</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mi">5</span><span class="o">)</span>
 <span class="c1">// retryFiveTimes: RetryPolicy[IO] = RetryPolicy(
-//   retry.RetryPolicy$$$Lambda$11738/740857596@518536d9
+//   retry.RetryPolicy$$$Lambda$11403/819459870@53e839f9
 // )
 </span></code></pre></div></div>
 
@@ -95,10 +92,8 @@ the <code class="highlighter-rouge">IO</code> monad.</p>
 </span><span class="k">import</span> <span class="nn">cats.effect.Timer</span>
 <span class="k">import</span> <span class="nn">scala.concurrent.ExecutionContext.global</span>
 <span class="k">implicit</span> <span class="k">val</span> <span class="nv">timer</span><span class="k">:</span> <span class="kt">Timer</span><span class="o">[</span><span class="kt">IO</span><span class="o">]</span> <span class="k">=</span> <span class="nv">IO</span><span class="o">.</span><span class="py">timer</span><span class="o">(</span><span class="n">global</span><span class="o">)</span>
-<span class="c1">// timer: Timer[IO] = cats.effect.internals.IOTimer@568c3b67
+<span class="c1">// timer: Timer[IO] = cats.effect.internals.IOTimer@58ffaa36
 </span>
-<span class="c1">// This is so we can use that Timer to perform delays between retries
-</span><span class="k">import</span> <span class="nn">retry.CatsEffect._</span>
 
 <span class="k">val</span> <span class="nv">flakyRequestWithRetry</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span>
   <span class="n">retryingOnAllErrors</span><span class="o">[</span><span class="kt">String</span><span class="o">](</span>
