@@ -35,10 +35,7 @@ println(
   s"""
   |```
   |val catsRetryVersion = "${retry.BuildInfo.version.replaceFirst("\\+.*", "")}"
-  |libraryDependencies ++= Seq(
-  |  "com.github.cb372" %% "cats-retry-core"        % catsRetryVersion,
-  |  "com.github.cb372" %% "cats-retry-cats-effect" % catsRetryVersion
-  |)
+  |libraryDependencies += "com.github.cb372" %% "cats-retry" % catsRetryVersion,
   |```
   |""".stripMargin.trim
 )
@@ -98,8 +95,6 @@ import cats.effect.Timer
 import scala.concurrent.ExecutionContext.global
 implicit val timer: Timer[IO] = IO.timer(global)
 
-// This is so we can use that Timer to perform delays between retries
-import retry.CatsEffect._
 
 val flakyRequestWithRetry: IO[String] =
   retryingOnAllErrors[String](

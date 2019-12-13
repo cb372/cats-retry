@@ -8,58 +8,12 @@ title: Combinators
 The library offers a few slightly different ways to wrap your operations with
 retries.
 
-## `retrying`
-
-This is useful when you are not working in a monadic context.  You have an
-operation that simply returns a value of some type `A`, and you want to retry
-until it returns a value that you are happy with.
-
-To use `retrying`, you pass in a predicate that decides whether you are
-happy with the result or you want to retry.
-
-The API looks like this:
-
-```scala
-def retrying[A](policy: RetryPolicy[Id],
-                wasSuccessful: A => Boolean,
-                onFailure: (A, RetryDetails) => Unit)
-               (action: => A): A
-```
-
-You need to pass in:
-
-* a retry policy
-* a predicate that decides whether the operation was successful
-* a failure handler, often used for logging
-* the operation that you want to wrap with retries
-
-For example, let's keep rolling a die until we get a six.
-
-```scala mdoc:reset-class
-import cats.Id
-import retry._
-import scala.concurrent.duration._
-
-val policy = RetryPolicies.constantDelay[Id](10.milliseconds)
-
-val predicate = (_: Int) == 6
-
-def onFailure(failedValue: Int, details: RetryDetails): Unit = {
-  println(s"Rolled a $failedValue, retrying ...")
-}
-
-val loadedDie = util.LoadedDie(2, 5, 4, 1, 3, 2, 6)
-
-retrying(policy, predicate, onFailure){
-  loadedDie.roll()
-}
-```
-
 ## `retryingM`
 
-This is similar to `retrying`, but is useful when you are working in an
-arbitrary `Monad` that is not a `MonadError`. Your operation doesn't throw
-errors, but you want to retry until it returns a value that you are happy with.
+To use `retryingM`, you pass in a predicate that decides whether you are
+happy with the result or you want to retry.
+It is useful when you are working in an arbitrary `Monad` that is not a `MonadError`.
+Your operation doesn't throw errors, but you want to retry until it returns a value that you are happy with.
 
 The API (modulo some type-inference trickery) looks like this:
 
@@ -84,7 +38,6 @@ import cats.effect.{ContextShift, IO, Timer}
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.global
 import retry._
-import retry.CatsEffect._
 
 // We need an implicit cats.effect.Timer
 implicit val timer: Timer[IO] = IO.timer(global)

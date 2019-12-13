@@ -1,20 +1,12 @@
 package retry
-
-import java.util.concurrent.Executors
+package alleycats
 
 import cats.{Eval, Id}
-
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{Future, Promise}
-import java.util.concurrent.ThreadFactory
+import java.util.concurrent.{ThreadFactory, Executors}
 
-trait Sleep[M[_]] {
-  def sleep(delay: FiniteDuration): M[Unit]
-}
-
-object Sleep {
-  def apply[M[_]](implicit sleep: Sleep[M]): Sleep[M] = sleep
-
+object instances {
   implicit val threadSleepId: Sleep[Id] = new Sleep[Id] {
     def sleep(delay: FiniteDuration): Id[Unit] = Thread.sleep(delay.toMillis)
   }

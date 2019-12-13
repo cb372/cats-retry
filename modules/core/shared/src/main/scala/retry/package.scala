@@ -5,19 +5,6 @@ import cats.syntax.flatMap._
 import scala.concurrent.duration.FiniteDuration
 
 package object retry {
-  def retrying[A](
-      policy: RetryPolicy[Id],
-      wasSuccessful: A => Boolean,
-      onFailure: (A, RetryDetails) => Unit
-  )(
-      action: => A
-  )(
-      implicit
-      M: Monad[Id],
-      S: Sleep[Id]
-  ): A =
-    retryingM[A][Id](policy, wasSuccessful, onFailure)(action)
-
   def retryingM[A] = new RetryingPartiallyApplied[A]
 
   private[retry] class RetryingPartiallyApplied[A] {
