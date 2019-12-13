@@ -109,17 +109,16 @@ TODO example
 
 Cats-retry include some syntactic sugar in order to reduce boilerplate.
 
-```scala
+```scala mdoc
 import retry._
 import cats.effect.IO
 import retry.syntax.all._
 
-implicit def noop[A]: (A, RetryDetails) => IO[Unit] = retry.noop[IO, A]
-implicit val policy: RetryPolicy[IO]                = RetryPolicies.limitRetries[IO](2)
+val policy = RetryPolicies.limitRetries[IO](2)
 
 val httpClient = util.FlakyHttpClient()
 
 val flakyRequest: IO[String] = IO(httpClient.getCatGif())
 
-flakyRequest.retryingOnAllErrors
+flakyRequest.retryingOnAllErrors(policy, onError = retry.noop[IO, Throwable])
 ```
