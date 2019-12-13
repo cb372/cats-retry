@@ -6,6 +6,7 @@ import cats.{Eval, Id}
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{Future, Promise}
+import java.util.concurrent.ThreadFactory
 
 trait Sleep[M[_]] {
   def sleep(delay: FiniteDuration): M[Unit]
@@ -23,13 +24,15 @@ object Sleep {
       Eval.later(Thread.sleep(delay.toMillis))
   }
 
-  private lazy val scheduler = Executors.newSingleThreadScheduledExecutor({
-    runnable =>
-      val t = new Thread(runnable)
-      t.setDaemon(true)
-      t.setName("cats-retry scheduler")
-      t
-  })
+  private lazy val scheduler =
+    Executors.newSingleThreadScheduledExecutor(new ThreadFactory {
+      override def newThread(runnable: Runnable) = {
+        val t = new Thread(runnable)
+        t.setDaemon(true)
+        t.setName("cats-retry scheduler")
+        t
+      }
+    })
 
   implicit val threadSleepFuture: Sleep[Future] =
     new Sleep[Future] {
