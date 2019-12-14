@@ -1,4 +1,4 @@
-# cats-retry
+# cats-retry [![Chat](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/typelevel/cats-retry)
 
 A library for retrying actions that can fail.
 
