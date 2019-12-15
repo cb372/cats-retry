@@ -61,16 +61,14 @@ class RetryPolicyLawsSpec extends AnyFunSuite with Discipline with Checkers {
     Eq.by(_.decideNextRetry)
 
   test("meet associativity") {
-    check(
-      (p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
-        Eq[RetryPolicy[Id]].eqv(p1.meet((p2).meet(p3)), (p1.meet(p2)).meet(p3))
+    check((p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
+      Eq[RetryPolicy[Id]].eqv(p1.meet((p2).meet(p3)), (p1.meet(p2)).meet(p3))
     )
   }
 
   test("meet commutativity") {
-    check(
-      (p1: RetryPolicy[Id], p2: RetryPolicy[Id]) =>
-        Eq[RetryPolicy[Id]].eqv(p1.meet(p2), p2.meet(p1))
+    check((p1: RetryPolicy[Id], p2: RetryPolicy[Id]) =>
+      Eq[RetryPolicy[Id]].eqv(p1.meet(p2), p2.meet(p1))
     )
   }
 
@@ -79,71 +77,64 @@ class RetryPolicyLawsSpec extends AnyFunSuite with Discipline with Checkers {
   }
 
   test("meet identity") {
-    check(
-      (p: RetryPolicy[Id]) =>
-        Eq[RetryPolicy[Id]].eqv(p.meet(RetryPolicies.alwaysGiveUp[Id]), p)
+    check((p: RetryPolicy[Id]) =>
+      Eq[RetryPolicy[Id]].eqv(p.meet(RetryPolicies.alwaysGiveUp[Id]), p)
     )
   }
 
   test("join meet absorption") {
-    check(
-      (p1: RetryPolicy[Id], p2: RetryPolicy[Id]) =>
-        Eq[RetryPolicy[Id]].eqv(p1.meet(p1.join(p2)), p1)
+    check((p1: RetryPolicy[Id], p2: RetryPolicy[Id]) =>
+      Eq[RetryPolicy[Id]].eqv(p1.meet(p1.join(p2)), p1)
     )
   }
 
   test("meet join absorption") {
-    check(
-      (p1: RetryPolicy[Id], p2: RetryPolicy[Id]) =>
-        Eq[RetryPolicy[Id]].eqv(p1.join(p1.meet(p2)), p1)
+    check((p1: RetryPolicy[Id], p2: RetryPolicy[Id]) =>
+      Eq[RetryPolicy[Id]].eqv(p1.join(p1.meet(p2)), p1)
     )
   }
 
   test("meet absorption") {
-    check(
-      (p: RetryPolicy[Id]) =>
-        Eq[RetryPolicy[Id]].eqv(
-          p.meet(Monoid[RetryPolicy[Id]].empty),
-          Monoid[RetryPolicy[Id]].empty
-        )
+    check((p: RetryPolicy[Id]) =>
+      Eq[RetryPolicy[Id]].eqv(
+        p.meet(Monoid[RetryPolicy[Id]].empty),
+        Monoid[RetryPolicy[Id]].empty
+      )
     )
   }
 
   test("join absorption") {
-    check(
-      (p: RetryPolicy[Id]) =>
-        Eq[RetryPolicy[Id]].eqv(
-          p.join(RetryPolicies.alwaysGiveUp[Id]),
-          RetryPolicies.alwaysGiveUp[Id]
-        )
+    check((p: RetryPolicy[Id]) =>
+      Eq[RetryPolicy[Id]].eqv(
+        p.join(RetryPolicies.alwaysGiveUp[Id]),
+        RetryPolicies.alwaysGiveUp[Id]
+      )
     )
   }
 
   test("join meet distributivity") {
-    check(
-      (p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
-        Eq[RetryPolicy[Id]]
-          .eqv(p1.meet(p2.join(p3)), (p1.meet(p2)).join(p1.meet(p3)))
+    check((p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
+      Eq[RetryPolicy[Id]]
+        .eqv(p1.meet(p2.join(p3)), (p1.meet(p2)).join(p1.meet(p3)))
     )
   }
 
   test("meet join distributivity") {
-    check(
-      (p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
-        Eq[RetryPolicy[Id]]
-          .eqv(p1.join(p2.meet(p3)), (p1.join(p2)).meet(p1.join(p3)))
+    check((p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
+      Eq[RetryPolicy[Id]]
+        .eqv(p1.join(p2.meet(p3)), (p1.join(p2)).meet(p1.join(p3)))
     )
   }
 
   test("mapK identity") {
-    check(
-      (p: RetryPolicy[Id]) => Eq[RetryPolicy[Id]].eqv(p.mapK(FunctionK.id), p)
+    check((p: RetryPolicy[Id]) =>
+      Eq[RetryPolicy[Id]].eqv(p.mapK(FunctionK.id), p)
     )
   }
 
   test("mapDelay identity") {
-    check(
-      (p: RetryPolicy[Id]) => Eq[RetryPolicy[Id]].eqv(p.mapDelay(identity), p)
+    check((p: RetryPolicy[Id]) =>
+      Eq[RetryPolicy[Id]].eqv(p.mapDelay(identity), p)
     )
   }
 
@@ -160,9 +151,8 @@ class RetryPolicyLawsSpec extends AnyFunSuite with Discipline with Checkers {
   }
 
   test("flatMapDelay identity") {
-    check(
-      (p: RetryPolicy[Id]) =>
-        Eq[RetryPolicy[Id]].eqv(p.flatMapDelay(Monad[Id].pure), p)
+    check((p: RetryPolicy[Id]) =>
+      Eq[RetryPolicy[Id]].eqv(p.flatMapDelay(Monad[Id].pure), p)
     )
   }
 
@@ -184,26 +174,23 @@ class RetryPolicyLawsSpec extends AnyFunSuite with Discipline with Checkers {
   )
 
   test("followedBy associativity") {
-    check(
-      (p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
-        Eq[RetryPolicy[Id]].eqv(
-          p1.followedBy((p2).followedBy(p3)),
-          (p1.followedBy(p2)).followedBy(p3)
-        )
+    check((p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
+      Eq[RetryPolicy[Id]].eqv(
+        p1.followedBy((p2).followedBy(p3)),
+        (p1.followedBy(p2)).followedBy(p3)
+      )
     )
   }
 
   test("followedBy left identity") {
-    check(
-      (p: RetryPolicy[Id]) =>
-        Eq[RetryPolicy[Id]].eqv(RetryPolicies.alwaysGiveUp[Id].followedBy(p), p)
+    check((p: RetryPolicy[Id]) =>
+      Eq[RetryPolicy[Id]].eqv(RetryPolicies.alwaysGiveUp[Id].followedBy(p), p)
     )
   }
 
   test("followedBy right identity") {
-    check(
-      (p: RetryPolicy[Id]) =>
-        Eq[RetryPolicy[Id]].eqv(p.followedBy(RetryPolicies.alwaysGiveUp), p)
+    check((p: RetryPolicy[Id]) =>
+      Eq[RetryPolicy[Id]].eqv(p.followedBy(RetryPolicies.alwaysGiveUp), p)
     )
   }
 }
