@@ -1,4 +1,4 @@
-import cats.{Id, Monad, MonadError}
+import cats.{Monad, MonadError}
 import cats.syntax.functor._
 import cats.syntax.flatMap._
 
