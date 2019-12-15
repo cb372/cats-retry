@@ -37,42 +37,37 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
   implicit val arbRetryPolicy: Arbitrary[LabelledRetryPolicy] = Arbitrary {
     Gen.oneOf(
       Gen.const(LabelledRetryPolicy(alwaysGiveUp[Id], "alwaysGiveUp")),
-      genFiniteDuration.map(
-        delay =>
-          LabelledRetryPolicy(
-            constantDelay[Id](delay),
-            s"constantDelay($delay)"
-          )
+      genFiniteDuration.map(delay =>
+        LabelledRetryPolicy(
+          constantDelay[Id](delay),
+          s"constantDelay($delay)"
+        )
       ),
-      genFiniteDuration.map(
-        baseDelay =>
-          LabelledRetryPolicy(
-            exponentialBackoff[Id](baseDelay),
-            s"exponentialBackoff($baseDelay)"
-          )
+      genFiniteDuration.map(baseDelay =>
+        LabelledRetryPolicy(
+          exponentialBackoff[Id](baseDelay),
+          s"exponentialBackoff($baseDelay)"
+        )
       ),
       Gen
         .posNum[Int]
-        .map(
-          maxRetries =>
-            LabelledRetryPolicy(
-              limitRetries(maxRetries),
-              s"limitRetries($maxRetries)"
-            )
+        .map(maxRetries =>
+          LabelledRetryPolicy(
+            limitRetries(maxRetries),
+            s"limitRetries($maxRetries)"
+          )
         ),
-      genFiniteDuration.map(
-        baseDelay =>
-          LabelledRetryPolicy(
-            fibonacciBackoff[Id](baseDelay),
-            s"fibonacciBackoff($baseDelay)"
-          )
+      genFiniteDuration.map(baseDelay =>
+        LabelledRetryPolicy(
+          fibonacciBackoff[Id](baseDelay),
+          s"fibonacciBackoff($baseDelay)"
+        )
       ),
-      genFiniteDuration.map(
-        baseDelay =>
-          LabelledRetryPolicy(
-            fullJitter[Id](baseDelay),
-            s"fullJitter($baseDelay)"
-          )
+      genFiniteDuration.map(baseDelay =>
+        LabelledRetryPolicy(
+          fullJitter[Id](baseDelay),
+          s"fullJitter($baseDelay)"
+        )
       )
     )
   }
