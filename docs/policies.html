@@ -118,12 +118,12 @@ As an example, we can retry with a 100ms delay 5 times and then retry every minu
 
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">retry5times100millis</span> <span class="k">=</span> <span class="n">constantDelay</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mf">100.</span><span class="n">millis</span><span class="o">)</span> <span class="o">|+|</span> <span class="n">limitRetries</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mi">5</span><span class="o">)</span>
 <span class="c1">// retry5times100millis: RetryPolicy[IO] = RetryPolicy(
-//   retry.RetryPolicy$$Lambda$11406/715463399@35f9aa3e
+//   retry.RetryPolicy$$Lambda$10250/1276932210@61620bbf
 // )
 </span>
 <span class="nv">retry5times100millis</span><span class="o">.</span><span class="py">followedBy</span><span class="o">(</span><span class="n">constantDelay</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mf">1.</span><span class="n">minute</span><span class="o">))</span>
 <span class="c1">// res1: RetryPolicy[IO] = RetryPolicy(
-//   retry.RetryPolicy$$Lambda$11412/682268289@3fe73cb7
+//   retry.RetryPolicy$$Lambda$10256/939679679@3d11dc2d
 // )
 </span></code></pre></div></div>
 
@@ -143,7 +143,7 @@ As an example, we can retry with a 100ms delay 5 times and then retry every minu
 
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">fibonacciBackoff</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mf">200.</span><span class="n">millis</span><span class="o">).</span><span class="py">mapDelay</span><span class="o">(</span><span class="k">_</span> <span class="o">+</span> <span class="mf">10.</span><span class="n">millis</span><span class="o">)</span>
 <span class="c1">// res3: RetryPolicy[IO] = RetryPolicy(
-//   retry.RetryPolicy$$Lambda$11418/184735793@4fd7f042
+//   retry.RetryPolicy$$Lambda$10262/134546884@dd0c045
 // )
 </span></code></pre></div></div>
 
@@ -156,7 +156,7 @@ As an example, we can retry with a 100ms delay 5 times and then retry every minu
   <span class="k">else</span> <span class="n">determineDelay</span>
 <span class="o">}</span>
 <span class="c1">// res4: RetryPolicy[IO] = RetryPolicy(
-//   retry.RetryPolicy$$Lambda$11420/539668630@6142807b
+//   retry.RetryPolicy$$Lambda$10264/1901310408@55a5d5f3
 // )
 </span></code></pre></div></div>
 
@@ -172,12 +172,12 @@ For example, you might have defined a custom <code class="highlighter-rouge">Ret
 <span class="k">val</span> <span class="nv">customPolicy</span><span class="k">:</span> <span class="kt">RetryPolicy</span><span class="o">[</span><span class="kt">IO</span><span class="o">]</span> <span class="k">=</span> 
   <span class="n">limitRetries</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mi">5</span><span class="o">).</span><span class="py">join</span><span class="o">(</span><span class="n">constantDelay</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mf">100.</span><span class="n">milliseconds</span><span class="o">))</span>
 <span class="c1">// customPolicy: RetryPolicy[IO] = RetryPolicy(
-//   retry.RetryPolicy$$Lambda$11406/715463399@44cf75d0
+//   retry.RetryPolicy$$Lambda$10250/1276932210@32a3a67a
 // )
 </span>
 <span class="nv">customPolicy</span><span class="o">.</span><span class="py">mapK</span><span class="o">[</span><span class="kt">Kleisli</span><span class="o">[</span><span class="kt">Task</span>, <span class="kt">String</span>, <span class="kt">?</span><span class="o">]](</span><span class="nv">LiftIO</span><span class="o">.</span><span class="py">liftK</span><span class="o">[</span><span class="kt">Kleisli</span><span class="o">[</span><span class="kt">Task</span>, <span class="kt">String</span>, <span class="kt">?</span><span class="o">]])</span>
 <span class="c1">// res5: RetryPolicy[Kleisli[Task, String, γ$0$]] = RetryPolicy(
-//   retry.RetryPolicy$$Lambda$11444/601640773@424bfb7a
+//   retry.RetryPolicy$$Lambda$10288/768629612@1e0f4b7
 // )
 </span></code></pre></div></div>
 
@@ -197,10 +197,10 @@ specifying the monad you need to work in:</p>
   <span class="o">}</span>
 <span class="o">}</span>
 <span class="c1">// onlyRetryOnTuesdays: RetryPolicy[IO] = RetryPolicy(
-//   retry.RetryPolicy$$$Lambda$11446/488915512@32ee5691
+//   retry.RetryPolicy$$$Lambda$10290/1948062699@ab9ce26
 // )
 </span></code></pre></div></div>
 </section></div></div></div></div><script src="/cats-retry/highlight/highlight.pack.js"></script><script>hljs.configure({languages:['scala','java','bash']});
 hljs.initHighlightingOnLoad();
               </script><script>console.info('\x57\x65\x62\x73\x69\x74\x65\x20\x62\x75\x69\x6c\x74\x20\x77\x69\x74\x68\x3a\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x5f\x5f\x20\x20\x20\x20\x5f\x5f\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x5f\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x5f\x20\x5f\x5f\x0a\x20\x20\x20\x5f\x5f\x5f\x5f\x5f\x2f\x20\x2f\x5f\x20\x20\x2f\x20\x2f\x5f\x20\x20\x20\x20\x20\x20\x5f\x5f\x5f\x5f\x20\x5f\x5f\x5f\x20\x20\x28\x5f\x29\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x20\x20\x5f\x5f\x5f\x5f\x5f\x28\x5f\x29\x20\x2f\x5f\x5f\x5f\x5f\x20\x20\x5f\x5f\x5f\x5f\x5f\x0a\x20\x20\x2f\x20\x5f\x5f\x5f\x2f\x20\x5f\x5f\x20\x5c\x2f\x20\x5f\x5f\x2f\x5f\x5f\x5f\x5f\x5f\x2f\x20\x5f\x5f\x20\x60\x5f\x5f\x20\x5c\x2f\x20\x2f\x20\x5f\x5f\x5f\x2f\x20\x5f\x5f\x5f\x2f\x20\x5f\x5f\x20\x5c\x2f\x20\x5f\x5f\x5f\x2f\x20\x2f\x20\x5f\x5f\x2f\x20\x5f\x20\x5c\x2f\x20\x5f\x5f\x5f\x2f\x0a\x20\x28\x5f\x5f\x20\x20\x29\x20\x2f\x5f\x2f\x20\x2f\x20\x2f\x5f\x2f\x5f\x5f\x5f\x5f\x5f\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x5f\x5f\x2f\x20\x2f\x20\x20\x2f\x20\x2f\x5f\x2f\x20\x28\x5f\x5f\x20\x20\x29\x20\x2f\x20\x2f\x5f\x2f\x20\x20\x5f\x5f\x28\x5f\x5f\x20\x20\x29\x0a\x2f\x5f\x5f\x5f\x5f\x2f\x5f\x2e\x5f\x5f\x5f\x2f\x5c\x5f\x5f\x2f\x20\x20\x20\x20\x20\x2f\x5f\x2f\x20\x2f\x5f\x2f\x20\x2f\x5f\x2f\x5f\x2f\x5c\x5f\x5f\x5f\x2f\x5f\x2f\x20\x20\x20\x5c\x5f\x5f\x5f\x5f\x2f\x5f\x5f\x5f\x5f\x2f\x5f\x2f\x5c\x5f\x5f\x2f\x5c\x5f\x5f\x5f\x2f\x5f\x5f\x5f\x5f\x2f\x0a\x0a\x68\x74\x74\x70\x73\x3a\x2f\x2f\x34\x37\x64\x65\x67\x2e\x67\x69\x74\x68\x75\x62\x2e\x69\x6f\x2f\x73\x62\x74\x2d\x6d\x69\x63\x72\x6f\x73\x69\x74\x65\x73')</script><script>((window.gitter = {}).chat = {}).options = {
-room: 'cb372/cats-retry'};</script><script src="https://sidecar.gitter.im/dist/sidecar.v1.js"></script><script src="/cats-retry/js/docs.js"></script></body></html>
+room: 'typelevel/cats-retry'};</script><script src="https://sidecar.gitter.im/dist/sidecar.v1.js"></script><script src="/cats-retry/js/docs.js"></script></body></html>
