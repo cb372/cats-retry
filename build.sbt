@@ -58,6 +58,7 @@ val moduleSettings = commonSettings ++ Seq(
 
 val catsVersion          = "2.0.0"
 val catsEffectVersion    = "2.0.0"
+val catsMtlVersion       = "0.7.0"
 val scalatestVersion     = "3.1.0"
 val scalaTestPlusVersion = "3.1.0.0-RC2"
 val scalacheckVersion    = "1.14.3"
@@ -104,6 +105,22 @@ val alleycatsRetry = crossProject(JVMPlatform, JSPlatform)
   )
 val alleycatsJVM = alleycatsRetry.jvm
 val alleycatsJS  = alleycatsRetry.js
+
+val mtlRetry = crossProject(JVMPlatform, JSPlatform)
+  .in(file("modules/mtl"))
+  .jvmConfigure(_.dependsOn(coreJVM))
+  .jsConfigure(_.dependsOn(coreJS))
+  .settings(moduleSettings)
+  .settings(
+    name := "cats-retry-mtl",
+    crossScalaVersions := scalaVersions,
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "cats-mtl-core" % catsMtlVersion,
+      "org.scalatest" %%% "scalatest"     % scalatestVersion % Test
+    )
+  )
+val mtlJVM = mtlRetry.jvm
+val mtlJS  = mtlRetry.js
 
 val docs = project
   .in(file("modules/docs"))

@@ -124,7 +124,7 @@ package object retry {
   def noop[M[_]: Monad, A]: (A, RetryDetails) => M[Unit] =
     (_, _) => Monad[M].pure(())
 
-  private def applyPolicy[M[_]: Monad](
+  private[retry] def applyPolicy[M[_]: Monad](
       policy: RetryPolicy[M],
       retryStatus: RetryStatus
   ): M[NextStep] =
@@ -135,7 +135,7 @@ package object retry {
         NextStep.GiveUp
     }
 
-  private def buildRetryDetails(
+  private[retry] def buildRetryDetails(
       currentStatus: RetryStatus,
       nextStep: NextStep
   ): RetryDetails =
@@ -153,9 +153,9 @@ package object retry {
         )
     }
 
-  private sealed trait NextStep
+  private[retry] sealed trait NextStep
 
-  private object NextStep {
+  private[retry] object NextStep {
     case object GiveUp extends NextStep
 
     final case class RetryAfterDelay(
