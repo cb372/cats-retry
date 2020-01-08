@@ -1,3 +1,5 @@
+<img align="right" src="modules/docs/src/main/resources/microsite/img/cats-retry-logo.png" height="200px" style="padding-left: 20px"/>
+
 # cats-retry [![Chat](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/typelevel/cats-retry)
 
 A library for retrying actions that can fail.
@@ -9,3 +11,5 @@ package](https://hackage.haskell.org/package/retry).
 
 Get started with [Getting
 started](https://cb372.github.io/cats-retry/docs/index.html)!
+
+Thank you to [@impurepics](https://twitter.com/impurepics) for the amazing logo!
