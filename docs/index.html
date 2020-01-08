@@ -40,7 +40,7 @@ information on more powerful policies).</p>
 
 <span class="k">val</span> <span class="nv">retryFiveTimes</span> <span class="k">=</span> <span class="nv">RetryPolicies</span><span class="o">.</span><span class="py">limitRetries</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mi">5</span><span class="o">)</span>
 <span class="c1">// retryFiveTimes: RetryPolicy[IO] = RetryPolicy(
-//   retry.RetryPolicy$$$Lambda$9654/395596802@31a0843a
+//   retry.RetryPolicy$$$Lambda$9042/2129345428@1b6a760a
 // )
 </span></code></pre></div></div>
 
@@ -92,7 +92,7 @@ the <code class="highlighter-rouge">IO</code> monad.</p>
 </span><span class="k">import</span> <span class="nn">cats.effect.Timer</span>
 <span class="k">import</span> <span class="nn">scala.concurrent.ExecutionContext.global</span>
 <span class="k">implicit</span> <span class="k">val</span> <span class="nv">timer</span><span class="k">:</span> <span class="kt">Timer</span><span class="o">[</span><span class="kt">IO</span><span class="o">]</span> <span class="k">=</span> <span class="nv">IO</span><span class="o">.</span><span class="py">timer</span><span class="o">(</span><span class="n">global</span><span class="o">)</span>
-<span class="c1">// timer: Timer[IO] = cats.effect.internals.IOTimer@3dade693
+<span class="c1">// timer: Timer[IO] = cats.effect.internals.IOTimer@2561b512
 </span>
 
 <span class="k">val</span> <span class="nv">flakyRequestWithRetry</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span>
