@@ -36,11 +36,11 @@ Your operation doesn’t throw errors, but you want to retry until it returns a 
 
 <span class="c1">// We need an implicit cats.effect.Timer
 </span><span class="k">implicit</span> <span class="k">val</span> <span class="nv">timer</span><span class="k">:</span> <span class="kt">Timer</span><span class="o">[</span><span class="kt">IO</span><span class="o">]</span> <span class="k">=</span> <span class="nv">IO</span><span class="o">.</span><span class="py">timer</span><span class="o">(</span><span class="n">global</span><span class="o">)</span>
-<span class="c1">// timer: Timer[IO] = cats.effect.internals.IOTimer@29367ead
+<span class="c1">// timer: Timer[IO] = cats.effect.internals.IOTimer@5e303245
 </span>
 <span class="k">val</span> <span class="nv">ioPolicy</span> <span class="k">=</span> <span class="nv">RetryPolicies</span><span class="o">.</span><span class="py">constantDelay</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">)</span>
 <span class="c1">// ioPolicy: RetryPolicy[IO] = RetryPolicy(
-//   retry.RetryPolicy$$$Lambda$10247/509260869@74d53efe
+//   retry.RetryPolicy$$$Lambda$9654/395596802@584952ce
 // )
 </span>
 <span class="k">def</span> <span class="nf">ioOnFailure</span><span class="o">(</span><span class="n">failedValue</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">details</span><span class="k">:</span> <span class="kt">RetryDetails</span><span class="o">)</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
@@ -54,7 +54,7 @@ Your operation doesn’t throw errors, but you want to retry until it returns a 
 <span class="o">}</span>
 <span class="c1">// io: IO[Int] = Bind(
 //   Delay(&lt;function0&gt;),
-//   retry.package$RetryingPartiallyApplied$$Lambda$10374/1357463029@19c0f2e7
+//   retry.package$RetryingPartiallyApplied$$Lambda$9781/1033756533@42c0d692
 // )
 </span>
 <span class="c1">// We need ContextShift for calling `.timeout`
@@ -62,8 +62,8 @@ Your operation doesn’t throw errors, but you want to retry until it returns a 
 
 <span class="nv">io</span><span class="o">.</span><span class="py">timeout</span><span class="o">(</span><span class="mf">1.</span><span class="n">minute</span><span class="o">)</span>
 <span class="c1">// res1: IO[Int] = Bind(
-//   Async(cats.effect.internals.IORace$$$Lambda$10375/2027956196@29f99fe3, true),
-//   cats.effect.Concurrent$$$Lambda$10376/873632601@69afec69
+//   Async(cats.effect.internals.IORace$$$Lambda$9782/2041900675@7f3ca241, true),
+//   cats.effect.Concurrent$$$Lambda$9783/291876329@5b0d040f
 // )
 </span></code></pre></div></div>
 
@@ -125,7 +125,7 @@ retry on all errors.</p>
 
 <span class="k">val</span> <span class="nv">policy</span> <span class="k">=</span> <span class="nv">RetryPolicies</span><span class="o">.</span><span class="py">limitRetries</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mi">2</span><span class="o">)</span>
 <span class="c1">// policy: RetryPolicy[IO] = RetryPolicy(
-//   retry.RetryPolicy$$$Lambda$10247/509260869@55d223c3
+//   retry.RetryPolicy$$$Lambda$9654/395596802@48e723b4
 // )
 </span>
 <span class="k">val</span> <span class="nv">httpClient</span> <span class="k">=</span> <span class="nv">util</span><span class="o">.</span><span class="py">FlakyHttpClient</span><span class="o">()</span>
