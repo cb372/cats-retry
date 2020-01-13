@@ -5,6 +5,7 @@ import cats.data.EitherT.catsDataMonadErrorFForEitherT
 import cats.instances.either._
 import cats.mtl.instances.handle._
 import org.scalatest.flatspec.AnyFlatSpec
+import retry.syntax.all._
 import retry.mtl.syntax.all._
 import retry.{RetryDetails, RetryPolicies, RetryPolicy, Sleep}
 
@@ -15,7 +16,7 @@ class SyntaxSpec extends AnyFlatSpec {
   type ErrorOr[A] = Either[Throwable, A]
   type F[A]       = EitherT[ErrorOr, String, A]
 
-  behavior of "retryingOnSomeErrors"
+  behavior of "retryingOnSomeErrorsMtl"
 
   it should "retry until the action succeeds" in new TestContext {
     implicit val sleepForEither: Sleep[F] =
@@ -25,12 +26,6 @@ class SyntaxSpec extends AnyFlatSpec {
 
     val error                  = new RuntimeException("Boom!")
     val policy: RetryPolicy[F] = RetryPolicies.constantDelay[F](1.second)
-
-    val isWorthRetrying: Either[Throwable, String] => Boolean = {
-      case Right(string) => string == "one more time"
-      case Left(cause)   => cause == error
-      case _             => false
-    }
 
     def action: F[String] = {
       attempts = attempts + 1
@@ -42,8 +37,9 @@ class SyntaxSpec extends AnyFlatSpec {
       }
     }
 
-    val finalResult: F[String] =
-      action.retryingOnSomeErrors[String](isWorthRetrying, policy, onError)
+    val finalResult: F[String] = action
+      .retryingOnSomeErrors(_ == error, policy, onError)
+      .retryingOnSomeErrorsMtl[String](_ == "one more time", policy, onMtlError)
 
     assert(finalResult.value == Right(Right("yay")))
     assert(attempts == 3)
@@ -60,12 +56,6 @@ class SyntaxSpec extends AnyFlatSpec {
     val error                  = new RuntimeException("Boom!")
     val policy: RetryPolicy[F] = RetryPolicies.constantDelay[F](1.second)
 
-    val isWorthRetrying: Either[Throwable, String] => Boolean = {
-      case Right(string) => string == "one more time"
-      case Left(cause)   => cause == error
-      case _             => false
-    }
-
     def action: F[String] = {
       attempts = attempts + 1
 
@@ -76,8 +66,9 @@ class SyntaxSpec extends AnyFlatSpec {
       }
     }
 
-    val finalResult =
-      action.retryingOnSomeErrors[String](isWorthRetrying, policy, onError)
+    val finalResult: F[String] = action
+      .retryingOnSomeErrors(_ == error, policy, onError)
+      .retryingOnSomeErrorsMtl[String](_ == "one more time", policy, onMtlError)
 
     assert(finalResult.value == Right(Left("nope")))
     assert(attempts == 3)
@@ -94,12 +85,6 @@ class SyntaxSpec extends AnyFlatSpec {
     val error                  = new RuntimeException("Boom!")
     val policy: RetryPolicy[F] = RetryPolicies.limitRetries[F](2)
 
-    val isWorthRetrying: Either[Throwable, String] => Boolean = {
-      case Right(string) => string == "one more time"
-      case Left(cause)   => cause == error
-      case _             => false
-    }
-
     def action: F[String] = {
       attempts = attempts + 1
 
@@ -110,22 +95,24 @@ class SyntaxSpec extends AnyFlatSpec {
       }
     }
 
-    val finalResult: F[String] =
-      action.retryingOnSomeErrors(isWorthRetrying, policy, onError)
+    val finalResult: F[String] = action
+      .retryingOnSomeErrors(_ == error, policy, onError)
+      .retryingOnSomeErrorsMtl[String](_ == "one more time", policy, onMtlError)
 
     assert(finalResult.value == Right(Left("one more time")))
-    assert(attempts == 3)
+    assert(attempts == 4)
     assert(
       errors.toList == List(
         Right("one more time"),
         Left(error),
+        Right("one more time"),
         Right("one more time")
       )
     )
     assert(gaveUp)
   }
 
-  behavior of "retryingOnAllErrors"
+  behavior of "retryingOnAllErrorsMtl"
 
   it should "retry until the action succeeds" in new TestContext {
     implicit val sleepForEither: Sleep[F] =
@@ -146,7 +133,9 @@ class SyntaxSpec extends AnyFlatSpec {
       }
     }
 
-    val finalResult: F[String] = action.retryingOnAllErrors(policy, onError)
+    val finalResult: F[String] = action
+      .retryingOnAllErrors(policy, onError)
+      .retryingOnAllErrorsMtl[String](policy, onMtlError)
 
     assert(finalResult.value == Right(Right("yay")))
     assert(attempts == 3)
@@ -173,14 +162,17 @@ class SyntaxSpec extends AnyFlatSpec {
       }
     }
 
-    val finalResult = action.retryingOnAllErrors(policy, onError)
+    val finalResult: F[String] = action
+      .retryingOnAllErrors(policy, onError)
+      .retryingOnAllErrorsMtl[String](policy, onMtlError)
 
     assert(finalResult.value == Right(Left("one more time")))
-    assert(attempts == 3)
+    assert(attempts == 4)
     assert(
       errors.toList == List(
         Right("one more time"),
         Left(error),
+        Right("one more time"),
         Right("one more time")
       )
     )
@@ -193,7 +185,13 @@ class SyntaxSpec extends AnyFlatSpec {
     val delays   = ArrayBuffer.empty[FiniteDuration]
     var gaveUp   = false
 
-    def onError(
+    def onError(error: Throwable, details: RetryDetails): F[Unit] =
+      onErrorInternal(Left(error), details)
+
+    def onMtlError(error: String, details: RetryDetails): F[Unit] =
+      onErrorInternal(Right(error), details)
+
+    private def onErrorInternal(
         error: Either[Throwable, String],
         details: RetryDetails
     ): F[Unit] = {

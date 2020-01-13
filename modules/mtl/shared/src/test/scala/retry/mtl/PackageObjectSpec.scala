@@ -21,28 +21,23 @@ class PackageObjectSpec extends AnyFlatSpec {
         def sleep(delay: FiniteDuration): F[Unit] = EitherT.pure(())
       }
 
-    val error  = new RuntimeException("Boom!")
     val policy = RetryPolicies.constantDelay[F](1.second)
 
-    val isWorthRetrying: Either[Throwable, String] => Boolean = {
-      case Right(string) => string == "one more time"
-      case Left(cause)   => cause == error
-      case _             => false
-    }
+    val isWorthRetrying: String => Boolean = _ == "one more time"
 
-    val finalResult = retryingOnSomeErrors(policy, isWorthRetrying, onError) {
-      attempts = attempts + 1
+    val finalResult =
+      retryingOnSomeErrors(policy, isWorthRetrying, onMtlError) {
+        attempts = attempts + 1
 
-      attempts match {
-        case 1 => EitherT.leftT[ErrorOr, String]("one more time")
-        case 2 => EitherT[ErrorOr, String, String](Left(error))
-        case _ => EitherT.pure[ErrorOr, String]("yay")
+        if (attempts < 3)
+          EitherT.leftT[ErrorOr, String]("one more time")
+        else
+          EitherT.pure[ErrorOr, String]("yay")
       }
-    }
 
     assert(finalResult.value == Right(Right("yay")))
     assert(attempts == 3)
-    assert(errors.toList == List(Right("one more time"), Left(error)))
+    assert(errors.toList == List("one more time", "one more time"))
     assert(!gaveUp)
   }
 
@@ -52,28 +47,23 @@ class PackageObjectSpec extends AnyFlatSpec {
         def sleep(delay: FiniteDuration): F[Unit] = EitherT.pure(())
       }
 
-    val error  = new RuntimeException("Boom!")
     val policy = RetryPolicies.constantDelay[F](1.second)
 
-    val isWorthRetrying: Either[Throwable, String] => Boolean = {
-      case Right(string) => string == "one more time"
-      case Left(cause)   => cause == error
-      case _             => false
-    }
+    val isWorthRetrying: String => Boolean = _ == "one more time"
 
-    val finalResult = retryingOnSomeErrors(policy, isWorthRetrying, onError) {
-      attempts = attempts + 1
+    val finalResult =
+      retryingOnSomeErrors(policy, isWorthRetrying, onMtlError) {
+        attempts = attempts + 1
 
-      attempts match {
-        case 1 => EitherT.leftT[ErrorOr, String]("one more time")
-        case 2 => EitherT[ErrorOr, String, String](Left(error))
-        case _ => EitherT.leftT[ErrorOr, String]("nope")
+        if (attempts < 3)
+          EitherT.leftT[ErrorOr, String]("one more time")
+        else
+          EitherT.leftT[ErrorOr, String]("nope")
       }
-    }
 
     assert(finalResult.value == Right(Left("nope")))
     assert(attempts == 3)
-    assert(errors.toList == List(Right("one more time"), Left(error)))
+    assert(errors.toList == List("one more time", "one more time"))
     assert(!gaveUp) // false because onError is only called when the error is worth retrying
   }
 
@@ -83,33 +73,20 @@ class PackageObjectSpec extends AnyFlatSpec {
         def sleep(delay: FiniteDuration): F[Unit] = EitherT.pure(())
       }
 
-    val error  = new RuntimeException("Boom!")
     val policy = RetryPolicies.limitRetries[F](2)
 
-    val isWorthRetrying: Either[Throwable, String] => Boolean = {
-      case Right(string) => string == "one more time"
-      case Left(cause)   => cause == error
-      case _             => false
-    }
+    val isWorthRetrying: String => Boolean = _ == "one more time"
 
-    val finalResult = retryingOnSomeErrors(policy, isWorthRetrying, onError) {
-      attempts = attempts + 1
-
-      attempts match {
-        case 1 => EitherT.leftT[ErrorOr, String]("one more time")
-        case 2 => EitherT[ErrorOr, String, String](Left(error))
-        case _ => EitherT.leftT[ErrorOr, String]("one more time")
+    val finalResult =
+      retryingOnSomeErrors(policy, isWorthRetrying, onMtlError) {
+        attempts = attempts + 1
+        EitherT.leftT[ErrorOr, String]("one more time")
       }
-    }
 
     assert(finalResult.value == Right(Left("one more time")))
     assert(attempts == 3)
     assert(
-      errors.toList == List(
-        Right("one more time"),
-        Left(error),
-        Right("one more time")
-      )
+      errors.toList == List("one more time", "one more time", "one more time")
     )
     assert(gaveUp)
   }
@@ -122,22 +99,20 @@ class PackageObjectSpec extends AnyFlatSpec {
         def sleep(delay: FiniteDuration): F[Unit] = EitherT.pure(())
       }
 
-    val error  = new RuntimeException("Boom!")
     val policy = RetryPolicies.constantDelay[F](1.second)
 
-    val finalResult = retryingOnAllErrors(policy, onError) {
+    val finalResult = retryingOnAllErrors(policy, onMtlError) {
       attempts = attempts + 1
 
-      attempts match {
-        case 1 => EitherT.leftT[ErrorOr, String]("one more time")
-        case 2 => EitherT[ErrorOr, String, String](Left(error))
-        case _ => EitherT.pure[ErrorOr, String]("yay")
-      }
+      if (attempts < 3)
+        EitherT.leftT[ErrorOr, String]("one more time")
+      else
+        EitherT.pure[ErrorOr, String]("yay")
     }
 
     assert(finalResult.value == Right(Right("yay")))
     assert(attempts == 3)
-    assert(errors.toList == List(Right("one more time"), Left(error)))
+    assert(errors.toList == List("one more time", "one more time"))
     assert(!gaveUp)
   }
 
@@ -147,39 +122,29 @@ class PackageObjectSpec extends AnyFlatSpec {
         def sleep(delay: FiniteDuration): F[Unit] = EitherT.pure(())
       }
 
-    val error  = new RuntimeException("Boom!")
     val policy = RetryPolicies.limitRetries[F](2)
 
-    val finalResult = retryingOnAllErrors(policy, onError) {
+    val finalResult = retryingOnAllErrors(policy, onMtlError) {
       attempts = attempts + 1
-
-      attempts match {
-        case 1 => EitherT.leftT[ErrorOr, String]("one more time")
-        case 2 => EitherT[ErrorOr, String, String](Left(error))
-        case _ => EitherT.leftT[ErrorOr, String]("one more time")
-      }
+      EitherT.leftT[ErrorOr, String]("one more time")
     }
 
     assert(finalResult.value == Right(Left("one more time")))
     assert(attempts == 3)
     assert(
-      errors.toList == List(
-        Right("one more time"),
-        Left(error),
-        Right("one more time")
-      )
+      errors.toList == List("one more time", "one more time", "one more time")
     )
     assert(gaveUp)
   }
 
   private class TestContext {
     var attempts = 0
-    val errors   = ArrayBuffer.empty[Either[Throwable, String]]
+    val errors   = ArrayBuffer.empty[String]
     val delays   = ArrayBuffer.empty[FiniteDuration]
     var gaveUp   = false
 
-    def onError(
-        error: Either[Throwable, String],
+    def onMtlError(
+        error: String,
         details: RetryDetails
     ): F[Unit] = {
       errors.append(error)
