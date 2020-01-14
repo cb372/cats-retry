@@ -28,11 +28,11 @@ MTL retry works independently from `retry.retryingOnSomeErrors`. The operations 
 `retry.mtl.retryingOnSomeErrors` evaluating retry exclusively on errors produced by `ApplicativeHandle`.
 Thus errors produced by `MonadError` are not being taken into account and retry is not triggered.
 
-If you want to retry in case of any error, just chain the methods:  
+If you want to retry in case of any error, you can chain the methods:
 ```scala
 fa
   .retryingOnAllErrors(policy, onError = retry.noop[F, Throwable])
-  .retryingOnAllErrorsMtl[AppError](policy, onError = retry.noop[F, AppError])
+  .retryingOnAllMtlErrors[AppError](policy, onError = retry.noop[F, AppError])
 ```
 
 ## `retryingOnSomeErrors`
@@ -94,7 +94,7 @@ retry.mtl
 
 ## `retryingOnAllErrors`
 
-This is useful when you are working with a `ApplicatieHandle[M, E]` and you want to
+This is useful when you are working with a `ApplicativeHandle[M, E]` and you want to
 retry on all errors.
 
 The API (modulo some type-inference trickery) looks like this:
@@ -164,13 +164,13 @@ class Service[F[_]: Timer](client: util.FlakyHttpClient)(implicit F: Sync[F], AH
 
   // evaluates retry exclusively on errors produced by ApplicativeHandle.
   def findCoolCatGifRetryMtl(policy: RetryPolicy[F]): F[String] =
-    findCoolCatGif.retryingOnAllErrorsMtl[AppError](policy, logMtlError)
+    findCoolCatGif.retryingOnAllMtlErrors[AppError](policy, logMtlError)
 
   // evaluates retry on errors produced by MonadError and ApplicativeHandle
   def findCoolCatGifRetryAll(policy: RetryPolicy[F]): F[String] =
     findCoolCatGif
       .retryingOnAllErrors(policy, logError)
-      .retryingOnAllErrorsMtl[AppError](policy, logMtlError)
+      .retryingOnAllMtlErrors[AppError](policy, logMtlError)
 
   private def findCoolCatGif: F[String] =
     for {

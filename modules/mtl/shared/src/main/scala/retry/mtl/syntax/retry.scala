@@ -15,7 +15,7 @@ final class RetryingMtlErrorOps[M[_], A](action: => M[A])(
     implicit M: Monad[M]
 ) {
 
-  def retryingOnAllErrorsMtl[E](
+  def retryingOnAllMtlErrors[E](
       policy: RetryPolicy[M],
       onError: (E, RetryDetails) => M[Unit]
   )(implicit S: Sleep[M], AH: ApplicativeHandle[M, E]): M[A] =
@@ -24,7 +24,7 @@ final class RetryingMtlErrorOps[M[_], A](action: => M[A])(
       onError = onError
     )(action)
 
-  def retryingOnSomeErrorsMtl[E](
+  def retryingOnSomeMtlErrors[E](
       isWorthRetrying: E => Boolean,
       policy: RetryPolicy[M],
       onError: (E, RetryDetails) => M[Unit]

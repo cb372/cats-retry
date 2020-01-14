@@ -163,6 +163,8 @@ val root = project
     coreJS,
     alleycatsJVM,
     alleycatsJS,
+    mtlJVM,
+    mtlJS,
     docs
   )
   .settings(commonSettings)
