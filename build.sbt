@@ -33,7 +33,8 @@ val commonSettings = Seq(
       email = "luka.jacobowitz@gmail.com",
       url = url("https://github.com/LukaJCB")
     )
-  )
+  ),
+  mimaPreviousArtifacts := Set.empty
 )
 
 val moduleSettings = commonSettings ++ Seq(
@@ -80,7 +81,8 @@ val core = crossProject(JVMPlatform, JSPlatform)
       "org.scalatestplus" %%% "scalacheck-1-14"      % scalaTestPlusVersion % Test,
       "org.typelevel"     %%% "discipline-scalatest" % disciplineVersion % Test,
       "org.scalacheck"    %%% "scalacheck"           % scalacheckVersion % Test
-    )
+    ),
+    mimaPreviousArtifacts := Set("com.github.cb372" %%% "cats-retry" % "1.0.0")
   )
 val coreJVM = core.jvm
 val coreJS  = core.js
@@ -101,6 +103,9 @@ val alleycatsRetry = crossProject(JVMPlatform, JSPlatform)
       "org.scalatestplus" %%% "scalacheck-1-14"      % scalaTestPlusVersion % Test,
       "org.typelevel"     %%% "discipline-scalatest" % disciplineVersion    % Test,
       "org.scalacheck"    %%% "scalacheck"           % scalacheckVersion    % Test
+    ),
+    mimaPreviousArtifacts := Set(
+      "com.github.cb372" %%% "alleycats-retry" % "1.0.0"
     )
   )
 val alleycatsJVM = alleycatsRetry.jvm
@@ -117,6 +122,9 @@ val mtlRetry = crossProject(JVMPlatform, JSPlatform)
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-mtl-core" % catsMtlVersion,
       "org.scalatest" %%% "scalatest"     % scalatestVersion % Test
+    ),
+    mimaPreviousArtifacts := Set(
+      "com.github.cb372" %%% "cats-retry-mtl" % "1.1.0"
     )
   )
 val mtlJVM = mtlRetry.jvm
