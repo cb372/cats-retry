@@ -112,5 +112,6 @@ logMessages.foreach(println)
 Next steps:
 
 * Learn about the other available [combinators](combinators.html)
+* Learn about the [MTL combinators](mtl-combinators.html)
 * Learn more about [retry policies](policies.html)
 * Learn about the [`Sleep` type class](sleep.html)

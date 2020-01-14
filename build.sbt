@@ -124,7 +124,7 @@ val mtlJS  = mtlRetry.js
 
 val docs = project
   .in(file("modules/docs"))
-  .dependsOn(coreJVM, alleycatsJVM)
+  .dependsOn(coreJVM, alleycatsJVM, mtlJVM)
   .enablePlugins(MicrositesPlugin, BuildInfoPlugin)
   .settings(moduleSettings)
   .settings(
