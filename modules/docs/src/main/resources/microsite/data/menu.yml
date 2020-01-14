@@ -3,6 +3,8 @@ options:
     url: docs/index.html
   - title: Combinators
     url: docs/combinators.html
+  - title: MTL Combinators
+    url: docs/mtl-combinators.html
   - title: Retry policies
     url: docs/policies.html
   - title: Sleep
