@@ -71,15 +71,15 @@ val core = crossProject(JVMPlatform, JSPlatform)
     name := "cats-retry",
     crossScalaVersions := scalaVersions,
     libraryDependencies ++= Seq(
-      "org.typelevel"     %%% "cats-core"                % catsVersion,
-      "org.typelevel"     %%% "cats-effect"              % catsEffectVersion,
-      "org.scalatest"     %%% "scalatest"                % scalatestVersion % Test,
-      "org.scalacheck"    %%% "scalacheck"               % scalacheckVersion % Test,
-      "org.typelevel"     %%% "cats-laws"                % catsVersion % Test,
-      "org.scalatest"     %%% "scalatest"                % scalatestVersion % Test,
-      "org.scalatestplus" %%% "scalacheck-1-14"          % scalaTestPlusVersion % Test,
-      "org.typelevel"     %%% "discipline-scalatest"     % disciplineVersion % Test,
-      "org.scalacheck"    %%% "scalacheck"               % scalacheckVersion % Test
+      "org.typelevel"     %%% "cats-core"            % catsVersion,
+      "org.typelevel"     %%% "cats-effect"          % catsEffectVersion,
+      "org.scalatest"     %%% "scalatest"            % scalatestVersion % Test,
+      "org.scalacheck"    %%% "scalacheck"           % scalacheckVersion % Test,
+      "org.typelevel"     %%% "cats-laws"            % catsVersion % Test,
+      "org.scalatest"     %%% "scalatest"            % scalatestVersion % Test,
+      "org.scalatestplus" %%% "scalacheck-1-14"      % scalaTestPlusVersion % Test,
+      "org.typelevel"     %%% "discipline-scalatest" % disciplineVersion % Test,
+      "org.scalacheck"    %%% "scalacheck"           % scalacheckVersion % Test
     )
   )
 val coreJVM = core.jvm
@@ -94,13 +94,13 @@ val alleycatsRetry = crossProject(JVMPlatform, JSPlatform)
     name := "alleycats-retry",
     crossScalaVersions := scalaVersions,
     libraryDependencies ++= Seq(
-      "org.scalatest"     %%% "scalatest"                % scalatestVersion     % Test,
-      "org.scalacheck"    %%% "scalacheck"               % scalacheckVersion    % Test,
-      "org.typelevel"     %%% "cats-laws"                % catsVersion          % Test,
-      "org.scalatest"     %%% "scalatest"                % scalatestVersion     % Test,
-      "org.scalatestplus" %%% "scalacheck-1-14"          % scalaTestPlusVersion % Test,
-      "org.typelevel"     %%% "discipline-scalatest"     % disciplineVersion    % Test,
-      "org.scalacheck"    %%% "scalacheck"               % scalacheckVersion    % Test
+      "org.scalatest"     %%% "scalatest"            % scalatestVersion     % Test,
+      "org.scalacheck"    %%% "scalacheck"           % scalacheckVersion    % Test,
+      "org.typelevel"     %%% "cats-laws"            % catsVersion          % Test,
+      "org.scalatest"     %%% "scalatest"            % scalatestVersion     % Test,
+      "org.scalatestplus" %%% "scalacheck-1-14"      % scalaTestPlusVersion % Test,
+      "org.typelevel"     %%% "discipline-scalatest" % disciplineVersion    % Test,
+      "org.scalacheck"    %%% "scalacheck"           % scalacheckVersion    % Test
     )
   )
 val alleycatsJVM = alleycatsRetry.jvm
