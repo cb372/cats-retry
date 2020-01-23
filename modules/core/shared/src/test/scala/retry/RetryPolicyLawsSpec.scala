@@ -6,7 +6,7 @@ import cats.kernel.laws.discipline.BoundedSemilatticeTests
 import org.scalacheck.{Arbitrary, Cogen, Gen}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatestplus.scalacheck.Checkers
-import org.typelevel.discipline.scalatest.Discipline
+import org.typelevel.discipline.scalatest.FunSuiteDiscipline
 
 import scala.concurrent.duration._
 import cats.laws.discipline.ExhaustiveCheck
@@ -14,7 +14,10 @@ import cats.laws.discipline.eq.catsLawsEqForFn1Exhaustive
 import cats.arrow.FunctionK
 import cats.Monad
 
-class RetryPolicyLawsSpec extends AnyFunSuite with Discipline with Checkers {
+class RetryPolicyLawsSpec
+    extends AnyFunSuite
+    with FunSuiteDiscipline
+    with Checkers {
   override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSuccessful = 100)
 

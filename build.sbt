@@ -60,9 +60,9 @@ val catsVersion          = "2.0.0"
 val catsEffectVersion    = "2.0.0"
 val catsMtlVersion       = "0.7.0"
 val scalatestVersion     = "3.1.0"
-val scalaTestPlusVersion = "3.1.0.0-RC2"
+val scalaTestPlusVersion = "3.1.0.1"
 val scalacheckVersion    = "1.14.3"
-val disciplineVersion    = "1.0.0-RC2"
+val disciplineVersion    = "1.0.0-RC4"
 
 val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/core"))
@@ -77,7 +77,7 @@ val core = crossProject(JVMPlatform, JSPlatform)
       "org.scalacheck"    %%% "scalacheck"               % scalacheckVersion % Test,
       "org.typelevel"     %%% "cats-laws"                % catsVersion % Test,
       "org.scalatest"     %%% "scalatest"                % scalatestVersion % Test,
-      "org.scalatestplus" %%% "scalatestplus-scalacheck" % scalaTestPlusVersion % Test,
+      "org.scalatestplus" %%% "scalacheck-1-14"          % scalaTestPlusVersion % Test,
       "org.typelevel"     %%% "discipline-scalatest"     % disciplineVersion % Test,
       "org.scalacheck"    %%% "scalacheck"               % scalacheckVersion % Test
     )
@@ -98,7 +98,7 @@ val alleycatsRetry = crossProject(JVMPlatform, JSPlatform)
       "org.scalacheck"    %%% "scalacheck"               % scalacheckVersion    % Test,
       "org.typelevel"     %%% "cats-laws"                % catsVersion          % Test,
       "org.scalatest"     %%% "scalatest"                % scalatestVersion     % Test,
-      "org.scalatestplus" %%% "scalatestplus-scalacheck" % scalaTestPlusVersion % Test,
+      "org.scalatestplus" %%% "scalacheck-1-14"          % scalaTestPlusVersion % Test,
       "org.typelevel"     %%% "discipline-scalatest"     % disciplineVersion    % Test,
       "org.scalacheck"    %%% "scalacheck"               % scalacheckVersion    % Test
     )
