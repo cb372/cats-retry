@@ -17,7 +17,7 @@ jobs:
       run: gem install jekyll -v 4
     - name: Publish the microsite
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.MICROSITE_GITHUB_TOKEN }}
       run: sbt -J-Xms4G -J-Xmx4G docs/publishMicrosite
 
   test:
