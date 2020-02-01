@@ -5,6 +5,21 @@ on:
     branches:
       - master
 jobs:
+  publish_site:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: olafurpg/setup-scala@v5
+    - uses: actions/setup-ruby@v1
+      with:
+        ruby-version: 2.6
+    - name: Install Jekyll
+      run: gem install jekyll -v 4
+    - name: Publish the microsite
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: sbt -J-Xms4G -J-Xmx4G docs/publishMicrosite
+
   test:
     runs-on: ubuntu-latest
     steps:
