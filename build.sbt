@@ -153,7 +153,9 @@ val docs = project
     micrositeTwitterCreator := "@cbirchall",
     micrositeCompilingDocsTool := WithMdoc,
     mdocIn := (sourceDirectory in Compile).value / "mdoc",
-    micrositeShareOnSocial := true
+    micrositeShareOnSocial := true,
+    micrositePushSiteWith := GitHub4s,
+    micrositeGithubToken := sys.env.get("GITHUB_TOKEN")
   )
 
 val root = project

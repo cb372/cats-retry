@@ -19,3 +19,18 @@ jobs:
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+
+  publish_site:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: olafurpg/setup-scala@v5
+    - uses: actions/setup-ruby@v1
+      with:
+        ruby-version: 2.6
+    - name: Install Jekyll
+      run: gem install jekyll -v 4
+    - name: Publish the microsite
+      env:
+        GITHUB_TOKEN: ${{ secrets.MICROSITE_GITHUB_TOKEN }}
+      run: sbt -J-Xms4G -J-Xmx4G docs/publishMicrosite
