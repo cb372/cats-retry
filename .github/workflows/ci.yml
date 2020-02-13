@@ -12,6 +12,13 @@ jobs:
     - uses: olafurpg/setup-scala@v5
     - name: Test
       run: sbt -J-Xms4G -J-Xmx4G +test
+  bincompat:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: olafurpg/setup-scala@v5
+    - name: Check binary compatibility
+      run: sbt -J-Xms4G -J-Xmx4G +mimaReportBinaryIssues
   docs:
     runs-on: ubuntu-latest
     steps:
