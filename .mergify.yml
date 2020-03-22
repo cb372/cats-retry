@@ -1,0 +1,24 @@
+pull_request_rules:
+  - name: Automatic merge for scala-steward PRs - patch
+    conditions:
+      - author=scala-steward
+      - body~=labels:.*semver-patch
+      - status-success=test
+      - status-success=docs
+      - status-success=bincompat
+      - status-success=format
+    actions:
+      merge:
+        method: merge
+  - name: Automatic merge for scala-steward PRs - minor
+    conditions:
+      - author=scala-steward
+      - body~=labels:.*semver-minor
+      - status-success=test
+      - status-success=docs
+      - status-success=bincompat
+      - status-success=format
+      - "#approved-reviews-by>=1"
+    actions:
+      merge:
+        method: merge
