@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit
 import cats.Applicative
 import cats.syntax.functor._
 import cats.syntax.show._
+import cats.instances.double._
 import cats.instances.finiteDuration._
 import cats.instances.int._
 import retry.PolicyDecision._
@@ -59,6 +60,24 @@ object RetryPolicies {
         safeMultiply(baseDelay, Math.pow(2, status.retriesSoFar).toLong)
       DelayAndRetry(delay)
     }, show"exponentialBackOff(baseDelay=$baseDelay)")
+
+  /**
+    * Each delay is twice as long as the previous one and caped by max delay. Never give up.
+    * Caped with max delay.
+    */
+  def exponentialBackoffCaped[M[_]: Applicative](
+      minDelay: FiniteDuration,
+      maxDelay: FiniteDuration
+  ): RetryPolicy[M] =
+    RetryPolicy.liftWithShow(
+      { status =>
+        val delay =
+          safeMultiply(minDelay, Math.pow(2, status.retriesSoFar).toLong)
+            .min(maxDelay)
+        DelayAndRetry(delay)
+      },
+      show"exponentialBackOffCaped(minDelay=$minDelay, maxDelay=$maxDelay)"
+    )
 
   /**
     * Retry without delay, giving up after the given number of retries.
@@ -157,5 +176,37 @@ object RetryPolicies {
       decideNextRetry,
       show"limitRetriesByCumulativeDelay(threshold=$threshold, $policy)"
     )
+  }
+
+  /**
+    * An analog for
+    * Akka restartable source https://doc.akka.io/api/akka/current/akka/stream/scaladsl/RestartSource$.html
+    * @param minDelay based delay for restarts
+    * @param maxDelay maximal (cap) delay for restarts
+    * @param randomFactor randomFactor for increasing delay
+    * @param maxRestarts maximal restarts count. pass -1 to infinite retries.
+    */
+  def exponentialBackoffCapedRandom[M[_]: Applicative](
+      minDelay: FiniteDuration,
+      maxDelay: FiniteDuration,
+      randomFactor: Double,
+      maxRestarts: Int
+  ): RetryPolicy[M] = {
+    RetryPolicy
+      .liftWithShow[M](
+        { status =>
+          if (maxRestarts != -1 && status.retriesSoFar >= maxRestarts) {
+            GiveUp
+          } else {
+            val delayNanos =
+              (safeMultiply(minDelay, Math.pow(2, status.retriesSoFar).toLong) *
+                (1.0 + Random.nextDouble() * randomFactor)).min(maxDelay)
+            DelayAndRetry(
+              new FiniteDuration(delayNanos.toNanos, TimeUnit.NANOSECONDS)
+            )
+          }
+        },
+        show"exponentialRandomBackoffRandom(maxDelay=$minDelay, maxDelay=$maxDelay, randomFactor=$randomFactor, maxRestarts=$maxRestarts)"
+      )
   }
 }

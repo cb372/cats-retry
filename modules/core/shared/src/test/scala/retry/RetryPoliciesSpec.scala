@@ -49,6 +49,30 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
           s"exponentialBackoff($baseDelay)"
         )
       ),
+      for {
+        delay1 <- genFiniteDuration
+        delay2 <- genFiniteDuration
+      } yield {
+        val min = delay1 min delay2
+        val max = delay1 max delay2
+        LabelledRetryPolicy(
+          exponentialBackoffCaped[Id](min, max),
+          s"exponentialBackoffCaped($min, $max)"
+        )
+      },
+      for {
+        delay1       <- genFiniteDuration
+        delay2       <- genFiniteDuration
+        maxRetries   <- Gen.posNum[Int]
+        randomFactor <- Gen.posNum[Double]
+      } yield {
+        val min = delay1 min delay2
+        val max = delay1 max delay2
+        LabelledRetryPolicy(
+          exponentialBackoffCapedRandom[Id](min, max, randomFactor, maxRetries),
+          s"exponentialBackoffCapedRandom($min, $max, $randomFactor, $maxRetries)"
+        )
+      },
       Gen
         .posNum[Int]
         .map(maxRetries =>
@@ -100,6 +124,59 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
     test(1, 200.milliseconds)
     test(2, 400.milliseconds)
     test(3, 800.milliseconds)
+  }
+
+  behavior of "exponentialBackoffCaped"
+
+  it should "start with the base delay, double the delay after each iteration and caped by max delay" in {
+    val policy                   = exponentialBackoffCaped[Id](100.milliseconds, 500.milliseconds)
+    val arbitraryCumulativeDelay = 999.milliseconds
+    val arbitraryPreviousDelay   = Some(999.milliseconds)
+
+    def test(retriesSoFar: Int, expectedDelay: FiniteDuration) = {
+      val status = RetryStatus(
+        retriesSoFar,
+        arbitraryCumulativeDelay,
+        arbitraryPreviousDelay
+      )
+      val verdict = policy.decideNextRetry(status)
+      assert(verdict == PolicyDecision.DelayAndRetry(expectedDelay))
+    }
+
+    test(0, 100.milliseconds)
+    test(1, 200.milliseconds)
+    test(2, 400.milliseconds)
+    test(3, 500.milliseconds)
+    test(4, 500.milliseconds)
+  }
+
+  behavior of "exponentialBackoffCapedRandom"
+
+  it should "start with the base delay, double the delay after each iteration and caped by max delay" in {
+    val policy = exponentialBackoffCapedRandom[Id](
+      100.milliseconds,
+      500.milliseconds,
+      0.0,
+      4
+    )
+    val arbitraryCumulativeDelay = 999.milliseconds
+    val arbitraryPreviousDelay   = Some(999.milliseconds)
+
+    def test(retriesSoFar: Int, expectedDecision: PolicyDecision) = {
+      val status = RetryStatus(
+        retriesSoFar,
+        arbitraryCumulativeDelay,
+        arbitraryPreviousDelay
+      )
+      val verdict = policy.decideNextRetry(status)
+      assert(verdict == expectedDecision)
+    }
+
+    test(0, DelayAndRetry(100.milliseconds))
+    test(1, DelayAndRetry(200.milliseconds))
+    test(2, DelayAndRetry(400.milliseconds))
+    test(3, DelayAndRetry(500.milliseconds))
+    test(4, GiveUp)
   }
 
   behavior of "fibonacciBackoff"
