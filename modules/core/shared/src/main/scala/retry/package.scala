@@ -95,28 +95,8 @@ package object retry {
         implicit
         ME: MonadError[M, E],
         S: Sleep[M]
-    ): M[A] = {
-
-      ME.tailRecM(RetryStatus.NoRetriesYet) { status =>
-        ME.attempt(action).flatMap {
-          case Left(error) =>
-            for {
-              nextStep <- applyPolicy(policy, status)
-              _        <- onError(error, buildRetryDetails(status, nextStep))
-              result <- nextStep match {
-                case NextStep.RetryAfterDelay(delay, updatedStatus) =>
-                  S.sleep(delay) *>
-                    ME.pure(Left(updatedStatus)) // continue recursion
-                case NextStep.GiveUp =>
-                  ME.raiseError[A](error).map(Right(_)) // stop the recursion
-              }
-            } yield result
-          case Right(success) =>
-            ME.pure(Right(success)) // stop the recursion
-        }
-      }
-
-    }
+    ): M[A] =
+      retryingOnSomeErrors[A].apply[M, E](policy, _ => true, onError)(action)
   }
 
   def noop[M[_]: Monad, A]: (A, RetryDetails) => M[Unit] =
