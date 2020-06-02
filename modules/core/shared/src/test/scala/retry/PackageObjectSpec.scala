@@ -10,6 +10,11 @@ import scala.concurrent.duration._
 class PackageObjectSpec extends AnyFlatSpec {
   type StringOr[A] = Either[String, A]
 
+  implicit val sleepForEither: Sleep[StringOr] =
+    new Sleep[StringOr] {
+      def sleep(delay: FiniteDuration): StringOr[Unit] = Right(())
+    }
+
   behavior of "retryingM"
 
   it should "retry until the action succeeds" in new TestContext {
@@ -62,14 +67,31 @@ class PackageObjectSpec extends AnyFlatSpec {
     assert(gaveUp)
   }
 
+  it should "retry in a stack-safe way" in new TestContext {
+    val policy = RetryPolicies.limitRetries[Id](10000)
+
+    implicit val dummySleep: Sleep[Id] =
+      new Sleep[Id] {
+        def sleep(delay: FiniteDuration): Id[Unit] = ()
+      }
+
+    val finalResult = retryingM[String][Id](
+      policy,
+      _.toInt > 20000,
+      onError
+    ) {
+      attempts = attempts + 1
+      attempts.toString
+    }
+
+    assert(finalResult == "10001")
+    assert(attempts == 10001)
+    assert(gaveUp)
+  }
+
   behavior of "retryingOnSomeErrors"
 
   it should "retry until the action succeeds" in new TestContext {
-    implicit val sleepForEither: Sleep[StringOr] =
-      new Sleep[StringOr] {
-        def sleep(delay: FiniteDuration): StringOr[Unit] = Right(())
-      }
-
     val policy = RetryPolicies.constantDelay[StringOr](1.second)
 
     val finalResult = retryingOnSomeErrors(
@@ -91,11 +113,6 @@ class PackageObjectSpec extends AnyFlatSpec {
   }
 
   it should "retry only if the error is worth retrying" in new TestContext {
-    implicit val sleepForEither: Sleep[StringOr] =
-      new Sleep[StringOr] {
-        def sleep(delay: FiniteDuration): StringOr[Unit] = Right(())
-      }
-
     val policy = RetryPolicies.constantDelay[StringOr](1.second)
 
     val finalResult = retryingOnSomeErrors(
@@ -117,11 +134,6 @@ class PackageObjectSpec extends AnyFlatSpec {
   }
 
   it should "retry until the policy chooses to give up" in new TestContext {
-    implicit val sleepForEither: Sleep[StringOr] =
-      new Sleep[StringOr] {
-        def sleep(delay: FiniteDuration): StringOr[Unit] = Right(())
-      }
-
     val policy = RetryPolicies.limitRetries[StringOr](2)
 
     val finalResult = retryingOnSomeErrors(
@@ -141,14 +153,26 @@ class PackageObjectSpec extends AnyFlatSpec {
     assert(gaveUp)
   }
 
+  it should "retry in a stack-safe way" in new TestContext {
+    val policy = RetryPolicies.limitRetries[StringOr](10000)
+
+    val finalResult = retryingOnSomeErrors(
+      policy,
+      (_: String) == "one more time",
+      onError
+    ) {
+      attempts = attempts + 1
+      Left("one more time")
+    }
+
+    assert(finalResult == Left("one more time"))
+    assert(attempts == 10001)
+    assert(gaveUp)
+  }
+
   behavior of "retryingOnAllErrors"
 
   it should "retry until the action succeeds" in new TestContext {
-    implicit val sleepForEither: Sleep[StringOr] =
-      new Sleep[StringOr] {
-        def sleep(delay: FiniteDuration): StringOr[Unit] = Right(())
-      }
-
     val policy = RetryPolicies.constantDelay[StringOr](1.second)
 
     val finalResult = retryingOnAllErrors(
@@ -169,11 +193,6 @@ class PackageObjectSpec extends AnyFlatSpec {
   }
 
   it should "retry until the policy chooses to give up" in new TestContext {
-    implicit val sleepForEither: Sleep[StringOr] =
-      new Sleep[StringOr] {
-        def sleep(delay: FiniteDuration): StringOr[Unit] = Right(())
-      }
-
     val policy = RetryPolicies.limitRetries[StringOr](2)
 
     val finalResult = retryingOnAllErrors(
@@ -189,6 +208,22 @@ class PackageObjectSpec extends AnyFlatSpec {
     assert(
       errors.toList == List("one more time", "one more time", "one more time")
     )
+    assert(gaveUp)
+  }
+
+  it should "retry in a stack-safe way" in new TestContext {
+    val policy = RetryPolicies.limitRetries[StringOr](10000)
+
+    val finalResult = retryingOnAllErrors(
+      policy,
+      onError
+    ) {
+      attempts = attempts + 1
+      Left("one more time")
+    }
+
+    assert(finalResult == Left("one more time"))
+    assert(attempts == 10001)
     assert(gaveUp)
   }
 
