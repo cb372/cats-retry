@@ -22,7 +22,7 @@ final class RetryingOps[M[_], A](action: => M[A]) {
       onFailure: (A, RetryDetails) => M[Unit]
   )(
       implicit
-      Mo: Monad[M],
+      M: Monad[M],
       S: Sleep[M]
   ): M[A] =
     retry.retryingM(
