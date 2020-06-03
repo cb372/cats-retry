@@ -1,4 +1,5 @@
 import cats.{Monad, MonadError}
+import cats.syntax.apply._
 import cats.syntax.functor._
 import cats.syntax.flatMap._
 
@@ -19,30 +20,27 @@ package object retry {
         M: Monad[M],
         S: Sleep[M]
     ): M[A] = {
-      def performNextStep(failedResult: A, nextStep: NextStep): M[A] =
-        nextStep match {
-          case NextStep.RetryAfterDelay(delay, updatedStatus) =>
-            S.sleep(delay) >> performAction(updatedStatus)
-          case NextStep.GiveUp =>
-            M.pure(failedResult)
-        }
 
-      def handleFailure(failedResult: A, status: RetryStatus): M[A] = {
-        for {
-          nextStep <- applyPolicy(policy, status)
-          _        <- onFailure(failedResult, buildRetryDetails(status, nextStep))
-          result   <- performNextStep(failedResult, nextStep)
-        } yield result
+      M.tailRecM(RetryStatus.NoRetriesYet) { status =>
+        action.flatMap { a =>
+          if (wasSuccessful(a)) {
+            M.pure(Right(a)) // stop the recursion
+          } else {
+            for {
+              nextStep <- applyPolicy(policy, status)
+              _        <- onFailure(a, buildRetryDetails(status, nextStep))
+              result <- nextStep match {
+                case NextStep.RetryAfterDelay(delay, updatedStatus) =>
+                  S.sleep(delay) *>
+                    M.pure(Left(updatedStatus)) // continue recursion
+                case NextStep.GiveUp =>
+                  M.pure(Right(a)) // stop the recursion
+              }
+            } yield result
+          }
+        }
       }
 
-      def performAction(status: RetryStatus): M[A] =
-        for {
-          a <- action
-          result <- if (wasSuccessful(a)) M.pure(a)
-          else handleFailure(a, status)
-        } yield result
-
-      performAction(RetryStatus.NoRetriesYet)
     }
   }
 
@@ -60,28 +58,28 @@ package object retry {
         ME: MonadError[M, E],
         S: Sleep[M]
     ): M[A] = {
-      def performNextStep(error: E, nextStep: NextStep): M[A] =
-        nextStep match {
-          case NextStep.RetryAfterDelay(delay, updatedStatus) =>
-            S.sleep(delay) >> performAction(updatedStatus)
-          case NextStep.GiveUp =>
-            ME.raiseError[A](error)
-        }
 
-      def handleError(error: E, status: RetryStatus): M[A] = {
-        for {
-          nextStep <- applyPolicy(policy, status)
-          _        <- onError(error, buildRetryDetails(status, nextStep))
-          result   <- performNextStep(error, nextStep)
-        } yield result
+      ME.tailRecM(RetryStatus.NoRetriesYet) { status =>
+        ME.attempt(action).flatMap {
+          case Left(error) if isWorthRetrying(error) =>
+            for {
+              nextStep <- applyPolicy(policy, status)
+              _        <- onError(error, buildRetryDetails(status, nextStep))
+              result <- nextStep match {
+                case NextStep.RetryAfterDelay(delay, updatedStatus) =>
+                  S.sleep(delay) *>
+                    ME.pure(Left(updatedStatus)) // continue recursion
+                case NextStep.GiveUp =>
+                  ME.raiseError[A](error).map(Right(_)) // stop the recursion
+              }
+            } yield result
+          case Left(error) =>
+            ME.raiseError[A](error).map(Right(_)) // stop the recursion
+          case Right(success) =>
+            ME.pure(Right(success)) // stop the recursion
+        }
       }
 
-      def performAction(status: RetryStatus): M[A] =
-        ME.recoverWith(action) {
-          case error if isWorthRetrying(error) => handleError(error, status)
-        }
-
-      performAction(RetryStatus.NoRetriesYet)
     }
   }
 
@@ -97,28 +95,8 @@ package object retry {
         implicit
         ME: MonadError[M, E],
         S: Sleep[M]
-    ): M[A] = {
-      def performNextStep(error: E, nextStep: NextStep): M[A] =
-        nextStep match {
-          case NextStep.RetryAfterDelay(delay, updatedStatus) =>
-            S.sleep(delay) >> performAction(updatedStatus)
-          case NextStep.GiveUp =>
-            ME.raiseError[A](error)
-        }
-
-      def handleError(error: E, status: RetryStatus): M[A] = {
-        for {
-          nextStep <- applyPolicy(policy, status)
-          _        <- onError(error, buildRetryDetails(status, nextStep))
-          result   <- performNextStep(error, nextStep)
-        } yield result
-      }
-
-      def performAction(status: RetryStatus): M[A] =
-        ME.handleErrorWith(action)(error => handleError(error, status))
-
-      performAction(RetryStatus.NoRetriesYet)
-    }
+    ): M[A] =
+      retryingOnSomeErrors[A].apply[M, E](policy, _ => true, onError)(action)
   }
 
   def noop[M[_]: Monad, A]: (A, RetryDetails) => M[Unit] =

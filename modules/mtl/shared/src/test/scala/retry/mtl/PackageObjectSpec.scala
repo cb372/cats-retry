@@ -13,14 +13,14 @@ class PackageObjectSpec extends AnyFlatSpec {
   type ErrorOr[A] = Either[Throwable, A]
   type F[A]       = EitherT[ErrorOr, String, A]
 
+  implicit val sleepForEitherT: Sleep[F] =
+    new Sleep[F] {
+      def sleep(delay: FiniteDuration): F[Unit] = EitherT.pure(())
+    }
+
   behavior of "retryingOnSomeErrors"
 
   it should "retry until the action succeeds" in new TestContext {
-    implicit val sleepForEither: Sleep[F] =
-      new Sleep[F] {
-        def sleep(delay: FiniteDuration): F[Unit] = EitherT.pure(())
-      }
-
     val policy = RetryPolicies.constantDelay[F](1.second)
 
     val isWorthRetrying: String => Boolean = _ == "one more time"
@@ -42,11 +42,6 @@ class PackageObjectSpec extends AnyFlatSpec {
   }
 
   it should "retry only if the error is worth retrying" in new TestContext {
-    implicit val sleepForEither: Sleep[F] =
-      new Sleep[F] {
-        def sleep(delay: FiniteDuration): F[Unit] = EitherT.pure(())
-      }
-
     val policy = RetryPolicies.constantDelay[F](1.second)
 
     val isWorthRetrying: String => Boolean = _ == "one more time"
@@ -68,11 +63,6 @@ class PackageObjectSpec extends AnyFlatSpec {
   }
 
   it should "retry until the policy chooses to give up" in new TestContext {
-    implicit val sleepForEither: Sleep[F] =
-      new Sleep[F] {
-        def sleep(delay: FiniteDuration): F[Unit] = EitherT.pure(())
-      }
-
     val policy = RetryPolicies.limitRetries[F](2)
 
     val isWorthRetrying: String => Boolean = _ == "one more time"
@@ -91,14 +81,25 @@ class PackageObjectSpec extends AnyFlatSpec {
     assert(gaveUp)
   }
 
+  it should "retry in a stack-safe way" in new TestContext {
+    val policy = RetryPolicies.limitRetries[F](10000)
+
+    val isWorthRetrying: String => Boolean = _ == "one more time"
+
+    val finalResult =
+      retryingOnSomeErrors(policy, isWorthRetrying, onMtlError) {
+        attempts = attempts + 1
+        EitherT.leftT[ErrorOr, String]("one more time")
+      }
+
+    assert(finalResult.value == Right(Left("one more time")))
+    assert(attempts == 10001)
+    assert(gaveUp)
+  }
+
   behavior of "retryingOnAllErrors"
 
   it should "retry until the action succeeds" in new TestContext {
-    implicit val sleepForEither: Sleep[F] =
-      new Sleep[F] {
-        def sleep(delay: FiniteDuration): F[Unit] = EitherT.pure(())
-      }
-
     val policy = RetryPolicies.constantDelay[F](1.second)
 
     val finalResult = retryingOnAllErrors(policy, onMtlError) {
@@ -117,11 +118,6 @@ class PackageObjectSpec extends AnyFlatSpec {
   }
 
   it should "retry until the policy chooses to give up" in new TestContext {
-    implicit val sleepForEither: Sleep[F] =
-      new Sleep[F] {
-        def sleep(delay: FiniteDuration): F[Unit] = EitherT.pure(())
-      }
-
     val policy = RetryPolicies.limitRetries[F](2)
 
     val finalResult = retryingOnAllErrors(policy, onMtlError) {
@@ -134,6 +130,19 @@ class PackageObjectSpec extends AnyFlatSpec {
     assert(
       errors.toList == List("one more time", "one more time", "one more time")
     )
+    assert(gaveUp)
+  }
+
+  it should "retry in a stack-safe way" in new TestContext {
+    val policy = RetryPolicies.limitRetries[F](10000)
+
+    val finalResult = retryingOnAllErrors(policy, onMtlError) {
+      attempts = attempts + 1
+      EitherT.leftT[ErrorOr, String]("one more time")
+    }
+
+    assert(finalResult.value == Right(Left("one more time")))
+    assert(attempts == 10001)
     assert(gaveUp)
   }
 

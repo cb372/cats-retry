@@ -2,6 +2,7 @@ package retry
 
 import cats.Monad
 import cats.mtl.ApplicativeHandle
+import cats.syntax.apply._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 
@@ -23,29 +24,28 @@ package object mtl {
         AH: ApplicativeHandle[M, E],
         S: Sleep[M]
     ): M[A] = {
-      def performNextStep(error: E, nextStep: NextStep): M[A] =
-        nextStep match {
-          case NextStep.RetryAfterDelay(delay, updatedStatus) =>
-            S.sleep(delay) >> performAction(updatedStatus)
-          case NextStep.GiveUp =>
-            AH.raise(error)
-        }
 
-      def handleError(error: E, status: RetryStatus): M[A] = {
-        for {
-          nextStep <- retry.applyPolicy(policy, status)
-          _        <- onError(error, retry.buildRetryDetails(status, nextStep))
-          result   <- performNextStep(error, nextStep)
-        } yield result
+      M.tailRecM(RetryStatus.NoRetriesYet) { status =>
+        AH.attempt(action).flatMap {
+          case Left(error) if isWorthRetrying(error) =>
+            for {
+              nextStep <- applyPolicy(policy, status)
+              _        <- onError(error, buildRetryDetails(status, nextStep))
+              result <- nextStep match {
+                case NextStep.RetryAfterDelay(delay, updatedStatus) =>
+                  S.sleep(delay) *>
+                    M.pure(Left(updatedStatus)) // continue recursion
+                case NextStep.GiveUp =>
+                  AH.raise[A](error).map(Right(_)) // stop the recursion
+              }
+            } yield result
+          case Left(error) =>
+            AH.raise[A](error).map(Right(_)) // stop the recursion
+          case Right(success) =>
+            M.pure(Right(success)) // stop the recursion
+        }
       }
 
-      def performAction(status: RetryStatus): M[A] =
-        AH.handleWith(action) { error =>
-          if (isWorthRetrying(error)) handleError(error, status)
-          else AH.raise(error)
-        }
-
-      performAction(RetryStatus.NoRetriesYet)
     }
   }
 
