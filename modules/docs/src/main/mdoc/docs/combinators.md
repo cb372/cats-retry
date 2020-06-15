@@ -10,10 +10,10 @@ retries.
 
 ## `retryingM`
 
-To use `retryingM`, you pass in a predicate that decides whether you are
-happy with the result or you want to retry.
-It is useful when you are working in an arbitrary `Monad` that is not a `MonadError`.
-Your operation doesn't throw errors, but you want to retry until it returns a value that you are happy with.
+To use `retryingM`, you pass in a predicate that decides whether you are happy
+with the result or you want to retry.  It is useful when you are working in an
+arbitrary `Monad` that is not a `MonadError`.  Your operation doesn't throw
+errors, but you want to retry until it returns a value that you are happy with.
 
 The API (modulo some type-inference trickery) looks like this:
 
@@ -31,32 +31,31 @@ You need to pass in:
 * a failure handler, often used for logging
 * the operation that you want to wrap with retries
 
-For example, let's redo the rolling-a-six example, this time using `IO`.
+For example, let's keep rolling a die until we get a six, using `IO`.
 
-```scala mdoc:reset-class
-import cats.effect.{ContextShift, IO, Timer}
+```scala mdoc
+import retry._
+
+import cats.effect.{IO, Timer}
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.global
-import retry._
 
 // We need an implicit cats.effect.Timer
 implicit val timer: Timer[IO] = IO.timer(global)
 
-val ioPolicy = RetryPolicies.constantDelay[IO](10.milliseconds)
+val policy = RetryPolicies.constantDelay[IO](10.milliseconds)
 
-def ioOnFailure(failedValue: Int, details: RetryDetails): IO[Unit] = {
+def onFailure(failedValue: Int, details: RetryDetails): IO[Unit] = {
   IO(println(s"Rolled a $failedValue, retrying ..."))
 }
+
 val loadedDie = util.LoadedDie(2, 5, 4, 1, 3, 2, 6)
 
-val io = retryingM(ioPolicy, (_: Int) == 6, ioOnFailure){
+val io = retryingM(policy, (_: Int) == 6, onFailure){
   IO(loadedDie.roll())
 }
 
-// We need ContextShift for calling `.timeout`
-implicit def ctx: ContextShift[IO] = IO.contextShift(global)
-
-io.timeout(1.minute)
+io.unsafeRunSync()
 ```
 
 ## `retryingOnSomeErrors`
@@ -64,7 +63,8 @@ io.timeout(1.minute)
 This is useful when you are working with a `MonadError[M, E]` but you only want
 to retry on some errors.
 
-To use `retryingOnSomeErrors`, you need to pass in a predicate that decides whether a given error is worth retrying.
+To use `retryingOnSomeErrors`, you need to pass in a predicate that decides
+whether a given error is worth retrying.
 
 The API (modulo some type-inference trickery) looks like this:
 
@@ -82,7 +82,28 @@ You need to pass in:
 * an error handler, often used for logging
 * the operation that you want to wrap with retries
 
-TODO example
+For example, let's make a request for a cat gif using our flaky HTTP client,
+retrying only if we get an `IOException`.
+
+```scala mdoc:nest
+import java.io.IOException
+
+val httpClient = util.FlakyHttpClient()
+val flakyRequest: IO[String] = IO(httpClient.getCatGif())
+
+def isIOException(e: Throwable): Boolean = e match {
+  case _: IOException => true
+  case _ => false
+}
+
+val io = retryingOnSomeErrors(
+  isWorthRetrying = isIOException,
+  policy = RetryPolicies.limitRetries[IO](5),
+  onError = retry.noop[IO, Throwable]
+)(flakyRequest)
+
+io.unsafeRunSync()
+```
 
 ## `retryingOnAllErrors`
 
@@ -103,22 +124,52 @@ You need to pass in:
 * an error handler, often used for logging
 * the operation that you want to wrap with retries
 
-TODO example
+For example, let's make the same request for a cat gif, this time retrying on
+all errors.
+
+```scala mdoc:nest
+import java.io.IOException
+
+val httpClient = util.FlakyHttpClient()
+val flakyRequest: IO[String] = IO(httpClient.getCatGif())
+
+val io = retryingOnAllErrors(
+  policy = RetryPolicies.limitRetries[IO](5),
+  onError = retry.noop[IO, Throwable]
+)(flakyRequest)
+
+io.unsafeRunSync()
+```
 
 ## Syntactic sugar
 
-Cats-retry include some syntactic sugar in order to reduce boilerplate.
+Cats-retry includes some syntactic sugar in order to reduce boilerplate.
 
-```scala mdoc
-import retry._
-import cats.effect.IO
+Instead of calling the combinators and passing in your action, you can call them
+as extension methods.
+
+```scala mdoc:nest:silent
 import retry.syntax.all._
 
-val policy = RetryPolicies.limitRetries[IO](2)
+// To retry until you get a value you like
+IO(loadedDie.roll()).retryingM(
+  policy = RetryPolicies.limitRetries[IO](2),
+  wasSuccessful = (_: Int) == 6,
+  onFailure = retry.noop[IO, Int]
+)
 
 val httpClient = util.FlakyHttpClient()
 
-val flakyRequest: IO[String] = IO(httpClient.getCatGif())
+// To retry only on errors that are worth retrying
+IO(httpClient.getCatGif()).retryingOnSomeErrors(
+  isWorthRetrying = isIOException,
+  policy = RetryPolicies.limitRetries[IO](2),
+  onError = retry.noop[IO, Throwable]
+)
 
-flakyRequest.retryingOnAllErrors(policy, onError = retry.noop[IO, Throwable])
+// To retry on all errors
+IO(httpClient.getCatGif()).retryingOnAllErrors(
+  policy = RetryPolicies.limitRetries[IO](2),
+  onError = retry.noop[IO, Throwable]
+)
 ```
