@@ -20,12 +20,30 @@ package object retry {
         M: Monad[M],
         S: Sleep[M]
     ): M[A] = {
+      new RetryingPartiallyApplied2[A]
+        .apply(policy, a => M.pure(wasSuccessful(a)), onFailure)(action)
+    }
+  }
+
+  def retryingMM[A] = new RetryingPartiallyApplied2[A]
+
+  private[retry] class RetryingPartiallyApplied2[A] {
+    def apply[M[_]](
+        policy: RetryPolicy[M],
+        wasSuccessful: A => M[Boolean],
+        onFailure: (A, RetryDetails) => M[Unit]
+    )(
+        action: => M[A]
+    )(
+        implicit
+        M: Monad[M],
+        S: Sleep[M]
+    ): M[A] = {
 
       M.tailRecM(RetryStatus.NoRetriesYet) { status =>
         action.flatMap { a =>
-          if (wasSuccessful(a)) {
-            M.pure(Right(a)) // stop the recursion
-          } else {
+          wasSuccessful(a).ifM(
+            M.pure(Right(a)), // stop the recursion
             for {
               nextStep <- applyPolicy(policy, status)
               _        <- onFailure(a, buildRetryDetails(status, nextStep))
@@ -37,7 +55,7 @@ package object retry {
                   M.pure(Right(a)) // stop the recursion
               }
             } yield result
-          }
+          )
         }
       }
 
