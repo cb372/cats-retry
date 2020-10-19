@@ -187,12 +187,12 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
 
   it should "cap the delay" in {
     check { status: RetryStatus =>
-      capDelay(100.milliseconds, constantDelay(101.milliseconds))
+      capDelay(100.milliseconds, constantDelay[Id](101.milliseconds))
         .decideNextRetry(status) == DelayAndRetry(100.milliseconds)
     }
 
     check { status: RetryStatus =>
-      capDelay(100.milliseconds, constantDelay(99.milliseconds))
+      capDelay(100.milliseconds, constantDelay[Id](99.milliseconds))
         .decideNextRetry(status) == DelayAndRetry(99.milliseconds)
     }
   }
@@ -201,12 +201,12 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
 
   it should "give up if the underlying policy chooses a delay greater than the threshold" in {
     check { status: RetryStatus =>
-      limitRetriesByDelay(100.milliseconds, constantDelay(101.milliseconds))
+      limitRetriesByDelay(100.milliseconds, constantDelay[Id](101.milliseconds))
         .decideNextRetry(status) == GiveUp
     }
 
     check { status: RetryStatus =>
-      limitRetriesByDelay(100.milliseconds, constantDelay(99.milliseconds))
+      limitRetriesByDelay(100.milliseconds, constantDelay[Id](99.milliseconds))
         .decideNextRetry(status) == DelayAndRetry(99.milliseconds)
     }
   }

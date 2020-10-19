@@ -1,7 +1,7 @@
 package retry.mtl.syntax
 
 import cats.Monad
-import cats.mtl.ApplicativeHandle
+import cats.mtl.Handle
 import retry.{RetryDetails, RetryPolicy, Sleep}
 
 trait RetrySyntax {
@@ -18,7 +18,7 @@ final class RetryingMtlErrorOps[M[_], A](action: => M[A])(
   def retryingOnAllMtlErrors[E](
       policy: RetryPolicy[M],
       onError: (E, RetryDetails) => M[Unit]
-  )(implicit S: Sleep[M], AH: ApplicativeHandle[M, E]): M[A] =
+  )(implicit S: Sleep[M], AH: Handle[M, E]): M[A] =
     retry.mtl.retryingOnAllErrors(
       policy = policy,
       onError = onError
@@ -28,7 +28,7 @@ final class RetryingMtlErrorOps[M[_], A](action: => M[A])(
       isWorthRetrying: E => Boolean,
       policy: RetryPolicy[M],
       onError: (E, RetryDetails) => M[Unit]
-  )(implicit S: Sleep[M], AH: ApplicativeHandle[M, E]): M[A] =
+  )(implicit S: Sleep[M], AH: Handle[M, E]): M[A] =
     retry.mtl.retryingOnSomeErrors(
       policy = policy,
       isWorthRetrying = isWorthRetrying,
