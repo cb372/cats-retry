@@ -83,7 +83,7 @@ class PackageObjectSpec extends AnyFlatSpec {
   it should "retry until the action succeeds" in new TestContext {
     val policy = RetryPolicies.constantDelay[StringOr](1.second)
 
-    val finalResult = retryingOnSomeErrors[String].apply[StringOr, String](
+    val finalResult = retryingOnSomeErrors(
       policy,
       (_: String) == "one more time",
       onError
@@ -104,7 +104,7 @@ class PackageObjectSpec extends AnyFlatSpec {
   it should "retry only if the error is worth retrying" in new TestContext {
     val policy = RetryPolicies.constantDelay[StringOr](1.second)
 
-    val finalResult = retryingOnSomeErrors[String].apply[StringOr, String](
+    val finalResult = retryingOnSomeErrors(
       policy,
       (_: String) == "one more time",
       onError
@@ -125,7 +125,7 @@ class PackageObjectSpec extends AnyFlatSpec {
   it should "retry until the policy chooses to give up" in new TestContext {
     val policy = RetryPolicies.limitRetries[StringOr](2)
 
-    val finalResult = retryingOnSomeErrors[String].apply[StringOr, String](
+    val finalResult = retryingOnSomeErrors(
       policy,
       (_: String) == "one more time",
       onError
@@ -145,7 +145,7 @@ class PackageObjectSpec extends AnyFlatSpec {
   it should "retry in a stack-safe way" in new TestContext {
     val policy = RetryPolicies.limitRetries[StringOr](10000)
 
-    val finalResult = retryingOnSomeErrors[String].apply[StringOr, String](
+    val finalResult = retryingOnSomeErrors(
       policy,
       (_: String) == "one more time",
       onError
@@ -164,7 +164,7 @@ class PackageObjectSpec extends AnyFlatSpec {
   it should "retry until the action succeeds" in new TestContext {
     val policy = RetryPolicies.constantDelay[StringOr](1.second)
 
-    val finalResult = retryingOnAllErrors[String].apply[StringOr, String](
+    val finalResult = retryingOnAllErrors(
       policy,
       onError
     ) {
@@ -184,7 +184,7 @@ class PackageObjectSpec extends AnyFlatSpec {
   it should "retry until the policy chooses to give up" in new TestContext {
     val policy = RetryPolicies.limitRetries[StringOr](2)
 
-    val finalResult = retryingOnAllErrors[String].apply[StringOr, String](
+    val finalResult = retryingOnAllErrors(
       policy,
       onError
     ) {
@@ -203,7 +203,7 @@ class PackageObjectSpec extends AnyFlatSpec {
   it should "retry in a stack-safe way" in new TestContext {
     val policy = RetryPolicies.limitRetries[StringOr](10000)
 
-    val finalResult = retryingOnAllErrors[String].apply[StringOr, String](
+    val finalResult = retryingOnAllErrors(
       policy,
       onError
     ) {
