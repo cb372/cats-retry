@@ -1,9 +1,8 @@
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
-lazy val scalaVersion213 = "2.13.0"
-lazy val scalaVersion212 = "2.12.10"
-lazy val scalaVersion211 = "2.11.12"
-lazy val scalaVersions   = List(scalaVersion213, scalaVersion212, scalaVersion211)
+lazy val scalaVersion213 = "2.13.3"
+lazy val scalaVersion212 = "2.12.12"
+lazy val scalaVersions   = List(scalaVersion213, scalaVersion212)
 
 ThisBuild / scalaVersion := scalaVersion212
 
@@ -57,13 +56,13 @@ val moduleSettings = commonSettings ++ Seq(
   scalafmtOnCompile := true
 )
 
-val catsVersion          = "2.0.0"
-val catsEffectVersion    = "2.0.0"
-val catsMtlVersion       = "0.7.0"
-val scalatestVersion     = "3.2.0"
-val scalaTestPlusVersion = "3.2.0.0"
+val catsVersion          = "2.2.0"
+val catsEffectVersion    = "2.2.0"
+val catsMtlVersion       = "1.0.0"
+val scalatestVersion     = "3.2.2"
+val scalaTestPlusVersion = "3.2.2.0"
 val scalacheckVersion    = "1.14.3"
-val disciplineVersion    = "1.0.1"
+val disciplineVersion    = "2.0.1"
 
 val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/core"))
@@ -82,7 +81,7 @@ val core = crossProject(JVMPlatform, JSPlatform)
       "org.typelevel"     %%% "discipline-scalatest" % disciplineVersion % Test,
       "org.scalacheck"    %%% "scalacheck"           % scalacheckVersion % Test
     ),
-    mimaPreviousArtifacts := Set("com.github.cb372" %%% "cats-retry" % "1.1.0")
+    mimaPreviousArtifacts := Set.empty
   )
 val coreJVM = core.jvm
 val coreJS  = core.js
@@ -104,9 +103,7 @@ val alleycatsRetry = crossProject(JVMPlatform, JSPlatform)
       "org.typelevel"     %%% "discipline-scalatest" % disciplineVersion    % Test,
       "org.scalacheck"    %%% "scalacheck"           % scalacheckVersion    % Test
     ),
-    mimaPreviousArtifacts := Set(
-      "com.github.cb372" %%% "alleycats-retry" % "1.1.0"
-    )
+    mimaPreviousArtifacts := Set.empty
   )
 val alleycatsJVM = alleycatsRetry.jvm
 val alleycatsJS  = alleycatsRetry.js
@@ -120,12 +117,10 @@ val mtlRetry = crossProject(JVMPlatform, JSPlatform)
     name := "cats-retry-mtl",
     crossScalaVersions := scalaVersions,
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-mtl-core" % catsMtlVersion,
-      "org.scalatest" %%% "scalatest"     % scalatestVersion % Test
+      "org.typelevel" %%% "cats-mtl"  % catsMtlVersion,
+      "org.scalatest" %%% "scalatest" % scalatestVersion % Test
     ),
-    mimaPreviousArtifacts := Set(
-      "com.github.cb372" %%% "cats-retry-mtl" % "1.1.0"
-    )
+    mimaPreviousArtifacts := Set.empty
   )
 val mtlJVM = mtlRetry.jvm
 val mtlJS  = mtlRetry.js

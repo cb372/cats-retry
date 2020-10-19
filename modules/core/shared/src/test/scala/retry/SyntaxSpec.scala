@@ -1,7 +1,6 @@
 package retry
 
 import cats.Id
-import cats.instances.either._
 import org.scalatest.flatspec.AnyFlatSpec
 import retry.syntax.all._
 
@@ -20,9 +19,8 @@ class SyntaxSpec extends AnyFlatSpec {
     def wasSuccessful(res: String): Id[Boolean]       = res.toInt > 3
     val sleeps                                        = ArrayBuffer.empty[FiniteDuration]
 
-    implicit val dummySleep: Sleep[Id] = new Sleep[Id] {
-      def sleep(delay: FiniteDuration): Id[Unit] = sleeps.append(delay)
-    }
+    implicit val dummySleep: Sleep[Id] =
+      (delay: FiniteDuration) => sleeps.append(delay)
 
     def action: Id[String] = {
       attempts = attempts + 1
@@ -41,11 +39,8 @@ class SyntaxSpec extends AnyFlatSpec {
   }
 
   it should "retry until the policy chooses to give up" in new TestContext {
-    val policy: RetryPolicy[Id] = RetryPolicies.limitRetries[Id](2)
-    implicit val dummySleep: Sleep[Id] =
-      new Sleep[Id] {
-        def sleep(delay: FiniteDuration): Id[Unit] = ()
-      }
+    val policy: RetryPolicy[Id]        = RetryPolicies.limitRetries[Id](2)
+    implicit val dummySleep: Sleep[Id] = _ => ()
 
     def action: Id[String] = {
       attempts = attempts + 1
@@ -64,10 +59,7 @@ class SyntaxSpec extends AnyFlatSpec {
   behavior of "retryingOnSomeErrors"
 
   it should "retry until the action succeeds" in new TestContext {
-    implicit val sleepForEither: Sleep[StringOr] =
-      new Sleep[StringOr] {
-        def sleep(delay: FiniteDuration): StringOr[Unit] = Right(())
-      }
+    implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
 
     val policy: RetryPolicy[StringOr] =
       RetryPolicies.constantDelay[StringOr](1.second)
@@ -94,10 +86,7 @@ class SyntaxSpec extends AnyFlatSpec {
   }
 
   it should "retry only if the error is worth retrying" in new TestContext {
-    implicit val sleepForEither: Sleep[StringOr] =
-      new Sleep[StringOr] {
-        def sleep(delay: FiniteDuration): StringOr[Unit] = Right(())
-      }
+    implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
 
     val policy: RetryPolicy[StringOr] =
       RetryPolicies.constantDelay[StringOr](1.second)
@@ -124,10 +113,7 @@ class SyntaxSpec extends AnyFlatSpec {
   }
 
   it should "retry until the policy chooses to give up" in new TestContext {
-    implicit val sleepForEither: Sleep[StringOr] =
-      new Sleep[StringOr] {
-        def sleep(delay: FiniteDuration): StringOr[Unit] = Right(())
-      }
+    implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
 
     val policy: RetryPolicy[StringOr] =
       RetryPolicies.limitRetries[StringOr](2)
@@ -156,10 +142,7 @@ class SyntaxSpec extends AnyFlatSpec {
   behavior of "retryingOnAllErrors"
 
   it should "retry until the action succeeds" in new TestContext {
-    implicit val sleepForEither: Sleep[StringOr] =
-      new Sleep[StringOr] {
-        def sleep(delay: FiniteDuration): StringOr[Unit] = Right(())
-      }
+    implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
 
     val policy: RetryPolicy[StringOr] =
       RetryPolicies.constantDelay[StringOr](1.second)
@@ -182,10 +165,7 @@ class SyntaxSpec extends AnyFlatSpec {
   }
 
   it should "retry until the policy chooses to give up" in new TestContext {
-    implicit val sleepForEither: Sleep[StringOr] =
-      new Sleep[StringOr] {
-        def sleep(delay: FiniteDuration): StringOr[Unit] = Right(())
-      }
+    implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
 
     val policy: RetryPolicy[StringOr] =
       RetryPolicies.limitRetries[StringOr](2)

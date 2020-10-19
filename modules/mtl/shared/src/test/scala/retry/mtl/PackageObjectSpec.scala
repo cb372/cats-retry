@@ -1,8 +1,6 @@
 package retry.mtl
 
 import cats.data.EitherT
-import cats.instances.either._
-import cats.mtl.instances.handle._
 import org.scalatest.flatspec.AnyFlatSpec
 import retry.{RetryDetails, RetryPolicies, Sleep}
 
@@ -13,10 +11,7 @@ class PackageObjectSpec extends AnyFlatSpec {
   type ErrorOr[A] = Either[Throwable, A]
   type F[A]       = EitherT[ErrorOr, String, A]
 
-  implicit val sleepForEitherT: Sleep[F] =
-    new Sleep[F] {
-      def sleep(delay: FiniteDuration): F[Unit] = EitherT.pure(())
-    }
+  implicit val sleepForEitherT: Sleep[F] = _ => EitherT.pure(())
 
   behavior of "retryingOnSomeErrors"
 

@@ -5,8 +5,6 @@ import java.util.concurrent.TimeUnit
 import cats.Applicative
 import cats.syntax.functor._
 import cats.syntax.show._
-import cats.instances.finiteDuration._
-import cats.instances.int._
 import retry.PolicyDecision._
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
