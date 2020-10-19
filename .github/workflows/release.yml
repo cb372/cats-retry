@@ -9,8 +9,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: olafurpg/setup-scala@v2
+      - uses: actions/checkout@v2
+      - uses: olafurpg/setup-scala@v10
       - uses: olafurpg/setup-gpg@v2
       - name: Publish
         run: sbt +test ci-release
@@ -23,8 +23,8 @@ jobs:
   publish_site:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - uses: olafurpg/setup-scala@v5
+    - uses: actions/checkout@v2
+    - uses: olafurpg/setup-scala@v10
     - uses: actions/setup-ruby@v1
       with:
         ruby-version: 2.6
