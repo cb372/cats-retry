@@ -99,10 +99,14 @@ retry on all errors.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnSomeErrors[M[_]: Monad, A, E: Handle[M, *]](
+def retryingOnAllErrors[M[_], E](
   policy: RetryPolicy[M],
   onError: (E, RetryDetails) => M[Unit]
-)(action: => M[A]): M[A]
+)(action: => M[A])(
+  implicit:
+  ME: MonadError[M, E],
+  S: Sleep[M]
+): M[A]
 ```
 
 You need to pass in:
