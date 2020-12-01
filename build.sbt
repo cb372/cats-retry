@@ -56,7 +56,7 @@ val moduleSettings = commonSettings ++ Seq(
   scalafmtOnCompile := true
 )
 
-val catsVersion          = "2.3.0"
+val catsVersion          = "2.2.0"
 val catsEffectVersion    = "2.3.0"
 val catsMtlVersion       = "1.1.0"
 val scalatestVersion     = "3.2.3"
