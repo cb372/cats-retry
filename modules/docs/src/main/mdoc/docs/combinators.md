@@ -87,12 +87,18 @@ retrying only if we get an `IOException`.
 
 ```scala mdoc:nest
 import java.io.IOException
+import java.util.concurrent.TimeoutException
 
 val httpClient = util.FlakyHttpClient()
 val flakyRequest: IO[String] = IO(httpClient.getCatGif())
 
 def isIOException(e: Throwable): Boolean = e match {
   case _: IOException => true
+  case _ => false
+}
+
+def isTimeoutException(e: Throwable): Boolean = e match {
+  case _: TimeoutException => true
   case _ => false
 }
 
@@ -258,8 +264,9 @@ IO(httpClient.getCatGif()).retryingOnAllErrors(
 // To retry only on errors and results that are worth retrying
 IO(httpClient.getRecordDetails("foo")).retryingOnFailuresAndSomeErrors(
   wasSuccessful = (_: String) == "pending",
-  isWorthRetrying = isIOException,
+  isWorthRetrying = isTimeoutException,
   policy = RetryPolicies.limitRetries[IO](2),
+  onFailure = retry.noop[IO, String],
   onError = retry.noop[IO, Throwable]
 )
 
@@ -267,6 +274,7 @@ IO(httpClient.getRecordDetails("foo")).retryingOnFailuresAndSomeErrors(
 IO(httpClient.getRecordDetails("foo")).retryingOnFailuresAndAllErrors(
   wasSuccessful = (_: String) == "pending",
   policy = RetryPolicies.limitRetries[IO](2),
+  onFailure = retry.noop[IO, String],
   onError = retry.noop[IO, Throwable]
 )
 ```
