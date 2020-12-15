@@ -312,7 +312,7 @@ class PackageObjectSpec extends AnyFlatSpec {
 
     val finalResult = retryingOnFailuresAndAllErrors[String](
       policy,
-      _.exists(_.toInt > 3),
+      _ == "yay",
       onError,
       onError
     ) {
@@ -329,34 +329,46 @@ class PackageObjectSpec extends AnyFlatSpec {
     assert(!gaveUp)
   }
 
-  it should "retry only if the error is worth retrying" in new TestContext {
-    val policy = RetryPolicies.constantDelay[StringOr](1.second)
+  /*
+   * Not sure what you were intending to test here?
+   *
+   * This is a test for `retryingOnFailuresAndAllErrors`,
+   * so there is no concept of the error being "worth retrying".
+   *
+   * This is one of the tests that was causing OOM.
+   * The action can never succeed (it always returns a Left),
+   * and the `constantDelay` retry policy will never give up,
+   * so it will keep retrying until the list of accumulated errors
+   * fills the heap.
+   */
+  //it should "retry only if the error is worth retrying" in new TestContext {
+  //  val policy = RetryPolicies.constantDelay[StringOr](1.second)
 
-    val finalResult = retryingOnFailuresAndAllErrors[String](
-      policy,
-      _.exists(_.toInt > 3),
-      onError,
-      onError
-    ) {
-      attempts = attempts + 1
-      if (attempts < 3)
-        Left("one more time")
-      else
-        Left("nope")
-    }
+  //  val finalResult = retryingOnFailuresAndAllErrors[String](
+  //    policy,
+  //    _ == "one more time",
+  //    onError,
+  //    onError
+  //  ) {
+  //    attempts = attempts + 1
+  //    if (attempts < 3)
+  //      Left("one more time")
+  //    else
+  //      Left("nope")
+  //  }
 
-    assert(finalResult == Left("nope"))
-    assert(attempts == 3)
-    assert(errors.toList == List("one more time", "one more time"))
-    assert(!gaveUp) // false because onError is only called when the error is worth retrying
-  }
+  //  assert(finalResult == Left("nope"))
+  //  assert(attempts == 3)
+  //  assert(errors.toList == List("one more time", "one more time"))
+  //  assert(!gaveUp) // false because onError is only called when the error is worth retrying
+  //}
 
   it should "retry until the policy chooses to give up" in new TestContext {
     val policy = RetryPolicies.limitRetries[StringOr](2)
 
     val finalResult = retryingOnFailuresAndAllErrors[String](
       policy,
-      _.exists(_.toInt > 3),
+      _ == "will never happen",
       onError,
       onError
     ) {
@@ -377,7 +389,7 @@ class PackageObjectSpec extends AnyFlatSpec {
 
     val finalResult = retryingOnFailuresAndAllErrors[String](
       policy,
-      _.exists(_.toInt > 3),
+      _ == "will never happen",
       onError,
       onError
     ) {
