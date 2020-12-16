@@ -216,6 +216,197 @@ class PackageObjectSpec extends AnyFlatSpec {
     assert(gaveUp)
   }
 
+  behavior of "retryingOnFailuresAndSomeErrors"
+
+  it should "retry until the action succeeds" in new TestContext {
+    val policy = RetryPolicies.constantDelay[StringOr](1.second)
+
+    val finalResult = retryingOnFailuresAndSomeErrors[String](
+      policy,
+      _ == "yay",
+      (_: String) == "one more time",
+      onError,
+      onError
+    ) {
+      attempts = attempts + 1
+      if (attempts < 3)
+        Left("one more time")
+      else
+        Right("yay")
+    }
+
+    assert(finalResult == Right("yay"))
+    assert(attempts == 3)
+    assert(errors.toList == List("one more time", "one more time"))
+    assert(!gaveUp)
+  }
+
+  it should "retry only if the error is worth retrying" in new TestContext {
+    val policy = RetryPolicies.constantDelay[StringOr](1.second)
+
+    val finalResult = retryingOnFailuresAndSomeErrors[String](
+      policy,
+      _ == "will never happen",
+      (_: String) == "one more time",
+      onError,
+      onError
+    ) {
+      attempts = attempts + 1
+      if (attempts < 3)
+        Left("one more time")
+      else
+        Left("nope")
+    }
+
+    assert(finalResult == Left("nope"))
+    assert(attempts == 3)
+    assert(errors.toList == List("one more time", "one more time"))
+    assert(!gaveUp) // false because onError is only called when the error is worth retrying
+  }
+
+  it should "retry until the policy chooses to give up due to errors" in new TestContext {
+    val policy = RetryPolicies.limitRetries[StringOr](2)
+
+    val finalResult = retryingOnFailuresAndSomeErrors[String](
+      policy,
+      _ == "will never happen",
+      (_: String) == "one more time",
+      onError,
+      onError
+    ) {
+      attempts = attempts + 1
+      Left("one more time")
+    }
+
+    assert(finalResult == Left("one more time"))
+    assert(attempts == 3)
+    assert(
+      errors.toList == List("one more time", "one more time", "one more time")
+    )
+    assert(gaveUp)
+  }
+
+  it should "retry until the policy chooses to give up due to failures" in new TestContext {
+    val policy = RetryPolicies.limitRetries[StringOr](2)
+
+    val finalResult = retryingOnFailuresAndSomeErrors[String](
+      policy,
+      _ == "yay",
+      (_: String) == "one more time",
+      onError,
+      onError
+    ) {
+      attempts = attempts + 1
+      Right("boo")
+    }
+
+    assert(finalResult == Right("boo"))
+    assert(attempts == 3)
+    assert(errors.toList == List("boo", "boo", "boo"))
+    assert(gaveUp)
+  }
+
+  it should "retry in a stack-safe way" in new TestContext {
+    val policy = RetryPolicies.limitRetries[StringOr](10000)
+
+    val finalResult = retryingOnFailuresAndSomeErrors[String](
+      policy,
+      _ == "yay",
+      (_: String) == "one more time",
+      onError,
+      onError
+    ) {
+      attempts = attempts + 1
+      Left("one more time")
+    }
+
+    assert(finalResult == Left("one more time"))
+    assert(attempts == 10001)
+    assert(gaveUp)
+  }
+
+  behavior of "retryingOnFailuresAndAllErrors"
+
+  it should "retry until the action succeeds" in new TestContext {
+    val policy = RetryPolicies.constantDelay[StringOr](1.second)
+
+    val finalResult = retryingOnFailuresAndAllErrors[String](
+      policy,
+      _ == "yay",
+      onError,
+      onError
+    ) {
+      attempts = attempts + 1
+      if (attempts < 3)
+        Left("one more time")
+      else
+        Right("yay")
+    }
+
+    assert(finalResult == Right("yay"))
+    assert(attempts == 3)
+    assert(errors.toList == List("one more time", "one more time"))
+    assert(!gaveUp)
+  }
+
+  it should "retry until the policy chooses to give up due to errors" in new TestContext {
+    val policy = RetryPolicies.limitRetries[StringOr](2)
+
+    val finalResult = retryingOnFailuresAndAllErrors[String](
+      policy,
+      _ == "will never happen",
+      onError,
+      onError
+    ) {
+      attempts = attempts + 1
+      Left("one more time")
+    }
+
+    assert(finalResult == Left("one more time"))
+    assert(attempts == 3)
+    assert(
+      errors.toList == List("one more time", "one more time", "one more time")
+    )
+    assert(gaveUp)
+  }
+
+  it should "retry until the policy chooses to give up due to failures" in new TestContext {
+    val policy = RetryPolicies.limitRetries[StringOr](2)
+
+    val finalResult = retryingOnFailuresAndAllErrors[String](
+      policy,
+      _ == "yay",
+      onError,
+      onError
+    ) {
+      attempts = attempts + 1
+      Right("boo")
+    }
+
+    assert(finalResult == Right("boo"))
+    assert(attempts == 3)
+    assert(errors.toList == List("boo", "boo", "boo"))
+    assert(gaveUp)
+  }
+
+  it should "retry in a stack-safe way" in new TestContext {
+    val policy = RetryPolicies.limitRetries[StringOr](10000)
+
+    val finalResult = retryingOnFailuresAndAllErrors[String](
+      policy,
+      _ == "will never happen",
+      onError,
+      onError
+    ) {
+      attempts = attempts + 1
+      Left("one more time")
+    }
+
+    assert(finalResult == Left("one more time"))
+    assert(attempts == 10001)
+    assert(gaveUp)
+  }
+
   private class TestContext {
     var attempts = 0
     val errors   = ArrayBuffer.empty[String]
