@@ -15,8 +15,7 @@ package object retry {
         onFailure: (A, RetryDetails) => M[Unit]
     )(
         action: => M[A]
-    )(
-        implicit
+    )(implicit
         M: Monad[M],
         S: Sleep[M]
     ): M[A] = {
@@ -53,8 +52,7 @@ package object retry {
         onError: (E, RetryDetails) => M[Unit]
     )(
         action: => M[A]
-    )(
-        implicit
+    )(implicit
         ME: MonadError[M, E],
         S: Sleep[M]
     ): M[A] = {
@@ -91,8 +89,7 @@ package object retry {
         onError: (E, RetryDetails) => M[Unit]
     )(
         action: => M[A]
-    )(
-        implicit
+    )(implicit
         ME: MonadError[M, E],
         S: Sleep[M]
     ): M[A] =

@@ -20,8 +20,7 @@ final class RetryingOps[M[_], A](action: => M[A]) {
       wasSuccessful: A => Boolean,
       policy: RetryPolicy[M],
       onFailure: (A, RetryDetails) => M[Unit]
-  )(
-      implicit
+  )(implicit
       M: Monad[M],
       S: Sleep[M]
   ): M[A] =
@@ -32,8 +31,8 @@ final class RetryingOps[M[_], A](action: => M[A]) {
     )(action)
 }
 
-final class RetryingErrorOps[M[_], A, E](action: => M[A])(
-    implicit M: MonadError[M, E]
+final class RetryingErrorOps[M[_], A, E](action: => M[A])(implicit
+    M: MonadError[M, E]
 ) {
   def retryingOnAllErrors(
       policy: RetryPolicy[M],

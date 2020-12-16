@@ -30,12 +30,16 @@ object instances {
     new Sleep[Future] {
       def sleep(delay: FiniteDuration): Future[Unit] = {
         val promise = Promise[Unit]()
-        scheduler.schedule(new Runnable {
-          def run: Unit = {
-            promise.success(())
-            ()
-          }
-        }, delay.length, delay.unit)
+        scheduler.schedule(
+          new Runnable {
+            def run: Unit = {
+              promise.success(())
+              ()
+            }
+          },
+          delay.length,
+          delay.unit
+        )
         promise.future
       }
     }
