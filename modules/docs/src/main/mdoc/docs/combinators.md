@@ -8,6 +8,18 @@ title: Combinators
 The library offers a few slightly different ways to wrap your operations with
 retries.
 
+## Cheat sheet
+
+| Combinator | Context bound | Handles |
+| --- | --- | --- |
+| [`retryingM`](#retryingm) | Monad | Failures |
+| [`retryingOnSomeErrors`](#retryingonsomeerrors) | MonadError | Errors |
+| [`retryingOnAllErrors`](#retryingonallerrors) | MonadError | Errors |
+| [`retryingOnFailuresAndSomeErrors`](#retryingonfailuresandsomeerrors) | MonadError | Failures and errors |
+| [`retryingOnFailuresAndAllErrors`](#retryingonfailuresandallerrors) | MonadError | Failures and errors |
+
+More information on each combinator is provided below.
+
 ## `retryingM`
 
 To use `retryingM`, you pass in a predicate that decides whether you are happy
