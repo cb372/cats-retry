@@ -16,8 +16,7 @@ package object retry {
       onFailure: (A, RetryDetails) => M[Unit],
       status: RetryStatus,
       a: A
-  )(
-      implicit
+  )(implicit
       M: Monad[M],
       S: Sleep[M]
   ): M[Either[RetryStatus, A]] =
@@ -44,8 +43,7 @@ package object retry {
         onFailure: (A, RetryDetails) => M[Unit]
     )(
         action: => M[A]
-    )(
-        implicit
+    )(implicit
         M: Monad[M],
         S: Sleep[M]
     ): M[A] = M.tailRecM(RetryStatus.NoRetriesYet) { status =>
@@ -63,8 +61,7 @@ package object retry {
       onError: (E, RetryDetails) => M[Unit],
       status: RetryStatus,
       attempt: Either[E, A]
-  )(
-      implicit
+  )(implicit
       ME: MonadError[M, E],
       S: Sleep[M]
   ): M[Either[RetryStatus, A]] = attempt match {
@@ -93,8 +90,7 @@ package object retry {
         onError: (E, RetryDetails) => M[Unit]
     )(
         action: => M[A]
-    )(
-        implicit
+    )(implicit
         ME: MonadError[M, E],
         S: Sleep[M]
     ): M[A] = ME.tailRecM(RetryStatus.NoRetriesYet) { status =>
@@ -118,8 +114,7 @@ package object retry {
         onError: (E, RetryDetails) => M[Unit]
     )(
         action: => M[A]
-    )(
-        implicit
+    )(implicit
         ME: MonadError[M, E],
         S: Sleep[M]
     ): M[A] =
@@ -138,8 +133,7 @@ package object retry {
         onError: (E, RetryDetails) => M[Unit]
     )(
         action: => M[A]
-    )(
-        implicit
+    )(implicit
         ME: MonadError[M, E],
         S: Sleep[M]
     ): M[A] = {
@@ -172,8 +166,7 @@ package object retry {
         onError: (E, RetryDetails) => M[Unit]
     )(
         action: => M[A]
-    )(
-        implicit
+    )(implicit
         ME: MonadError[M, E],
         S: Sleep[M]
     ): M[A] =

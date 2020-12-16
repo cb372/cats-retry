@@ -10,8 +10,7 @@ object syntax {
       onFailure: (A, RetryDetails) => Unit
   )(
       action: => A
-  )(
-      implicit
+  )(implicit
       M: Monad[Id],
       S: Sleep[Id]
   ): A =

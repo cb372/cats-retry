@@ -110,7 +110,9 @@ class SyntaxSpec extends AnyFlatSpec {
     assert(finalResult == Left("nope"))
     assert(attempts == 3)
     assert(errors.toList == List("one more time", "one more time"))
-    assert(!gaveUp) // false because onError is only called when the error is worth retrying
+    assert(
+      !gaveUp
+    ) // false because onError is only called when the error is worth retrying
   }
 
   it should "retry until the policy chooses to give up" in new TestContext {

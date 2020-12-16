@@ -11,8 +11,8 @@ trait RetrySyntax {
     new RetryingMtlErrorOps[M, A](action)
 }
 
-final class RetryingMtlErrorOps[M[_], A](action: => M[A])(
-    implicit M: Monad[M]
+final class RetryingMtlErrorOps[M[_], A](action: => M[A])(implicit
+    M: Monad[M]
 ) {
 
   def retryingOnAllMtlErrors[E](
