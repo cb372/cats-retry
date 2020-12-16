@@ -30,8 +30,7 @@ final class RetryingOps[M[_], A](action: => M[A]) {
       wasSuccessful: A => Boolean,
       policy: RetryPolicy[M],
       onFailure: (A, RetryDetails) => M[Unit]
-  )(
-      implicit
+  )(implicit
       M: Monad[M],
       S: Sleep[M]
   ): M[A] =
