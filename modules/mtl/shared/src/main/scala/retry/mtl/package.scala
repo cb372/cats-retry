@@ -1,7 +1,7 @@
 package retry
 
 import cats.Monad
-import cats.mtl.ApplicativeHandle
+import cats.mtl.Handle
 import cats.syntax.apply._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -20,7 +20,7 @@ package object mtl {
         action: => M[A]
     )(implicit
         M: Monad[M],
-        AH: ApplicativeHandle[M, E],
+        AH: Handle[M, E],
         S: Sleep[M]
     ): M[A] = {
 
@@ -35,11 +35,11 @@ package object mtl {
                   S.sleep(delay) *>
                     M.pure(Left(updatedStatus)) // continue recursion
                 case NextStep.GiveUp =>
-                  AH.raise[A](error).map(Right(_)) // stop the recursion
+                  AH.raise[E, A](error).map(Right(_)) // stop the recursion
               }
             } yield result
           case Left(error) =>
-            AH.raise[A](error).map(Right(_)) // stop the recursion
+            AH.raise[E, A](error).map(Right(_)) // stop the recursion
           case Right(success) =>
             M.pure(Right(success)) // stop the recursion
         }
@@ -58,7 +58,7 @@ package object mtl {
         action: => M[A]
     )(implicit
         M: Monad[M],
-        AH: ApplicativeHandle[M, E],
+        AH: Handle[M, E],
         S: Sleep[M]
     ): M[A] = {
       retryingOnSomeErrors[A].apply[M, E](policy, _ => true, onError)(action)

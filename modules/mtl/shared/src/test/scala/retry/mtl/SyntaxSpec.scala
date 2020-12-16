@@ -2,8 +2,6 @@ package retry.mtl
 
 import cats.data.EitherT
 import cats.data.EitherT.catsDataMonadErrorFForEitherT
-import cats.instances.either._
-import cats.mtl.instances.handle._
 import org.scalatest.flatspec.AnyFlatSpec
 import retry.syntax.all._
 import retry.mtl.syntax.all._
@@ -19,10 +17,7 @@ class SyntaxSpec extends AnyFlatSpec {
   behavior of "retryingOnSomeMtlErrors"
 
   it should "retry until the action succeeds" in new TestContext {
-    implicit val sleepForEither: Sleep[F] =
-      new Sleep[F] {
-        def sleep(delay: FiniteDuration): F[Unit] = EitherT.pure(())
-      }
+    implicit val sleepForEither: Sleep[F] = _ => EitherT.pure(())
 
     val error                  = new RuntimeException("Boom!")
     val policy: RetryPolicy[F] = RetryPolicies.constantDelay[F](1.second)
@@ -48,10 +43,7 @@ class SyntaxSpec extends AnyFlatSpec {
   }
 
   it should "retry only if the error is worth retrying" in new TestContext {
-    implicit val sleepForEither: Sleep[F] =
-      new Sleep[F] {
-        def sleep(delay: FiniteDuration): F[Unit] = EitherT.pure(())
-      }
+    implicit val sleepForEither: Sleep[F] = _ => EitherT.pure(())
 
     val error                  = new RuntimeException("Boom!")
     val policy: RetryPolicy[F] = RetryPolicies.constantDelay[F](1.second)
@@ -79,10 +71,7 @@ class SyntaxSpec extends AnyFlatSpec {
   }
 
   it should "retry until the policy chooses to give up" in new TestContext {
-    implicit val sleepForEither: Sleep[F] =
-      new Sleep[F] {
-        def sleep(delay: FiniteDuration): F[Unit] = EitherT.pure(())
-      }
+    implicit val sleepForEither: Sleep[F] = _ => EitherT.pure(())
 
     val error                  = new RuntimeException("Boom!")
     val policy: RetryPolicy[F] = RetryPolicies.limitRetries[F](2)
@@ -117,10 +106,7 @@ class SyntaxSpec extends AnyFlatSpec {
   behavior of "retryingOnAllMtlErrors"
 
   it should "retry until the action succeeds" in new TestContext {
-    implicit val sleepForEither: Sleep[F] =
-      new Sleep[F] {
-        def sleep(delay: FiniteDuration): F[Unit] = EitherT.pure(())
-      }
+    implicit val sleepForEither: Sleep[F] = _ => EitherT.pure(())
 
     val error                  = new RuntimeException("Boom!")
     val policy: RetryPolicy[F] = RetryPolicies.constantDelay[F](1.second)
@@ -146,10 +132,7 @@ class SyntaxSpec extends AnyFlatSpec {
   }
 
   it should "retry until the policy chooses to give up" in new TestContext {
-    implicit val sleepForEither: Sleep[F] =
-      new Sleep[F] {
-        def sleep(delay: FiniteDuration): F[Unit] = EitherT.pure(())
-      }
+    implicit val sleepForEither: Sleep[F] = _ => EitherT.pure(())
 
     val error                  = new RuntimeException("Boom!")
     val policy: RetryPolicy[F] = RetryPolicies.limitRetries[F](2)
