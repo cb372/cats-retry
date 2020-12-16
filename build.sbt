@@ -73,13 +73,13 @@ val core = crossProject(JVMPlatform, JSPlatform)
     libraryDependencies ++= Seq(
       "org.typelevel"     %%% "cats-core"            % catsVersion,
       "org.typelevel"     %%% "cats-effect"          % catsEffectVersion,
-      "org.scalatest"     %%% "scalatest"            % scalatestVersion % Test,
-      "org.scalacheck"    %%% "scalacheck"           % scalacheckVersion % Test,
-      "org.typelevel"     %%% "cats-laws"            % catsVersion % Test,
-      "org.scalatest"     %%% "scalatest"            % scalatestVersion % Test,
+      "org.scalatest"     %%% "scalatest"            % scalatestVersion     % Test,
+      "org.scalacheck"    %%% "scalacheck"           % scalacheckVersion    % Test,
+      "org.typelevel"     %%% "cats-laws"            % catsVersion          % Test,
+      "org.scalatest"     %%% "scalatest"            % scalatestVersion     % Test,
       "org.scalatestplus" %%% "scalacheck-1-14"      % scalaTestPlusVersion % Test,
-      "org.typelevel"     %%% "discipline-scalatest" % disciplineVersion % Test,
-      "org.scalacheck"    %%% "scalacheck"           % scalacheckVersion % Test
+      "org.typelevel"     %%% "discipline-scalatest" % disciplineVersion    % Test,
+      "org.scalacheck"    %%% "scalacheck"           % scalacheckVersion    % Test
     ),
     mimaPreviousArtifacts := Set.empty
   )
