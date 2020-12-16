@@ -16,7 +16,7 @@ trait RetrySyntax {
 }
 
 final class RetryingOps[M[_], A](action: => M[A]) {
-  @deprecated("Use retryingOnFailures instead", "")
+  @deprecated("Use retryingOnFailures instead", "2.1.0")
   def retryingM[E](
       wasSuccessful: A => Boolean,
       policy: RetryPolicy[M],

@@ -11,7 +11,7 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class PackageObjectLazinessSpec extends AnyFlatSpec {
-  behavior of "retryingM"
+  behavior of "retryingOnFailures"
 
   // this test reproduces issue #116
   it should "not evaluate the next attempt until it has finished sleeping" in new TestContext {

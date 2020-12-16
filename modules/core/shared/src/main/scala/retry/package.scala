@@ -6,11 +6,11 @@ import cats.syntax.flatMap._
 import scala.concurrent.duration.FiniteDuration
 
 package object retry {
-  @deprecated("Use retryingOnFailures instead", "")
+  @deprecated("Use retryingOnFailures instead", "2.1.0")
   def retryingM[A]          = new RetryingOnFailuresPartiallyApplied[A]
   def retryingOnFailures[A] = new RetryingOnFailuresPartiallyApplied[A]
 
-  private def retryingMImpl[M[_], A](
+  private def retryingOnFailuresImpl[M[_], A](
       policy: RetryPolicy[M],
       wasSuccessful: A => Boolean,
       onFailure: (A, RetryDetails) => M[Unit],
@@ -37,7 +37,7 @@ package object retry {
       } yield result
     }
 
-  private[retry] class RetryingPartiallyApplied[A] {
+  private[retry] class RetryingOnFailuresPartiallyApplied[A] {
     def apply[M[_]](
         policy: RetryPolicy[M],
         wasSuccessful: A => Boolean,
@@ -50,7 +50,7 @@ package object retry {
         S: Sleep[M]
     ): M[A] = M.tailRecM(RetryStatus.NoRetriesYet) { status =>
       action.flatMap { a =>
-        retryingMImpl(policy, wasSuccessful, onFailure, status, a)
+        retryingOnFailuresImpl(policy, wasSuccessful, onFailure, status, a)
       }
     }
   }
@@ -147,7 +147,7 @@ package object retry {
       ME.tailRecM(RetryStatus.NoRetriesYet) { status =>
         ME.attempt(action).flatMap {
           case Right(a) =>
-            retryingMImpl(policy, wasSuccessful, onFailure, status, a)
+            retryingOnFailuresImpl(policy, wasSuccessful, onFailure, status, a)
           case attempt =>
             retryingOnSomeErrorsImpl(
               policy,
