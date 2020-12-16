@@ -24,12 +24,16 @@ object instances {
   implicit val threadSleepFuture: Sleep[Future] =
     (delay: FiniteDuration) => {
       val promise = Promise[Unit]()
-      scheduler.schedule(new Runnable {
-        def run(): Unit = {
-          promise.success(())
-          ()
-        }
-      }, delay.length, delay.unit)
+      scheduler.schedule(
+        new Runnable {
+          def run(): Unit = {
+            promise.success(())
+            ()
+          }
+        },
+        delay.length,
+        delay.unit
+      )
       promise.future
     }
 }
