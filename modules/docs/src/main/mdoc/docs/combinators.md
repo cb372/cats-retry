@@ -150,7 +150,7 @@ io.unsafeRunSync()
 ## `retryingOnFailuresAndSomeErrors`
 
 This is a combination of `retryingM` and `retryingOnSomeErrors`. It allows you to specify failure
-conditions for both the results of your results as well as errors that can occur.
+conditions for both the results and errors that can occur.
 
 To use `retryingOnFailuresAndSomeErrors`, you need to pass in predicates that decide
 whether a given error or result is worth retrying. 
@@ -158,18 +158,19 @@ whether a given error or result is worth retrying.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnFailuresAndSomeErrors[M[_]: Monad, A, E](policy: RetryPolicy[M],
-                                                       wasSuccessful: A => Boolean,
-                                                       isWorthRetrying: E => Boolean,
-                                                       onFailure: (A, RetryDetails) => M[Unit],
-                                                       onError: (E, RetryDetails) => M[Unit])
-                                                       (action: => M[A]): M[A]
+def retryingOnFailuresAndSomeErrors[M[_], A, E](policy: RetryPolicy[M],
+                                                wasSuccessful: A => Boolean,
+                                                isWorthRetrying: E => Boolean,
+                                                onFailure: (A, RetryDetails) => M[Unit],
+                                                onError: (E, RetryDetails) => M[Unit])
+                                                (action: => M[A])
+                                                (implicit ME: MonadError[M, E]): M[A]
 ```
 
 You need to pass in:
 
 * a retry policy
-* a predicate that decides whether a result is worth retrying
+* a predicate that decides whether the operation was successful
 * a predicate that decides whether a given error is worth retrying
 * a failure handler, often used for logging
 * an error handler, often used for logging
@@ -178,6 +179,28 @@ You need to pass in:
 For example, let's make a request to an API to retrieve details for a record, which we will only retry if:
 * A timeout exception occurs
 * The record's details are incomplete pending future operations
+
+```scala mdoc:nest
+import java.util.concurrent.TimeoutException
+
+val httpClient = util.FlakyHttpClient()
+val flakyRequest: IO[String] = IO(httpClient.getRecordDetails("foo"))
+
+def isTimeoutException(e: Throwable): Boolean = e match {
+  case _: TimeoutException => true
+  case _ => false
+}
+
+val io = retryingOnFailuresAndSomeErrors(
+  wasSuccessful = (_: String) != "pending",
+  isWorthRetrying = isTimeoutException,
+  policy = RetryPolicies.limitRetries[IO](5),
+  onFailure = retry.noop[IO, String],
+  onError = retry.noop[IO, Throwable]
+)(flakyRequest)
+
+io.unsafeRunSync()
+```
 
 ## `retryingOnFailuresAndAllErrors`
 
@@ -190,17 +213,18 @@ whether a given result is worth retrying.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnFailuresAndAllErrors[M[_]: Monad, A, E](policy: RetryPolicy[M],
-                                                      wasSuccessful: A => Boolean,
-                                                      onFailure: (A, RetryDetails) => M[Unit],
-                                                      onError: (E, RetryDetails) => M[Unit])
-                                                      (action: => M[A]): M[A]
+def retryingOnFailuresAndAllErrors[M[_], A, E](policy: RetryPolicy[M],
+                                               wasSuccessful: A => Boolean,
+                                               onFailure: (A, RetryDetails) => M[Unit],
+                                               onError: (E, RetryDetails) => M[Unit])
+                                               (action: => M[A])
+                                               (implicit ME: MonadError[M, E]): M[A]
 ```
 
 You need to pass in:
 
 * a retry policy
-* a predicate that decides whether a result is worth retrying
+* a predicate that decides whether the operation was successful
 * a failure handler, often used for logging
 * an error handler, often used for logging
 * the operation that you want to wrap with retries
@@ -210,19 +234,15 @@ For example, let's make a request to an API to retrieve details for a record, wh
 * The record's details are incomplete pending future operations
 
 ```scala mdoc:nest
-import java.io.IOException
+import java.util.concurrent.TimeoutException
 
 val httpClient = util.FlakyHttpClient()
-val flakyRequest: IO[String] = IO(httpClient.getCatGif())
+val flakyRequest: IO[String] = IO(httpClient.getRecordDetails("foo"))
 
-def isIOException(e: Throwable): Boolean = e match {
-  case _: IOException => true
-  case _ => false
-}
-
-val io = retryingOnSomeErrors(
-  isWorthRetrying = isIOException,
+val io = retryingOnFailuresAndAllErrors(
+  wasSuccessful = (_: String) != "pending",
   policy = RetryPolicies.limitRetries[IO](5),
+  onFailure = retry.noop[IO, String],
   onError = retry.noop[IO, Throwable]
 )(flakyRequest)
 
@@ -263,7 +283,7 @@ IO(httpClient.getCatGif()).retryingOnAllErrors(
 
 // To retry only on errors and results that are worth retrying
 IO(httpClient.getRecordDetails("foo")).retryingOnFailuresAndSomeErrors(
-  wasSuccessful = (_: String) == "pending",
+  wasSuccessful = (_: String) != "pending",
   isWorthRetrying = isTimeoutException,
   policy = RetryPolicies.limitRetries[IO](2),
   onFailure = retry.noop[IO, String],
@@ -272,7 +292,7 @@ IO(httpClient.getRecordDetails("foo")).retryingOnFailuresAndSomeErrors(
 
 // To retry all errors and results that are worth retrying
 IO(httpClient.getRecordDetails("foo")).retryingOnFailuresAndAllErrors(
-  wasSuccessful = (_: String) == "pending",
+  wasSuccessful = (_: String) != "pending",
   policy = RetryPolicies.limitRetries[IO](2),
   onFailure = retry.noop[IO, String],
   onError = retry.noop[IO, Throwable]
