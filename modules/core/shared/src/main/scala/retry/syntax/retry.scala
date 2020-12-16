@@ -54,4 +54,32 @@ final class RetryingErrorOps[M[_], A, E](action: => M[A])(
       isWorthRetrying = isWorthRetrying,
       onError = onError
     )(action)
+
+  def retryingOnFailuresAndAllErrors(
+      wasSuccessful: A => Boolean,
+      policy: RetryPolicy[M],
+      onFailure: (A, RetryDetails) => M[Unit],
+      onError: (E, RetryDetails) => M[Unit]
+  )(implicit S: Sleep[M]): M[A] =
+    retry.retryingOnFailuresAndAllErrors(
+      policy = policy,
+      wasSuccessful = wasSuccessful,
+      onFailure = onFailure,
+      onError = onError
+    )(action)
+
+  def retryingOnFailuresAndSomeErrors(
+      wasSuccessful: A => Boolean,
+      isWorthRetrying: E => Boolean,
+      policy: RetryPolicy[M],
+      onFailure: (A, RetryDetails) => M[Unit],
+      onError: (E, RetryDetails) => M[Unit]
+  )(implicit S: Sleep[M]): M[A] =
+    retry.retryingOnFailuresAndSomeErrors(
+      policy = policy,
+      wasSuccessful = wasSuccessful,
+      isWorthRetrying = isWorthRetrying,
+      onFailure = onFailure,
+      onError = onError
+    )(action)
 }
