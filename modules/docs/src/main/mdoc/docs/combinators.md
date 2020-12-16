@@ -12,7 +12,7 @@ retries.
 
 | Combinator | Context bound | Handles |
 | --- | --- | --- |
-| [`retryingM`](#retryingm) | Monad | Failures |
+| [`retryingOnFailures`](#retryingOnFailures) | Monad | Failures |
 | [`retryingOnSomeErrors`](#retryingonsomeerrors) | MonadError | Errors |
 | [`retryingOnAllErrors`](#retryingonallerrors) | MonadError | Errors |
 | [`retryingOnFailuresAndSomeErrors`](#retryingonfailuresandsomeerrors) | MonadError | Failures and errors |
@@ -20,9 +20,9 @@ retries.
 
 More information on each combinator is provided below.
 
-## `retryingM`
+## `retryingOnFailures`
 
-To use `retryingM`, you pass in a predicate that decides whether you are happy
+To use `retryingOnFailures`, you pass in a predicate that decides whether you are happy
 with the result or you want to retry.  It is useful when you are working in an
 arbitrary `Monad` that is not a `MonadError`.  Your operation doesn't throw
 errors, but you want to retry until it returns a value that you are happy with.
@@ -30,10 +30,10 @@ errors, but you want to retry until it returns a value that you are happy with.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingM[M[_]: Monad: Sleep, A](policy: RetryPolicy[M],
-                                     wasSuccessful: A => Boolean,
-                                     onFailure: (A, RetryDetails) => M[Unit])
-                                    (action: => M[A]): M[A]
+def retryingOnFailures[M[_]: Monad: Sleep, A](policy: RetryPolicy[M],
+                                              wasSuccessful: A => Boolean,
+                                              onFailure: (A, RetryDetails) => M[Unit])
+                                              (action: => M[A]): M[A]
 ```
 
 You need to pass in:
@@ -63,7 +63,7 @@ def onFailure(failedValue: Int, details: RetryDetails): IO[Unit] = {
 
 val loadedDie = util.LoadedDie(2, 5, 4, 1, 3, 2, 6)
 
-val io = retryingM(policy, (_: Int) == 6, onFailure){
+val io = retryingOnFailures(policy, (_: Int) == 6, onFailure){
   IO(loadedDie.roll())
 }
 
@@ -157,7 +157,7 @@ io.unsafeRunSync()
 
 ## `retryingOnFailuresAndSomeErrors`
 
-This is a combination of `retryingM` and `retryingOnSomeErrors`. It allows you
+This is a combination of `retryingOnFailures` and `retryingOnSomeErrors`. It allows you
 to specify failure conditions for both the results and errors that can occur.
 
 To use `retryingOnFailuresAndSomeErrors`, you need to pass in predicates that
@@ -212,7 +212,7 @@ io.unsafeRunSync()
 
 ## `retryingOnFailuresAndAllErrors`
 
-This is a combination of `retryingM` and `retryingOnAllErrors`. It allows you to specify failure
+This is a combination of `retryingOnFailures` and `retryingOnAllErrors`. It allows you to specify failure
 conditions for your results as well as retry an error that occurs
 
 To use `retryingOnFailuresAndAllErrors`, you need to pass in a predicate that decides
@@ -268,7 +268,7 @@ as extension methods.
 import retry.syntax.all._
 
 // To retry until you get a value you like
-IO(loadedDie.roll()).retryingM(
+IO(loadedDie.roll()).retryingOnFailures(
   policy = RetryPolicies.limitRetries[IO](2),
   wasSuccessful = (_: Int) == 6,
   onFailure = retry.noop[IO, Int]
