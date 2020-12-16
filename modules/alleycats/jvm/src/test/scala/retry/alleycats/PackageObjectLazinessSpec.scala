@@ -18,7 +18,7 @@ class PackageObjectLazinessSpec extends AnyFlatSpec {
     val policy = RetryPolicies.constantDelay[Future](5.second)
 
     // Kick off an operation which will fail, wait 5 seconds, and repeat forever, in a Future
-    val _ = retryingM[String][Future](
+    val _ = retryingOnFailures[String][Future](
       policy,
       _ => false,
       (a, retryDetails) => Future.successful(onError(a, retryDetails))

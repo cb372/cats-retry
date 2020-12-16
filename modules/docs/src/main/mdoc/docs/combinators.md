@@ -8,9 +8,9 @@ title: Combinators
 The library offers a few slightly different ways to wrap your operations with
 retries.
 
-## `retryingM`
+## `retryingOnFailures`
 
-To use `retryingM`, you pass in a predicate that decides whether you are happy
+To use `retryingOnFailures`, you pass in a predicate that decides whether you are happy
 with the result or you want to retry.  It is useful when you are working in an
 arbitrary `Monad` that is not a `MonadError`.  Your operation doesn't throw
 errors, but you want to retry until it returns a value that you are happy with.
@@ -18,7 +18,7 @@ errors, but you want to retry until it returns a value that you are happy with.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingM[M[_]: Monad, A](policy: RetryPolicy[M],
+def retryingOnFailures[M[_]: Monad, A](policy: RetryPolicy[M],
                               wasSuccessful: A => Boolean,
                               onFailure: (A, RetryDetails) => M[Unit])
                              (action: => M[A]): M[A]
@@ -51,7 +51,7 @@ def onFailure(failedValue: Int, details: RetryDetails): IO[Unit] = {
 
 val loadedDie = util.LoadedDie(2, 5, 4, 1, 3, 2, 6)
 
-val io = retryingM(policy, (_: Int) == 6, onFailure){
+val io = retryingOnFailures(policy, (_: Int) == 6, onFailure){
   IO(loadedDie.roll())
 }
 
@@ -152,7 +152,7 @@ as extension methods.
 import retry.syntax.all._
 
 // To retry until you get a value you like
-IO(loadedDie.roll()).retryingM(
+IO(loadedDie.roll()).retryingOnFailures(
   policy = RetryPolicies.limitRetries[IO](2),
   wasSuccessful = (_: Int) == 6,
   onFailure = retry.noop[IO, Int]

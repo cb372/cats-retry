@@ -10,7 +10,7 @@ import scala.concurrent.duration._
 class SyntaxSpec extends AnyFlatSpec {
   type StringOr[A] = Either[String, A]
 
-  behavior of "retryingM"
+  behavior of "retryingOnFailures"
 
   it should "retry until the action succeeds" in new TestContext {
     val policy: RetryPolicy[Id] =
@@ -28,7 +28,7 @@ class SyntaxSpec extends AnyFlatSpec {
     }
 
     val finalResult: Id[String] =
-      action.retryingM(wasSuccessful, policy, onFailure)
+      action.retryingOnFailures(wasSuccessful, policy, onFailure)
 
     assert(finalResult == "4")
     assert(attempts == 4)
@@ -47,7 +47,8 @@ class SyntaxSpec extends AnyFlatSpec {
       attempts.toString
     }
 
-    val finalResult: Id[String] = action.retryingM(_.toInt > 3, policy, onError)
+    val finalResult: Id[String] =
+      action.retryingOnFailures(_.toInt > 3, policy, onError)
 
     assert(finalResult == "3")
     assert(attempts == 3)

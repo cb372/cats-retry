@@ -6,9 +6,11 @@ import cats.syntax.flatMap._
 import scala.concurrent.duration.FiniteDuration
 
 package object retry {
-  def retryingM[A] = new RetryingPartiallyApplied[A]
+  @deprecated("Use retryingOnFailures instead", "")
+  def retryingM[A]          = new RetryingOnFailuresPartiallyApplied[A]
+  def retryingOnFailures[A] = new RetryingOnFailuresPartiallyApplied[A]
 
-  private[retry] class RetryingPartiallyApplied[A] {
+  private[retry] class RetryingOnFailuresPartiallyApplied[A] {
     def apply[M[_]](
         policy: RetryPolicy[M],
         wasSuccessful: A => Boolean,

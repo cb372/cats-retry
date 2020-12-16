@@ -15,5 +15,5 @@ object syntax {
       M: Monad[Id],
       S: Sleep[Id]
   ): A =
-    retryingM[A][Id](policy, wasSuccessful, onFailure)(action)
+    retryingOnFailures[A][Id](policy, wasSuccessful, onFailure)(action)
 }

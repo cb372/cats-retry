@@ -11,7 +11,7 @@ class PackageObjectSpec extends AnyFlatSpec {
 
   implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
 
-  behavior of "retryingM"
+  behavior of "retryingOnFailures"
 
   it should "retry until the action succeeds" in new TestContext {
     val policy = RetryPolicies.constantDelay[Id](1.second)
@@ -21,7 +21,7 @@ class PackageObjectSpec extends AnyFlatSpec {
     implicit val dummySleep: Sleep[Id] =
       (delay: FiniteDuration) => sleeps.append(delay)
 
-    val finalResult = retryingM[String][Id](
+    val finalResult = retryingOnFailures[String][Id](
       policy,
       _.toInt > 3,
       onError
@@ -43,7 +43,7 @@ class PackageObjectSpec extends AnyFlatSpec {
 
     implicit val dummySleep: Sleep[Id] = _ => ()
 
-    val finalResult = retryingM[String][Id](
+    val finalResult = retryingOnFailures[String][Id](
       policy,
       _.toInt > 3,
       onError
@@ -64,7 +64,7 @@ class PackageObjectSpec extends AnyFlatSpec {
 
     implicit val dummySleep: Sleep[Id] = _ => ()
 
-    val finalResult = retryingM[String][Id](
+    val finalResult = retryingOnFailures[String][Id](
       policy,
       _.toInt > 20000,
       onError
