@@ -5,12 +5,14 @@ title: MTL Combinators
 
 # MTL Combinators
 
-The `cats-retry-mtl` module provides two additional retry methods that operating with errors produced 
-by `Handle` from [cats-mtl](https://github.com/typelevel/cats-mtl).
+The `cats-retry-mtl` module provides two additional retry methods that operating
+with errors produced by `Handle` from
+[cats-mtl](https://github.com/typelevel/cats-mtl).
 
 ## Installation
 
 To use `cats-retry-mtl`, add the following dependency to your `build.sbt`:
+
 ```scala mdoc:passthrough
 println(
   s"""
@@ -24,11 +26,13 @@ println(
 
 ## Interaction with MonadError retry
 
-MTL retry works independently from `retry.retryingOnSomeErrors`. The operations `retry.mtl.retryingOnAllErrors` and 
-`retry.mtl.retryingOnSomeErrors` evaluating retry exclusively on errors produced by `Handle`.
-Thus errors produced by `MonadError` are not being taken into account and retry is not triggered.
+MTL retry works independently from `retry.retryingOnSomeErrors`. The operations
+`retry.mtl.retryingOnAllErrors` and `retry.mtl.retryingOnSomeErrors` evaluating
+retry exclusively on errors produced by `Handle`.  Thus errors produced by
+`MonadError` are not being taken into account and retry is not triggered.
 
 If you want to retry in case of any error, you can chain the methods:
+
 ```scala
 fa
   .retryingOnAllErrors(policy, onError = retry.noop[F, Throwable])
@@ -40,12 +44,13 @@ fa
 This is useful when you are working with an `Handle[M, E]` but you only want
 to retry on some errors.
 
-To use `retryingOnSomeErrors`, you need to pass in a predicate that decides whether a given error is worth retrying.
+To use `retryingOnSomeErrors`, you need to pass in a predicate that decides
+whether a given error is worth retrying.
 
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnSomeErrors[M[_]: Monad, A, E: Handle[M, *]](
+def retryingOnSomeErrors[M[_]: Monad: Sleep, A, E: Handle[M, *]](
   policy: RetryPolicy[M],
   isWorthRetrying: E => Boolean,
   onError: (E, RetryDetails) => M[Unit]
@@ -77,14 +82,14 @@ case class AppError(reason: String)
 def failingOperation[F[_]: Handle[*[_], AppError]]: F[Unit] =
   Handle[F, AppError].raise(AppError("Boom!"))
 
-def isWorthRetrying(error: AppError): Boolean = 
+def isWorthRetrying(error: AppError): Boolean =
   error.reason.contains("Boom!")
 
-def logError[F[_]: Sync](error: AppError, details: RetryDetails): F[Unit] = 
-  Sync[F].delay(println(s"Raised error $error. Details $details")) 
+def logError[F[_]: Sync](error: AppError, details: RetryDetails): F[Unit] =
+  Sync[F].delay(println(s"Raised error $error. Details $details"))
 
 val policy = RetryPolicies.limitRetries[Effect](2)
- 
+
 retry.mtl
   .retryingOnSomeErrors(policy, isWorthRetrying, logError[Effect])(failingOperation[Effect])
   .value
@@ -99,7 +104,7 @@ retry on all errors.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnSomeErrors[M[_]: Monad, A, E: Handle[M, *]](
+def retryingOnSomeErrors[M[_]: Monad: Sleep, A, E: Handle[M, *]](
   policy: RetryPolicy[M],
   onError: (E, RetryDetails) => M[Unit]
 )(action: => M[A]): M[A]
@@ -129,8 +134,8 @@ case class AppError(reason: String)
 def failingOperation[F[_]: Handle[*[_], AppError]]: F[Unit] =
   Handle[F, AppError].raise(AppError("Boom!"))
 
-def logError[F[_]: Sync](error: AppError, details: RetryDetails): F[Unit] = 
-  Sync[F].delay(println(s"Raised error $error. Details $details")) 
+def logError[F[_]: Sync](error: AppError, details: RetryDetails): F[Unit] =
+  Sync[F].delay(println(s"Raised error $error. Details $details"))
 
 val policy = RetryPolicies.limitRetries[Effect](2)
 
@@ -182,11 +187,11 @@ class Service[F[_]: Timer](client: util.FlakyHttpClient)(implicit F: Sync[F], AH
     if (string.contains("cool")) F.unit
     else AH.raise(AppError("Gif is not cool"))
 
-  private def logError(error: Throwable, details: RetryDetails): F[Unit] = 
+  private def logError(error: Throwable, details: RetryDetails): F[Unit] =
     F.delay(println(s"Raised error $error. Details $details"))
 
-  private def logMtlError(error: AppError, details: RetryDetails): F[Unit] = 
-    F.delay(println(s"Raised MTL error $error. Details $details")) 
+  private def logMtlError(error: AppError, details: RetryDetails): F[Unit] =
+    F.delay(println(s"Raised MTL error $error. Details $details"))
 }
 
 type Effect[A] = EitherT[IO, AppError, A]

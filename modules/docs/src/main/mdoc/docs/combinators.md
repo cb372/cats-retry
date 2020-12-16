@@ -18,10 +18,10 @@ errors, but you want to retry until it returns a value that you are happy with.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingM[M[_]: Monad, A](policy: RetryPolicy[M],
-                              wasSuccessful: A => Boolean,
-                              onFailure: (A, RetryDetails) => M[Unit])
-                             (action: => M[A]): M[A]
+def retryingM[M[_]: Monad: Sleep, A](policy: RetryPolicy[M],
+                                     wasSuccessful: A => Boolean,
+                                     onFailure: (A, RetryDetails) => M[Unit])
+                                    (action: => M[A]): M[A]
 ```
 
 You need to pass in:
@@ -69,10 +69,11 @@ whether a given error is worth retrying.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnSomeErrors[M[_]: Monad, A, E](policy: RetryPolicy[M],
+def retryingOnSomeErrors[M[_]: Sleep, A, E](policy: RetryPolicy[M],
                                             isWorthRetrying: E => Boolean,
                                             onError: (E, RetryDetails) => M[Unit])
-                                           (action: => M[A]): M[A]
+                                           (action: => M[A])
+                                           (implicit ME: MonadError[M, E]): M[A]
 ```
 
 You need to pass in:
@@ -113,9 +114,10 @@ retry on all errors.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnAllErrors[M[_]: Monad, A, E](policy: RetryPolicy[M],
+def retryingOnAllErrors[M[_]: Sleep, A, E](policy: RetryPolicy[M],
                                            onError: (E, RetryDetails) => M[Unit])
-                                          (action: => M[A]): M[A]
+                                          (action: => M[A])
+                                          (implicit ME: MonadError[M, E]): M[A]
 ```
 
 You need to pass in:
@@ -143,22 +145,22 @@ io.unsafeRunSync()
 
 ## `retryingOnFailuresAndSomeErrors`
 
-This is a combination of `retryingM` and `retryingOnSomeErrors`. It allows you to specify failure
-conditions for both the results and errors that can occur.
+This is a combination of `retryingM` and `retryingOnSomeErrors`. It allows you
+to specify failure conditions for both the results and errors that can occur.
 
-To use `retryingOnFailuresAndSomeErrors`, you need to pass in predicates that decide
-whether a given error or result is worth retrying. 
+To use `retryingOnFailuresAndSomeErrors`, you need to pass in predicates that
+decide whether a given error or result is worth retrying.
 
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnFailuresAndSomeErrors[M[_], A, E](policy: RetryPolicy[M],
-                                                wasSuccessful: A => Boolean,
-                                                isWorthRetrying: E => Boolean,
-                                                onFailure: (A, RetryDetails) => M[Unit],
-                                                onError: (E, RetryDetails) => M[Unit])
-                                                (action: => M[A])
-                                                (implicit ME: MonadError[M, E]): M[A]
+def retryingOnFailuresAndSomeErrors[M[_]: Sleep, A, E](policy: RetryPolicy[M],
+                                                       wasSuccessful: A => Boolean,
+                                                       isWorthRetrying: E => Boolean,
+                                                       onFailure: (A, RetryDetails) => M[Unit],
+                                                       onError: (E, RetryDetails) => M[Unit])
+                                                      (action: => M[A])
+                                                      (implicit ME: MonadError[M, E]): M[A]
 ```
 
 You need to pass in:
@@ -207,12 +209,12 @@ whether a given result is worth retrying.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnFailuresAndAllErrors[M[_], A, E](policy: RetryPolicy[M],
-                                               wasSuccessful: A => Boolean,
-                                               onFailure: (A, RetryDetails) => M[Unit],
-                                               onError: (E, RetryDetails) => M[Unit])
-                                               (action: => M[A])
-                                               (implicit ME: MonadError[M, E]): M[A]
+def retryingOnFailuresAndAllErrors[M[_]: Sleep, A, E](policy: RetryPolicy[M],
+                                                      wasSuccessful: A => Boolean,
+                                                      onFailure: (A, RetryDetails) => M[Unit],
+                                                      onError: (E, RetryDetails) => M[Unit])
+                                                     (action: => M[A])
+                                                     (implicit ME: MonadError[M, E]): M[A]
 ```
 
 You need to pass in:
