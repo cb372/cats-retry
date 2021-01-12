@@ -57,12 +57,12 @@ val moduleSettings = commonSettings ++ Seq(
 )
 
 val catsVersion          = "2.3.0"
-val catsEffectVersion    = "2.3.0"
-val catsMtlVersion       = "1.1.0"
+val catsEffectVersion    = "2.3.1"
+val catsMtlVersion       = "1.1.1"
 val scalatestVersion     = "3.2.3"
 val scalaTestPlusVersion = "3.2.2.0"
-val scalacheckVersion    = "1.15.2"
-val disciplineVersion    = "2.1.0"
+val scalacheckVersion    = "1.15.1"
+val disciplineVersion    = "2.1.1"
 
 val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/core"))
