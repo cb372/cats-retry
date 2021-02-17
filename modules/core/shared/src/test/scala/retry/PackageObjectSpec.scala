@@ -85,7 +85,7 @@ class PackageObjectSpec extends AnyFlatSpec {
 
     val finalResult = retryingOnSomeErrors(
       policy,
-      (_: String) == "one more time",
+      (s: String) => Right(s == "one more time"),
       onError
     ) {
       attempts = attempts + 1
@@ -106,7 +106,7 @@ class PackageObjectSpec extends AnyFlatSpec {
 
     val finalResult = retryingOnSomeErrors(
       policy,
-      (_: String) == "one more time",
+      (s: String) => Right(s == "one more time"),
       onError
     ) {
       attempts = attempts + 1
@@ -129,7 +129,7 @@ class PackageObjectSpec extends AnyFlatSpec {
 
     val finalResult = retryingOnSomeErrors(
       policy,
-      (_: String) == "one more time",
+      (s: String) => Right(s == "one more time"),
       onError
     ) {
       attempts = attempts + 1
@@ -149,7 +149,7 @@ class PackageObjectSpec extends AnyFlatSpec {
 
     val finalResult = retryingOnSomeErrors(
       policy,
-      (_: String) == "one more time",
+      (s: String) => Right(s == "one more time"),
       onError
     ) {
       attempts = attempts + 1
@@ -225,8 +225,8 @@ class PackageObjectSpec extends AnyFlatSpec {
 
     val finalResult = retryingOnFailuresAndSomeErrors[String](
       policy,
-      _ == "yay",
-      (_: String) == "one more time",
+      s => Right(s == "yay"),
+      (s: String) => Right(s == "one more time"),
       onError,
       onError
     ) {
@@ -248,8 +248,8 @@ class PackageObjectSpec extends AnyFlatSpec {
 
     val finalResult = retryingOnFailuresAndSomeErrors[String](
       policy,
-      _ == "will never happen",
-      (_: String) == "one more time",
+      s => Right(s == "will never happen"),
+      (s: String) => Right(s == "one more time"),
       onError,
       onError
     ) {
@@ -273,8 +273,8 @@ class PackageObjectSpec extends AnyFlatSpec {
 
     val finalResult = retryingOnFailuresAndSomeErrors[String](
       policy,
-      _ == "will never happen",
-      (_: String) == "one more time",
+      s => Right(s == "will never happen"),
+      (s: String) => Right(s == "one more time"),
       onError,
       onError
     ) {
@@ -295,8 +295,8 @@ class PackageObjectSpec extends AnyFlatSpec {
 
     val finalResult = retryingOnFailuresAndSomeErrors[String](
       policy,
-      _ == "yay",
-      (_: String) == "one more time",
+      s => Right(s == "yay"),
+      (s: String) => Right(s == "one more time"),
       onError,
       onError
     ) {
@@ -315,8 +315,8 @@ class PackageObjectSpec extends AnyFlatSpec {
 
     val finalResult = retryingOnFailuresAndSomeErrors[String](
       policy,
-      _ == "yay",
-      (_: String) == "one more time",
+      s => Right(s == "yay"),
+      (s: String) => Right(s == "one more time"),
       onError,
       onError
     ) {
@@ -336,7 +336,7 @@ class PackageObjectSpec extends AnyFlatSpec {
 
     val finalResult = retryingOnFailuresAndAllErrors[String](
       policy,
-      _ == "yay",
+      s => Right(s == "yay"),
       onError,
       onError
     ) {
@@ -358,7 +358,7 @@ class PackageObjectSpec extends AnyFlatSpec {
 
     val finalResult = retryingOnFailuresAndAllErrors[String](
       policy,
-      _ == "will never happen",
+      s => Right(s == "will never happen"),
       onError,
       onError
     ) {
@@ -379,7 +379,7 @@ class PackageObjectSpec extends AnyFlatSpec {
 
     val finalResult = retryingOnFailuresAndAllErrors[String](
       policy,
-      _ == "yay",
+      s => Right(s == "yay"),
       onError,
       onError
     ) {
@@ -398,7 +398,7 @@ class PackageObjectSpec extends AnyFlatSpec {
 
     val finalResult = retryingOnFailuresAndAllErrors[String](
       policy,
-      _ == "will never happen",
+      s => Right(s == "will never happen"),
       onError,
       onError
     ) {

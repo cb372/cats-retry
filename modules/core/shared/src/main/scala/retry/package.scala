@@ -12,34 +12,37 @@ package object retry {
 
   private def retryingOnFailuresImpl[M[_], A](
       policy: RetryPolicy[M],
-      wasSuccessful: A => Boolean,
+      wasSuccessful: A => M[Boolean],
       onFailure: (A, RetryDetails) => M[Unit],
       status: RetryStatus,
       a: A
   )(implicit
       M: Monad[M],
       S: Sleep[M]
-  ): M[Either[RetryStatus, A]] =
-    if (wasSuccessful(a)) {
-      M.pure(Right(a)) // stop the recursion
-    } else {
-      for {
-        nextStep <- applyPolicy(policy, status)
-        _        <- onFailure(a, buildRetryDetails(status, nextStep))
-        result <- nextStep match {
-          case NextStep.RetryAfterDelay(delay, updatedStatus) =>
-            S.sleep(delay) *>
-              M.pure(Left(updatedStatus)) // continue recursion
-          case NextStep.GiveUp =>
-            M.pure(Right(a)) // stop the recursion
-        }
-      } yield result
-    }
+  ): M[Either[RetryStatus, A]] = {
+
+    def onFalse: M[Either[RetryStatus, A]] = for {
+      nextStep <- applyPolicy(policy, status)
+      _        <- onFailure(a, buildRetryDetails(status, nextStep))
+      result <- nextStep match {
+        case NextStep.RetryAfterDelay(delay, updatedStatus) =>
+          S.sleep(delay) *>
+            M.pure(Left(updatedStatus)) // continue recursion
+        case NextStep.GiveUp =>
+          M.pure(Right(a)) // stop the recursion
+      }
+    } yield result
+
+    wasSuccessful(a).ifM(
+      M.pure(Right(a)), // stop the recursion
+      onFalse
+    )
+  }
 
   private[retry] class RetryingOnFailuresPartiallyApplied[A] {
     def apply[M[_]](
         policy: RetryPolicy[M],
-        wasSuccessful: A => Boolean,
+        wasSuccessful: A => M[Boolean],
         onFailure: (A, RetryDetails) => M[Unit]
     )(
         action: => M[A]
@@ -57,7 +60,7 @@ package object retry {
 
   private def retryingOnSomeErrorsImpl[M[_], A, E](
       policy: RetryPolicy[M],
-      isWorthRetrying: E => Boolean,
+      isWorthRetrying: E => M[Boolean],
       onError: (E, RetryDetails) => M[Unit],
       status: RetryStatus,
       attempt: Either[E, A]
@@ -65,20 +68,21 @@ package object retry {
       ME: MonadError[M, E],
       S: Sleep[M]
   ): M[Either[RetryStatus, A]] = attempt match {
-    case Left(error) if isWorthRetrying(error) =>
-      for {
-        nextStep <- applyPolicy(policy, status)
-        _        <- onError(error, buildRetryDetails(status, nextStep))
-        result <- nextStep match {
-          case NextStep.RetryAfterDelay(delay, updatedStatus) =>
-            S.sleep(delay) *>
-              ME.pure(Left(updatedStatus)) // continue recursion
-          case NextStep.GiveUp =>
-            ME.raiseError[A](error).map(Right(_)) // stop the recursion
-        }
-      } yield result
     case Left(error) =>
-      ME.raiseError[A](error).map(Right(_)) // stop the recursion
+      isWorthRetrying(error).ifM(
+        for {
+          nextStep <- applyPolicy(policy, status)
+          _        <- onError(error, buildRetryDetails(status, nextStep))
+          result <- nextStep match {
+            case NextStep.RetryAfterDelay(delay, updatedStatus) =>
+              S.sleep(delay) *>
+                ME.pure(Left(updatedStatus)) // continue recursion
+            case NextStep.GiveUp =>
+              ME.raiseError[A](error).map(Right(_)) // stop the recursion
+          }
+        } yield result,
+        ME.raiseError[A](error).map(Right(_)) // stop the recursion
+      )
     case Right(success) =>
       ME.pure(Right(success)) // stop the recursion
   }
@@ -86,7 +90,7 @@ package object retry {
   private[retry] class RetryingOnSomeErrorsPartiallyApplied[A] {
     def apply[M[_], E](
         policy: RetryPolicy[M],
-        isWorthRetrying: E => Boolean,
+        isWorthRetrying: E => M[Boolean],
         onError: (E, RetryDetails) => M[Unit]
     )(
         action: => M[A]
@@ -118,7 +122,9 @@ package object retry {
         ME: MonadError[M, E],
         S: Sleep[M]
     ): M[A] =
-      retryingOnSomeErrors[A].apply[M, E](policy, _ => true, onError)(action)
+      retryingOnSomeErrors[A].apply[M, E](policy, _ => ME.pure(true), onError)(
+        action
+      )
   }
 
   def retryingOnFailuresAndSomeErrors[A] =
@@ -127,8 +133,8 @@ package object retry {
   private[retry] class RetryingOnFailuresAndSomeErrorsPartiallyApplied[A] {
     def apply[M[_], E](
         policy: RetryPolicy[M],
-        wasSuccessful: A => Boolean,
-        isWorthRetrying: E => Boolean,
+        wasSuccessful: A => M[Boolean],
+        isWorthRetrying: E => M[Boolean],
         onFailure: (A, RetryDetails) => M[Unit],
         onError: (E, RetryDetails) => M[Unit]
     )(
@@ -161,7 +167,7 @@ package object retry {
   private[retry] class RetryingOnFailuresAndAllErrorsPartiallyApplied[A] {
     def apply[M[_], E](
         policy: RetryPolicy[M],
-        wasSuccessful: A => Boolean,
+        wasSuccessful: A => M[Boolean],
         onFailure: (A, RetryDetails) => M[Unit],
         onError: (E, RetryDetails) => M[Unit]
     )(
@@ -171,7 +177,13 @@ package object retry {
         S: Sleep[M]
     ): M[A] =
       retryingOnFailuresAndSomeErrors[A]
-        .apply[M, E](policy, wasSuccessful, _ => true, onFailure, onError)(
+        .apply[M, E](
+          policy,
+          wasSuccessful,
+          _ => ME.pure(true),
+          onFailure,
+          onError
+        )(
           action
         )
   }

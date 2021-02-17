@@ -52,7 +52,7 @@ The API (modulo some type-inference trickery) looks like this:
 ```scala
 def retryingOnSomeErrors[M[_]: Monad: Sleep, A, E: Handle[M, *]](
   policy: RetryPolicy[M],
-  isWorthRetrying: E => Boolean,
+  isWorthRetrying: E => M[Boolean],
   onError: (E, RetryDetails) => M[Unit]
 )(action: => M[A]): M[A]
 ```
@@ -82,8 +82,8 @@ case class AppError(reason: String)
 def failingOperation[F[_]: Handle[*[_], AppError]]: F[Unit] =
   Handle[F, AppError].raise(AppError("Boom!"))
 
-def isWorthRetrying(error: AppError): Boolean =
-  error.reason.contains("Boom!")
+def isWorthRetrying(error: AppError): Effect[Boolean] =
+  EitherT.pure(error.reason.contains("Boom!"))
 
 def logError[F[_]: Sync](error: AppError, details: RetryDetails): F[Unit] =
   Sync[F].delay(println(s"Raised error $error. Details $details"))

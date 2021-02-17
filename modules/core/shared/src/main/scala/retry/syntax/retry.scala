@@ -18,7 +18,7 @@ trait RetrySyntax {
 final class RetryingOps[M[_], A](action: => M[A]) {
   @deprecated("Use retryingOnFailures instead", "2.1.0")
   def retryingM[E](
-      wasSuccessful: A => Boolean,
+      wasSuccessful: A => M[Boolean],
       policy: RetryPolicy[M],
       onFailure: (A, RetryDetails) => M[Unit]
   )(implicit
@@ -27,7 +27,7 @@ final class RetryingOps[M[_], A](action: => M[A]) {
   ): M[A] = retryingOnFailures(wasSuccessful, policy, onFailure)
 
   def retryingOnFailures[E](
-      wasSuccessful: A => Boolean,
+      wasSuccessful: A => M[Boolean],
       policy: RetryPolicy[M],
       onFailure: (A, RetryDetails) => M[Unit]
   )(implicit
@@ -54,7 +54,7 @@ final class RetryingErrorOps[M[_], A, E](action: => M[A])(implicit
     )(action)
 
   def retryingOnSomeErrors(
-      isWorthRetrying: E => Boolean,
+      isWorthRetrying: E => M[Boolean],
       policy: RetryPolicy[M],
       onError: (E, RetryDetails) => M[Unit]
   )(implicit S: Sleep[M]): M[A] =
@@ -65,7 +65,7 @@ final class RetryingErrorOps[M[_], A, E](action: => M[A])(implicit
     )(action)
 
   def retryingOnFailuresAndAllErrors(
-      wasSuccessful: A => Boolean,
+      wasSuccessful: A => M[Boolean],
       policy: RetryPolicy[M],
       onFailure: (A, RetryDetails) => M[Unit],
       onError: (E, RetryDetails) => M[Unit]
@@ -78,8 +78,8 @@ final class RetryingErrorOps[M[_], A, E](action: => M[A])(implicit
     )(action)
 
   def retryingOnFailuresAndSomeErrors(
-      wasSuccessful: A => Boolean,
-      isWorthRetrying: E => Boolean,
+      wasSuccessful: A => M[Boolean],
+      isWorthRetrying: E => M[Boolean],
       policy: RetryPolicy[M],
       onFailure: (A, RetryDetails) => M[Unit],
       onError: (E, RetryDetails) => M[Unit]
