@@ -41,7 +41,6 @@ val commonSettings = Seq(
 
 val moduleSettings = commonSettings ++ Seq(
   scalacOptions ++= Seq(
-    "-Xfuture",
     "-Ywarn-dead-code",
     "-Ywarn-unused",
     "-deprecation",
@@ -53,8 +52,10 @@ val moduleSettings = commonSettings ++ Seq(
   scalacOptions in (Test, compile) ++= {
     if (scalaVersion.value.startsWith("2.13"))
       Nil
-    else
-      List("-Ypartial-unification")
+    else if (scalaVersion.value.startsWith("2.12"))
+      List("-Ypartial-unification", "-Xfuture")
+    else // scala 3.x
+      Nil
   },
   scalafmtOnCompile := true,
   testFrameworks += new TestFramework("munit.Framework"),
@@ -125,7 +126,6 @@ val mtlRetry = crossProject(JVMPlatform, JSPlatform)
 val mtlJVM = mtlRetry.jvm
 val mtlJS  = mtlRetry.js
 
-// Only building docs for 2.13 as neither monix nor tut have builds for scala 3
 val docs = project
   .in(file("modules/docs"))
   .dependsOn(coreJVM, alleycatsJVM, mtlJVM)
@@ -136,11 +136,11 @@ val docs = project
     scalacOptions -= "-Ywarn-unused",
     scalacOptions += "-Ydelambdafy:inline",
     scalaVersion := scalaVersion213,
+    //libraryDependencies ++= Seq(
+    //  "io.monix" %%% "monix" % "3.3.0"
+    //),
     addCompilerPlugin(
-      "org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full
-    ),
-    libraryDependencies ++= Seq(
-      "io.monix" %%% "monix" % "3.1.0"
+      "org.typelevel" %% "kind-projector" % "0.11.3" cross CrossVersion.full
     ),
     crossScalaVersions := Nil,
     buildInfoPackage := "retry",
@@ -156,7 +156,6 @@ val docs = project
     micrositeGitterChannel := true,
     micrositeGitterChannelUrl := "typelevel/cats-retry",
     micrositeTwitterCreator := "@cbirchall",
-    micrositeCompilingDocsTool := WithMdoc,
     mdocIn := (sourceDirectory in Compile).value / "mdoc",
     micrositeShareOnSocial := true,
     micrositePushSiteWith := GitHub4s,

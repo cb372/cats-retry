@@ -68,12 +68,11 @@ Example:
 ```scala mdoc
 import retry.{RetryDetails, RetryPolicies}
 import cats.data.EitherT
-import cats.effect.{Sync, IO, Timer}
+import cats.effect.{Sync, IO}
 import cats.mtl.Handle
 import scala.concurrent.duration._
 
-// We need an implicit cats.effect.Timer
-implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
+import cats.effect.unsafe.implicits.global
 
 type Effect[A] = EitherT[IO, AppError, A]
 
@@ -120,12 +119,11 @@ Example:
 ```scala mdoc:reset
 import retry.{RetryDetails, RetryPolicies}
 import cats.data.EitherT
-import cats.effect.{Sync, IO, Timer}
+import cats.effect.{Sync, IO}
 import cats.mtl.Handle
 import scala.concurrent.duration._
 
-// We need an implicit cats.effect.Timer
-implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
+import cats.effect.unsafe.implicits.global
 
 type Effect[A] = EitherT[IO, AppError, A]
 
@@ -151,18 +149,18 @@ Cats-retry-mtl include some syntactic sugar in order to reduce boilerplate.
 
 ```scala mdoc:reset
 import retry._
+import cats.implicits._
 import cats.data.EitherT
-import cats.effect.{Sync, IO, Timer}
-import cats.syntax.functor._
-import cats.syntax.flatMap._
+import cats.effect.{Async, IO}
 import cats.mtl.Handle
 import retry.mtl.syntax.all._
 import retry.syntax.all._
 import scala.concurrent.duration._
+import cats.effect.unsafe.implicits.global
 
 case class AppError(reason: String)
 
-class Service[F[_]: Timer](client: util.FlakyHttpClient)(implicit F: Sync[F], AH: Handle[F, AppError]) {
+class Service[F[_]](client: util.FlakyHttpClient)(implicit F: Async[F], AH: Handle[F, AppError]) {
 
   // evaluates retry exclusively on errors produced by Handle.
   def findCoolCatGifRetryMtl(policy: RetryPolicy[F]): F[String] =
@@ -177,7 +175,7 @@ class Service[F[_]: Timer](client: util.FlakyHttpClient)(implicit F: Sync[F], AH
   private def findCoolCatGif: F[String] =
     for {
       gif <- findCatGif
-      _ <- isCoolGif(gif)
+      _   <- isCoolGif(gif)
     } yield gif
 
   private def findCatGif: F[String] =
@@ -195,8 +193,6 @@ class Service[F[_]: Timer](client: util.FlakyHttpClient)(implicit F: Sync[F], AH
 }
 
 type Effect[A] = EitherT[IO, AppError, A]
-
-implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
 
 val policy = RetryPolicies.limitRetries[Effect](5)
 

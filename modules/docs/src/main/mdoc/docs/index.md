@@ -62,6 +62,7 @@ import cats.effect.IO
 import scala.concurrent.duration.FiniteDuration
 import retry._
 import retry.RetryDetails._
+import cats.effect.unsafe.implicits.global
 
 val httpClient = util.FlakyHttpClient()
 
@@ -89,13 +90,6 @@ def logError(err: Throwable, details: RetryDetails): IO[Unit] = details match {
 }
 
 // Now we have a retry policy and an error handler, we can wrap our `IO` inretries.
-
-// We need an implicit cats.effect.Timer
-import cats.effect.Timer
-import scala.concurrent.ExecutionContext.global
-implicit val timer: Timer[IO] = IO.timer(global)
-
-
 val flakyRequestWithRetry: IO[String] =
   retryingOnAllErrors[String](
     policy = RetryPolicies.limitRetries[IO](5),

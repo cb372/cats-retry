@@ -48,12 +48,10 @@ For example, let's keep rolling a die until we get a six, using `IO`.
 ```scala mdoc
 import retry._
 
-import cats.effect.{IO, Timer}
+import cats.effect.IO
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.global
 
-// We need an implicit cats.effect.Timer
-implicit val timer: Timer[IO] = IO.timer(global)
+import cats.effect.unsafe.implicits.global
 
 val policy = RetryPolicies.constantDelay[IO](10.milliseconds)
 
