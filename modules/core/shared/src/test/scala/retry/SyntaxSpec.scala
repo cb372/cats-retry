@@ -1,192 +1,204 @@
 package retry
 
-import cats.Id
-import org.scalatest.flatspec.AnyFlatSpec
+import cats.{Id, catsInstancesForId}
+import munit.FunSuite
 import retry.syntax.all._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 
-class SyntaxSpec extends AnyFlatSpec {
+class SyntaxSpec extends FunSuite {
   type StringOr[A] = Either[String, A]
 
-  behavior of "retryingOnFailures"
+  test("retryingOnFailures should retry until the action succeeds") {
+    new TestContext {
+      val policy: RetryPolicy[Id] =
+        RetryPolicies.constantDelay[Id](1.second)
+      def onFailure: (String, RetryDetails) => Id[Unit] = onError
+      def wasSuccessful(res: String): Id[Boolean]       = res.toInt > 3
+      val sleeps                                        = ArrayBuffer.empty[FiniteDuration]
 
-  it should "retry until the action succeeds" in new TestContext {
-    val policy: RetryPolicy[Id] =
-      RetryPolicies.constantDelay[Id](1.second)
-    def onFailure: (String, RetryDetails) => Id[Unit] = onError
-    def wasSuccessful(res: String): Id[Boolean]       = res.toInt > 3
-    val sleeps                                        = ArrayBuffer.empty[FiniteDuration]
+      implicit val dummySleep: Sleep[Id] =
+        (delay: FiniteDuration) => sleeps.append(delay)
 
-    implicit val dummySleep: Sleep[Id] =
-      (delay: FiniteDuration) => sleeps.append(delay)
+      def action: Id[String] = {
+        attempts = attempts + 1
+        attempts.toString
+      }
 
-    def action: Id[String] = {
-      attempts = attempts + 1
-      attempts.toString
+      val finalResult: Id[String] =
+        action.retryingOnFailures(wasSuccessful, policy, onFailure)
+
+      assert(finalResult == "4")
+      assert(attempts == 4)
+      assert(errors.toList == List("1", "2", "3"))
+      assert(delays.toList == List(1.second, 1.second, 1.second))
+      assert(sleeps.toList == delays.toList)
+      assert(!gaveUp)
     }
-
-    val finalResult: Id[String] =
-      action.retryingOnFailures(wasSuccessful, policy, onFailure)
-
-    assert(finalResult == "4")
-    assert(attempts == 4)
-    assert(errors.toList == List("1", "2", "3"))
-    assert(delays.toList == List(1.second, 1.second, 1.second))
-    assert(sleeps.toList == delays.toList)
-    assert(!gaveUp)
   }
 
-  it should "retry until the policy chooses to give up" in new TestContext {
-    val policy: RetryPolicy[Id]        = RetryPolicies.limitRetries[Id](2)
-    implicit val dummySleep: Sleep[Id] = _ => ()
+  test("retryingOnFailures should retry until the policy chooses to give up") {
+    new TestContext {
+      val policy: RetryPolicy[Id]        = RetryPolicies.limitRetries[Id](2)
+      implicit val dummySleep: Sleep[Id] = _ => ()
 
-    def action: Id[String] = {
-      attempts = attempts + 1
-      attempts.toString
+      def action: Id[String] = {
+        attempts = attempts + 1
+        attempts.toString
+      }
+
+      val finalResult: Id[String] =
+        action.retryingOnFailures(_.toInt > 3, policy, onError)
+
+      assert(finalResult == "3")
+      assert(attempts == 3)
+      assert(errors.toList == List("1", "2", "3"))
+      assert(delays.toList == List(Duration.Zero, Duration.Zero))
+      assert(gaveUp)
     }
-
-    val finalResult: Id[String] =
-      action.retryingOnFailures(_.toInt > 3, policy, onError)
-
-    assert(finalResult == "3")
-    assert(attempts == 3)
-    assert(errors.toList == List("1", "2", "3"))
-    assert(delays.toList == List(Duration.Zero, Duration.Zero))
-    assert(gaveUp)
   }
 
-  behavior of "retryingOnSomeErrors"
+  test("retryingOnSomeErrors should retry until the action succeeds") {
+    new TestContext {
+      implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
 
-  it should "retry until the action succeeds" in new TestContext {
-    implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
+      val policy: RetryPolicy[StringOr] =
+        RetryPolicies.constantDelay[StringOr](1.second)
 
-    val policy: RetryPolicy[StringOr] =
-      RetryPolicies.constantDelay[StringOr](1.second)
+      def action: StringOr[String] = {
+        attempts = attempts + 1
+        if (attempts < 3)
+          Left("one more time")
+        else
+          Right("yay")
+      }
 
-    def action: StringOr[String] = {
-      attempts = attempts + 1
-      if (attempts < 3)
+      val finalResult: StringOr[String] =
+        action.retryingOnSomeErrors(
+          _ == "one more time",
+          policy,
+          (err, rd) => onError(err, rd)
+        )
+
+      assert(finalResult == Right("yay"))
+      assert(attempts == 3)
+      assert(errors.toList == List("one more time", "one more time"))
+      assert(!gaveUp)
+    }
+  }
+
+  test(
+    "retryingOnSomeErrors should retry only if the error is worth retrying"
+  ) {
+    new TestContext {
+      implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
+
+      val policy: RetryPolicy[StringOr] =
+        RetryPolicies.constantDelay[StringOr](1.second)
+
+      def action: StringOr[Nothing] = {
+        attempts = attempts + 1
+        if (attempts < 3)
+          Left("one more time")
+        else
+          Left("nope")
+      }
+
+      val finalResult =
+        action.retryingOnSomeErrors(
+          _ == "one more time",
+          policy,
+          (err, rd) => onError(err, rd)
+        )
+
+      assert(finalResult == Left("nope"))
+      assert(attempts == 3)
+      assert(errors.toList == List("one more time", "one more time"))
+      assert(
+        !gaveUp
+      ) // false because onError is only called when the error is worth retrying
+    }
+  }
+
+  test(
+    "retryingOnSomeErrors should retry until the policy chooses to give up"
+  ) {
+    new TestContext {
+      implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
+
+      val policy: RetryPolicy[StringOr] =
+        RetryPolicies.limitRetries[StringOr](2)
+
+      def action: StringOr[Nothing] = {
+        attempts = attempts + 1
+
         Left("one more time")
-      else
-        Right("yay")
-    }
+      }
 
-    val finalResult: StringOr[String] =
-      action.retryingOnSomeErrors(
-        _ == "one more time",
-        policy,
-        (err, rd) => onError(err, rd)
+      val finalResult: StringOr[Nothing] =
+        action.retryingOnSomeErrors(
+          _ == "one more time",
+          policy,
+          (err, rd) => onError(err, rd)
+        )
+
+      assert(finalResult == Left("one more time"))
+      assert(attempts == 3)
+      assert(
+        errors.toList == List("one more time", "one more time", "one more time")
       )
-
-    assert(finalResult == Right("yay"))
-    assert(attempts == 3)
-    assert(errors.toList == List("one more time", "one more time"))
-    assert(!gaveUp)
+      assert(gaveUp)
+    }
   }
 
-  it should "retry only if the error is worth retrying" in new TestContext {
-    implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
+  test("retryingOnAllErrors should retry until the action succeeds") {
+    new TestContext {
+      implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
 
-    val policy: RetryPolicy[StringOr] =
-      RetryPolicies.constantDelay[StringOr](1.second)
+      val policy: RetryPolicy[StringOr] =
+        RetryPolicies.constantDelay[StringOr](1.second)
 
-    def action: StringOr[Nothing] = {
-      attempts = attempts + 1
-      if (attempts < 3)
+      def action: StringOr[String] = {
+        attempts = attempts + 1
+        if (attempts < 3)
+          Left("one more time")
+        else
+          Right("yay")
+      }
+
+      val finalResult: StringOr[String] =
+        action.retryingOnAllErrors(policy, (err, rd) => onError(err, rd))
+
+      assert(finalResult == Right("yay"))
+      assert(attempts == 3)
+      assert(errors.toList == List("one more time", "one more time"))
+      assert(!gaveUp)
+    }
+  }
+
+  test("retryingOnAllErrors should retry until the policy chooses to give up") {
+    new TestContext {
+      implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
+
+      val policy: RetryPolicy[StringOr] =
+        RetryPolicies.limitRetries[StringOr](2)
+
+      def action: StringOr[Nothing] = {
+        attempts = attempts + 1
         Left("one more time")
-      else
-        Left("nope")
-    }
+      }
 
-    val finalResult =
-      action.retryingOnSomeErrors(
-        _ == "one more time",
-        policy,
-        (err, rd) => onError(err, rd)
+      val finalResult =
+        action.retryingOnAllErrors(policy, (err, rd) => onError(err, rd))
+
+      assert(finalResult == Left("one more time"))
+      assert(attempts == 3)
+      assert(
+        errors.toList == List("one more time", "one more time", "one more time")
       )
-
-    assert(finalResult == Left("nope"))
-    assert(attempts == 3)
-    assert(errors.toList == List("one more time", "one more time"))
-    assert(
-      !gaveUp
-    ) // false because onError is only called when the error is worth retrying
-  }
-
-  it should "retry until the policy chooses to give up" in new TestContext {
-    implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
-
-    val policy: RetryPolicy[StringOr] =
-      RetryPolicies.limitRetries[StringOr](2)
-
-    def action: StringOr[Nothing] = {
-      attempts = attempts + 1
-
-      Left("one more time")
+      assert(gaveUp)
     }
-
-    val finalResult: StringOr[Nothing] =
-      action.retryingOnSomeErrors(
-        _ == "one more time",
-        policy,
-        (err, rd) => onError(err, rd)
-      )
-
-    assert(finalResult == Left("one more time"))
-    assert(attempts == 3)
-    assert(
-      errors.toList == List("one more time", "one more time", "one more time")
-    )
-    assert(gaveUp)
-  }
-
-  behavior of "retryingOnAllErrors"
-
-  it should "retry until the action succeeds" in new TestContext {
-    implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
-
-    val policy: RetryPolicy[StringOr] =
-      RetryPolicies.constantDelay[StringOr](1.second)
-
-    def action: StringOr[String] = {
-      attempts = attempts + 1
-      if (attempts < 3)
-        Left("one more time")
-      else
-        Right("yay")
-    }
-
-    val finalResult: StringOr[String] =
-      action.retryingOnAllErrors(policy, (err, rd) => onError(err, rd))
-
-    assert(finalResult == Right("yay"))
-    assert(attempts == 3)
-    assert(errors.toList == List("one more time", "one more time"))
-    assert(!gaveUp)
-  }
-
-  it should "retry until the policy chooses to give up" in new TestContext {
-    implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
-
-    val policy: RetryPolicy[StringOr] =
-      RetryPolicies.limitRetries[StringOr](2)
-
-    def action: StringOr[Nothing] = {
-      attempts = attempts + 1
-      Left("one more time")
-    }
-
-    val finalResult =
-      action.retryingOnAllErrors(policy, (err, rd) => onError(err, rd))
-
-    assert(finalResult == Left("one more time"))
-    assert(attempts == 3)
-    assert(
-      errors.toList == List("one more time", "one more time", "one more time")
-    )
-    assert(gaveUp)
   }
 
   private class TestContext {

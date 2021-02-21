@@ -1,9 +1,9 @@
 package retry
 
-import org.scalatest.flatspec.AnyFlatSpec
+import munit.FunSuite
 
-class FibonacciSpec extends AnyFlatSpec {
-  it should "calculate the Fibonacci sequence" in {
+class FibonacciSpec extends FunSuite {
+  test("calculate the Fibonacci sequence") {
     assert(Fibonacci.fibonacci(0) == 0)
     assert(Fibonacci.fibonacci(1) == 1)
     assert(Fibonacci.fibonacci(2) == 1)

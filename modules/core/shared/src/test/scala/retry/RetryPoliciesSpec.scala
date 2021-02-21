@@ -3,17 +3,18 @@ package retry
 import java.util.concurrent.TimeUnit
 
 import retry.RetryPolicies._
-import cats.Id
+import cats.{Id, catsInstancesForId}
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatestplus.scalacheck.Checkers
+import org.scalacheck.Prop._
+import munit.ScalaCheckSuite
 import retry.PolicyDecision.{DelayAndRetry, GiveUp}
 
 import scala.concurrent.duration._
 
-class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
-  override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
-    PropertyCheckConfiguration(minSuccessful = 100)
+class RetryPoliciesSpec extends ScalaCheckSuite {
+  override def scalaCheckTestParameters =
+    super.scalaCheckTestParameters
+      .withMinSuccessfulTests(100)
 
   implicit val arbRetryStatus: Arbitrary[RetryStatus] = Arbitrary {
     for {
@@ -72,16 +73,16 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
     )
   }
 
-  behavior of "constantDelay"
-
-  it should "always retry with the same delay" in check { status: RetryStatus =>
-    constantDelay[Id](1.second)
-      .decideNextRetry(status) == PolicyDecision.DelayAndRetry(1.second)
+  test("constantDelay should always retry with the same delay") {
+    forAll { (status: RetryStatus) =>
+      constantDelay[Id](1.second)
+        .decideNextRetry(status) == PolicyDecision.DelayAndRetry(1.second)
+    }
   }
 
-  behavior of "exponentialBackoff"
-
-  it should "start with the base delay and double the delay after each iteration" in {
+  test(
+    "exponentialBackoff should start with the base delay and double the delay after each iteration"
+  ) {
     val policy                   = exponentialBackoff[Id](100.milliseconds)
     val arbitraryCumulativeDelay = 999.milliseconds
     val arbitraryPreviousDelay   = Some(999.milliseconds)
@@ -102,9 +103,9 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
     test(3, 800.milliseconds)
   }
 
-  behavior of "fibonacciBackoff"
-
-  it should "start with the base delay and increase the delay in a Fibonacci-y way" in {
+  test(
+    "fibonacciBackoff should start with the base delay and increase the delay in a Fibonacci-y way"
+  ) {
     val policy                   = fibonacciBackoff[Id](100.milliseconds)
     val arbitraryCumulativeDelay = 999.milliseconds
     val arbitraryPreviousDelay   = Some(999.milliseconds)
@@ -129,9 +130,7 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
     test(7, 2100.milliseconds)
   }
 
-  behavior of "fullJitter"
-
-  it should "implement the AWS Full Jitter backoff algorithm" in {
+  test("fullJitter should implement the AWS Full Jitter backoff algorithm") {
     val policy                   = fullJitter[Id](100.milliseconds)
     val arbitraryCumulativeDelay = 999.milliseconds
     val arbitraryPreviousDelay   = Some(999.milliseconds)
@@ -158,21 +157,20 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
     test(5, 3200.milliseconds)
   }
 
-  behavior of "all built-in policies"
-
-  it should "never try to create a FiniteDuration of more than Long.MaxValue nanoseconds" in check {
-    (labelledPolicy: LabelledRetryPolicy, status: RetryStatus) =>
+  test(
+    "all built-in policies should never try to create a FiniteDuration of more than Long.MaxValue nanoseconds"
+  ) {
+    forAll { (labelledPolicy: LabelledRetryPolicy, status: RetryStatus) =>
       labelledPolicy.policy.decideNextRetry(status) match {
         case PolicyDecision.DelayAndRetry(nextDelay) =>
           nextDelay.toNanos <= Long.MaxValue
         case PolicyDecision.GiveUp => true
       }
+    }
   }
 
-  behavior of "limitRetries"
-
-  it should "retry with no delay until the limit is reached" in check {
-    status: RetryStatus =>
+  test("limitRetries should retry with no delay until the limit is reached") {
+    forAll { (status: RetryStatus) =>
       val limit = 500
       val verdict =
         limitRetries[Id](limit).decideNextRetry(status)
@@ -181,39 +179,38 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
       } else {
         verdict == PolicyDecision.GiveUp
       }
+    }
   }
 
-  behavior of "capDelay"
-
-  it should "cap the delay" in {
-    check { status: RetryStatus =>
+  test("capDelay should cap the delay") {
+    forAll { (status: RetryStatus) =>
       capDelay(100.milliseconds, constantDelay[Id](101.milliseconds))
         .decideNextRetry(status) == DelayAndRetry(100.milliseconds)
     }
 
-    check { status: RetryStatus =>
+    forAll { (status: RetryStatus) =>
       capDelay(100.milliseconds, constantDelay[Id](99.milliseconds))
         .decideNextRetry(status) == DelayAndRetry(99.milliseconds)
     }
   }
 
-  behavior of "limitRetriesByDelay"
-
-  it should "give up if the underlying policy chooses a delay greater than the threshold" in {
-    check { status: RetryStatus =>
+  test(
+    "limitRetriesByDelay should give up if the underlying policy chooses a delay greater than the threshold"
+  ) {
+    forAll { (status: RetryStatus) =>
       limitRetriesByDelay(100.milliseconds, constantDelay[Id](101.milliseconds))
         .decideNextRetry(status) == GiveUp
     }
 
-    check { status: RetryStatus =>
+    forAll { (status: RetryStatus) =>
       limitRetriesByDelay(100.milliseconds, constantDelay[Id](99.milliseconds))
         .decideNextRetry(status) == DelayAndRetry(99.milliseconds)
     }
   }
 
-  behavior of "limitRetriesByCumulativeDelay"
-
-  it should "give up if cumulativeDelay + underlying policy's next delay >= threshold" in {
+  test(
+    "limitRetriesByCumulativeDelay should give up if cumulativeDelay + underlying policy's next delay >= threshold"
+  ) {
     val cumulativeDelay        = 400.milliseconds
     val arbitraryRetriesSoFar  = 5
     val arbitraryPreviousDelay = Some(123.milliseconds)

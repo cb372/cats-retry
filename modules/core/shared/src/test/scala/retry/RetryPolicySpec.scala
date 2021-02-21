@@ -1,15 +1,17 @@
 package retry
 
+import cats.catsInstancesForId
 import cats.Id
 import cats.syntax.semigroup._
-import org.scalatest.flatspec.AnyFlatSpec
+import munit.FunSuite
 
 import scala.concurrent.duration._
 
-class RetryPolicySpec extends AnyFlatSpec {
-  behavior of "BoundedSemilattice append"
+class RetryPolicySpec extends FunSuite {
 
-  it should "give up if either of the composed policies decides to give up" in {
+  test(
+    "BoundedSemilattice append should give up if either of the composed policies decides to give up"
+  ) {
     val alwaysGiveUp = RetryPolicy.lift[Id](_ => PolicyDecision.GiveUp)
     val alwaysRetry  = RetryPolicies.constantDelay[Id](1.second)
 
@@ -23,7 +25,9 @@ class RetryPolicySpec extends AnyFlatSpec {
     )
   }
 
-  it should "choose the maximum of the delays if both of the composed policies decides to retry" in {
+  test(
+    "BoundedSemilattice append should choose the maximum of the delays if both of the composed policies decides to retry"
+  ) {
     val delayOneSecond =
       RetryPolicy.lift[Id](_ => PolicyDecision.DelayAndRetry(1.second))
     val delayTwoSeconds =
