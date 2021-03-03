@@ -329,6 +329,25 @@ class PackageObjectSpec extends AnyFlatSpec {
     assert(gaveUp)
   }
 
+  it should "should fail fast if isWorthRetrying's effect fails" in new TestContext {
+    val policy = RetryPolicies.limitRetries[StringOr](10000)
+
+    val finalResult = retryingOnFailuresAndSomeErrors[String](
+      policy,
+      s => Right(s == "yay, but it doesn't matter"),
+      (_: String) => Left("isWorthRetrying failed"): StringOr[Boolean],
+      onError,
+      onError
+    ) {
+      attempts = attempts + 1
+      Left("one more time")
+    }
+
+    assert(finalResult == Left("isWorthRetrying failed"))
+    assert(attempts == 1)
+    assert(!gaveUp)
+  }
+
   behavior of "retryingOnFailuresAndAllErrors"
 
   it should "retry until the action succeeds" in new TestContext {
@@ -409,6 +428,24 @@ class PackageObjectSpec extends AnyFlatSpec {
     assert(finalResult == Left("one more time"))
     assert(attempts == 10001)
     assert(gaveUp)
+  }
+
+  it should "should fail fast if wasSuccessful's effect fails" in new TestContext {
+    val policy = RetryPolicies.limitRetries[StringOr](10000)
+
+    val finalResult = retryingOnFailuresAndAllErrors[String](
+      policy,
+      _ => Left("an error was raised!"): StringOr[Boolean],
+      onError,
+      onError
+    ) {
+      attempts = attempts + 1
+      Right("one more time")
+    }
+
+    assert(finalResult == Left("an error was raised!"))
+    assert(attempts == 1)
+    assert(!gaveUp)
   }
 
   private class TestContext {
