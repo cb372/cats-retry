@@ -2,10 +2,11 @@ import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
 lazy val scalaVersion213 = "2.13.5"
 lazy val scalaVersion212 = "2.12.13"
-lazy val scalaVersion3   = "3.0.0-RC1"
+lazy val scalaVersion3   = "3.0.0-RC2"
 lazy val scalaVersions   = List(scalaVersion213, scalaVersion212, scalaVersion3)
 
 ThisBuild / scalaVersion := scalaVersion212
+Global / onChangedBuildSource := ReloadOnSourceChanges
 
 val commonSettings = Seq(
   organization := "com.github.cb372",
@@ -49,22 +50,24 @@ val moduleSettings = commonSettings ++ Seq(
     "-language:implicitConversions",
     "-unchecked"
   ),
-  scalacOptions in (Test, compile) ++= {
+  Test / compile / scalacOptions ++= {
     if (scalaVersion.value.startsWith("2.12"))
       List("-Ypartial-unification")
     else
       Nil
   },
-  scalafmtOnCompile := true,
-  testFrameworks += new TestFramework("munit.Framework"),
+  scalafmtOnCompile := true
+)
+
+val moduleJsSettings = Seq(
   Test / scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) }
 )
 
-val catsVersion            = "2.4.2"
-val catsEffectVersion      = "2.3.3"
-val catsMtlVersion         = "1.1.2"
-val munitVersion           = "0.7.22"
-val disciplineMunitVersion = "1.0.6"
+val catsVersion            = "2.5.0"
+val catsEffectVersion      = "2.4.1"
+val catsMtlVersion         = "1.1.3"
+val munitVersion           = "0.7.23"
+val disciplineMunitVersion = "1.0.7"
 val munitCatsEffectVersion = "0.13.1"
 
 val core = crossProject(JVMPlatform, JSPlatform)
@@ -81,6 +84,7 @@ val core = crossProject(JVMPlatform, JSPlatform)
     ),
     mimaPreviousArtifacts := Set.empty
   )
+  .jsSettings(moduleJsSettings)
 val coreJVM = core.jvm
 val coreJS  = core.js
 
@@ -97,6 +101,7 @@ val alleycatsRetry = crossProject(JVMPlatform, JSPlatform)
     ),
     mimaPreviousArtifacts := Set.empty
   )
+  .jsSettings(moduleJsSettings)
 val alleycatsJVM = alleycatsRetry.jvm
 val alleycatsJS  = alleycatsRetry.js
 
@@ -114,6 +119,7 @@ val mtlRetry = crossProject(JVMPlatform, JSPlatform)
     ),
     mimaPreviousArtifacts := Set.empty
   )
+  .jsSettings(moduleJsSettings)
 val mtlJVM = mtlRetry.jvm
 val mtlJS  = mtlRetry.js
 
@@ -147,7 +153,7 @@ val docs = project
     micrositeGitterChannelUrl := "typelevel/cats-retry",
     micrositeTwitterCreator := "@cbirchall",
     micrositeCompilingDocsTool := WithMdoc,
-    mdocIn := (sourceDirectory in Compile).value / "mdoc",
+    mdocIn := (Compile / sourceDirectory).value / "mdoc",
     micrositeShareOnSocial := true,
     micrositePushSiteWith := GitHub4s,
     micrositeGithubToken := sys.env.get("GITHUB_TOKEN")
