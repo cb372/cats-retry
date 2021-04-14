@@ -134,7 +134,7 @@ val docs = project
       "org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full
     ),
     libraryDependencies ++= Seq(
-      "io.monix" %%% "monix" % "3.1.0"
+      "io.monix" %%% "monix" % "3.3.0" // TODO update to version compatible cats effect 3
     ),
     crossScalaVersions := Nil,
     buildInfoPackage := "retry",
