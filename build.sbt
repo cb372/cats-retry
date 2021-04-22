@@ -57,8 +57,8 @@ val moduleSettings = commonSettings ++ Seq(
 )
 
 val catsVersion          = "2.5.0"
-val catsEffectVersion    = "3.0.2"
-val catsMtlVersion       = "1.1.3"
+val catsEffectVersion    = "3.1.0"
+val catsMtlVersion       = "1.2.0"
 val scalatestVersion     = "3.2.3"
 val scalaTestPlusVersion = "3.2.2.0"
 val scalacheckVersion    = "1.15.2"
@@ -132,9 +132,6 @@ val docs = project
     scalacOptions += "-Ydelambdafy:inline",
     addCompilerPlugin(
       "org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full
-    ),
-    libraryDependencies ++= Seq(
-      //"io.monix" %%% "monix" % "3.3.0" // TODO update to version compatible cats effect 3
     ),
     crossScalaVersions := Nil,
     buildInfoPackage := "retry",
