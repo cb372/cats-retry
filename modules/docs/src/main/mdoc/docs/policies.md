@@ -151,17 +151,16 @@ fibonacciBackoff[IO](200.millis).flatMapDelay { currentDelay =>
 ### mapK
 
 If you've defined a `RetryPolicy[F]`, but you need a `RetryPolicy` for another effect type `G[_]`, you can use `mapK` to convert from one to the other.
-For example, you might have defined a custom `RetryPolicy[cats.effect.IO]` and for another part of the app you might need a `RetryPolicy[Kleisli[monix.eval.Task]]`:
+For example, you might have defined a custom `RetryPolicy[cats.effect.IO]` and for another part of the app you might need a `RetryPolicy[Kleisli[IO]]`:
 
 ```scala mdoc
 import cats.effect.LiftIO
 import cats.data.Kleisli
-import monix.eval.Task
 
 val customPolicy: RetryPolicy[IO] = 
   limitRetries[IO](5).join(constantDelay[IO](100.milliseconds))
 
-customPolicy.mapK[Kleisli[Task, String, ?]](LiftIO.liftK[Kleisli[Task, String, ?]])
+customPolicy.mapK[Kleisli[IO, String, ?]](LiftIO.liftK[Kleisli[IO, String, ?]])
 ```
 
 
