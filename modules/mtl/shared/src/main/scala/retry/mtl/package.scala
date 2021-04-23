@@ -14,7 +14,7 @@ package object mtl {
 
     def apply[M[_], E](
         policy: RetryPolicy[M],
-        isWorthRetrying: E => Boolean,
+        isWorthRetrying: E => M[Boolean],
         onError: (E, RetryDetails) => M[Unit]
     )(
         action: => M[A]
@@ -26,20 +26,23 @@ package object mtl {
 
       M.tailRecM(RetryStatus.NoRetriesYet) { status =>
         AH.attempt(action).flatMap {
-          case Left(error) if isWorthRetrying(error) =>
-            for {
-              nextStep <- applyPolicy(policy, status)
-              _        <- onError(error, buildRetryDetails(status, nextStep))
-              result <- nextStep match {
-                case NextStep.RetryAfterDelay(delay, updatedStatus) =>
-                  S.sleep(delay) *>
-                    M.pure(Left(updatedStatus)) // continue recursion
-                case NextStep.GiveUp =>
-                  AH.raise[E, A](error).map(Right(_)) // stop the recursion
-              }
-            } yield result
           case Left(error) =>
-            AH.raise[E, A](error).map(Right(_)) // stop the recursion
+            def stopRecursion: M[Either[RetryStatus, A]] =
+              AH.raise[E, A](error).map(Right(_))
+            def runRetry: M[Either[RetryStatus, A]] =
+              for {
+                nextStep <- applyPolicy(policy, status)
+                _        <- onError(error, buildRetryDetails(status, nextStep))
+                result <- nextStep match {
+                  case NextStep.RetryAfterDelay(delay, updatedStatus) =>
+                    S.sleep(delay) *>
+                      M.pure(Left(updatedStatus)) // continue recursion
+                  case NextStep.GiveUp =>
+                    AH.raise[E, A](error).map(Right(_)) // stop the recursion
+                }
+              } yield result
+
+            isWorthRetrying(error).ifM(runRetry, stopRecursion)
           case Right(success) =>
             M.pure(Right(success)) // stop the recursion
         }
@@ -61,7 +64,9 @@ package object mtl {
         AH: Handle[M, E],
         S: Sleep[M]
     ): M[A] = {
-      retryingOnSomeErrors[A].apply[M, E](policy, _ => true, onError)(action)
+      retryingOnSomeErrors[A].apply[M, E](policy, _ => M.pure(true), onError)(
+        action
+      )
     }
   }
 

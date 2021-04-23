@@ -52,7 +52,7 @@ The API (modulo some type-inference trickery) looks like this:
 ```scala
 def retryingOnSomeErrors[M[_]: Monad: Sleep, A, E: Handle[M, *]](
   policy: RetryPolicy[M],
-  isWorthRetrying: E => Boolean,
+  isWorthRetrying: E => M[Boolean],
   onError: (E, RetryDetails) => M[Unit]
 )(action: => M[A]): M[A]
 ```
@@ -68,12 +68,10 @@ Example:
 ```scala mdoc
 import retry.{RetryDetails, RetryPolicies}
 import cats.data.EitherT
-import cats.effect.{Sync, IO, Timer}
+import cats.effect.{Sync, IO}
 import cats.mtl.Handle
 import scala.concurrent.duration._
-
-// We need an implicit cats.effect.Timer
-implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
+import cats.effect.unsafe.implicits.global
 
 type Effect[A] = EitherT[IO, AppError, A]
 
@@ -82,8 +80,8 @@ case class AppError(reason: String)
 def failingOperation[F[_]: Handle[*[_], AppError]]: F[Unit] =
   Handle[F, AppError].raise(AppError("Boom!"))
 
-def isWorthRetrying(error: AppError): Boolean =
-  error.reason.contains("Boom!")
+def isWorthRetrying(error: AppError): Effect[Boolean] =
+  EitherT.pure(error.reason.contains("Boom!"))
 
 def logError[F[_]: Sync](error: AppError, details: RetryDetails): F[Unit] =
   Sync[F].delay(println(s"Raised error $error. Details $details"))
@@ -120,12 +118,10 @@ Example:
 ```scala mdoc:reset
 import retry.{RetryDetails, RetryPolicies}
 import cats.data.EitherT
-import cats.effect.{Sync, IO, Timer}
+import cats.effect.{Sync, IO}
 import cats.mtl.Handle
 import scala.concurrent.duration._
-
-// We need an implicit cats.effect.Timer
-implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
+import cats.effect.unsafe.implicits.global
 
 type Effect[A] = EitherT[IO, AppError, A]
 
@@ -152,17 +148,18 @@ Cats-retry-mtl include some syntactic sugar in order to reduce boilerplate.
 ```scala mdoc:reset
 import retry._
 import cats.data.EitherT
-import cats.effect.{Sync, IO, Timer}
+import cats.effect.{Sync, IO}
 import cats.syntax.functor._
 import cats.syntax.flatMap._
 import cats.mtl.Handle
 import retry.mtl.syntax.all._
 import retry.syntax.all._
 import scala.concurrent.duration._
+import cats.effect.unsafe.implicits.global
 
 case class AppError(reason: String)
 
-class Service[F[_]: Timer](client: util.FlakyHttpClient)(implicit F: Sync[F], AH: Handle[F, AppError]) {
+class Service[F[_]: Sleep](client: util.FlakyHttpClient)(implicit F: Sync[F], AH: Handle[F, AppError]) {
 
   // evaluates retry exclusively on errors produced by Handle.
   def findCoolCatGifRetryMtl(policy: RetryPolicy[F]): F[String] =
@@ -195,8 +192,6 @@ class Service[F[_]: Timer](client: util.FlakyHttpClient)(implicit F: Sync[F], AH
 }
 
 type Effect[A] = EitherT[IO, AppError, A]
-
-implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
 
 val policy = RetryPolicies.limitRetries[Effect](5)
 

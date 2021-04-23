@@ -18,17 +18,15 @@ trait Sleep[M[_]] {
 ```
 
 Out of the box, the core module provides instances for any type with an implicit cats-effect
-[`Timer`](https://typelevel.org/cats-effect/datatypes/timer.html) in scope.
+[`Temporal`](https://typelevel.org/cats-effect/datatypes/temporal.html) in scope.
 
 For example using `cats.effect.IO`:
 
 ```scala mdoc:silent:reset-class
 import retry.Sleep
-import cats.effect.{IO, Timer}
+import cats.effect.IO
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.global
-
-implicit val timer: Timer[IO] = IO.timer(global)
+import cats.effect.unsafe.implicits.global
 
 Sleep[IO].sleep(10.milliseconds)
 ```
@@ -37,10 +35,10 @@ Or if you're using an abstract `F[_]`:
 
 ```scala mdoc:silent:reset-class
 import retry.Sleep
-import cats.effect.Timer
+import cats.effect.Temporal
 import scala.concurrent.duration._
 
-def sleepWell[F[_]: Timer] =
+def sleepWell[F[_]: Temporal] =
   Sleep[F].sleep(10.milliseconds)
 ```
 

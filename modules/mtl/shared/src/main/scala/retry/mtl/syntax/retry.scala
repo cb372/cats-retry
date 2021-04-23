@@ -25,7 +25,7 @@ final class RetryingMtlErrorOps[M[_], A](action: => M[A])(implicit
     )(action)
 
   def retryingOnSomeMtlErrors[E](
-      isWorthRetrying: E => Boolean,
+      isWorthRetrying: E => M[Boolean],
       policy: RetryPolicy[M],
       onError: (E, RetryDetails) => M[Unit]
   )(implicit S: Sleep[M], AH: Handle[M, E]): M[A] =

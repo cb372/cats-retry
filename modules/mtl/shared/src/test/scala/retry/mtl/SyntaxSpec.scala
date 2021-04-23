@@ -33,8 +33,12 @@ class SyntaxSpec extends AnyFlatSpec {
     }
 
     val finalResult: F[String] = action
-      .retryingOnSomeErrors(_ == error, policy, onError)
-      .retryingOnSomeMtlErrors[String](_ == "one more time", policy, onMtlError)
+      .retryingOnSomeErrors(s => EitherT.pure(s == error), policy, onError)
+      .retryingOnSomeMtlErrors[String](
+        s => EitherT.pure(s == "one more time"),
+        policy,
+        onMtlError
+      )
 
     assert(finalResult.value == Right(Right("yay")))
     assert(attempts == 3)
@@ -59,8 +63,12 @@ class SyntaxSpec extends AnyFlatSpec {
     }
 
     val finalResult: F[String] = action
-      .retryingOnSomeErrors(_ == error, policy, onError)
-      .retryingOnSomeMtlErrors[String](_ == "one more time", policy, onMtlError)
+      .retryingOnSomeErrors(s => EitherT.pure(s == error), policy, onError)
+      .retryingOnSomeMtlErrors[String](
+        s => EitherT.pure(s == "one more time"),
+        policy,
+        onMtlError
+      )
 
     assert(finalResult.value == Right(Left("nope")))
     assert(attempts == 3)
@@ -87,8 +95,12 @@ class SyntaxSpec extends AnyFlatSpec {
     }
 
     val finalResult: F[String] = action
-      .retryingOnSomeErrors(_ == error, policy, onError)
-      .retryingOnSomeMtlErrors[String](_ == "one more time", policy, onMtlError)
+      .retryingOnSomeErrors(s => EitherT.pure(s == error), policy, onError)
+      .retryingOnSomeMtlErrors[String](
+        s => EitherT.pure(s == "one more time"),
+        policy,
+        onMtlError
+      )
 
     assert(finalResult.value == Right(Left("one more time")))
     assert(attempts == 4)

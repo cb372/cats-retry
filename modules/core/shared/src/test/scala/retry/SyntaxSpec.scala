@@ -75,7 +75,7 @@ class SyntaxSpec extends AnyFlatSpec {
 
     val finalResult: StringOr[String] =
       action.retryingOnSomeErrors(
-        _ == "one more time",
+        s => Right(s == "one more time"),
         policy,
         (err, rd) => onError(err, rd)
       )
@@ -102,7 +102,7 @@ class SyntaxSpec extends AnyFlatSpec {
 
     val finalResult =
       action.retryingOnSomeErrors(
-        _ == "one more time",
+        s => Right(s == "one more time"),
         policy,
         (err, rd) => onError(err, rd)
       )
@@ -129,7 +129,7 @@ class SyntaxSpec extends AnyFlatSpec {
 
     val finalResult: StringOr[Nothing] =
       action.retryingOnSomeErrors(
-        _ == "one more time",
+        s => Right(s == "one more time"),
         policy,
         (err, rd) => onError(err, rd)
       )

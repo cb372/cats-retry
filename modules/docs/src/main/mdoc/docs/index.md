@@ -90,11 +90,7 @@ def logError(err: Throwable, details: RetryDetails): IO[Unit] = details match {
 
 // Now we have a retry policy and an error handler, we can wrap our `IO` inretries.
 
-// We need an implicit cats.effect.Timer
-import cats.effect.Timer
-import scala.concurrent.ExecutionContext.global
-implicit val timer: Timer[IO] = IO.timer(global)
-
+import cats.effect.unsafe.implicits.global
 
 val flakyRequestWithRetry: IO[String] =
   retryingOnAllErrors[String](

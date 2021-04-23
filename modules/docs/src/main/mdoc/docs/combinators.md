@@ -31,7 +31,7 @@ The API (modulo some type-inference trickery) looks like this:
 
 ```scala
 def retryingOnFailures[M[_]: Monad: Sleep, A](policy: RetryPolicy[M],
-                                              wasSuccessful: A => Boolean,
+                                              wasSuccessful: A => M[Boolean],
                                               onFailure: (A, RetryDetails) => M[Unit])
                                               (action: => M[A]): M[A]
 ```
@@ -46,14 +46,11 @@ You need to pass in:
 For example, let's keep rolling a die until we get a six, using `IO`.
 
 ```scala mdoc
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import retry._
 
-import cats.effect.{IO, Timer}
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.global
-
-// We need an implicit cats.effect.Timer
-implicit val timer: Timer[IO] = IO.timer(global)
 
 val policy = RetryPolicies.constantDelay[IO](10.milliseconds)
 
@@ -63,7 +60,7 @@ def onFailure(failedValue: Int, details: RetryDetails): IO[Unit] = {
 
 val loadedDie = util.LoadedDie(2, 5, 4, 1, 3, 2, 6)
 
-val io = retryingOnFailures(policy, (_: Int) == 6, onFailure){
+val io = retryingOnFailures(policy, (i: Int) => IO.pure(i == 6), onFailure){
   IO(loadedDie.roll())
 }
 
@@ -82,7 +79,7 @@ The API (modulo some type-inference trickery) looks like this:
 
 ```scala
 def retryingOnSomeErrors[M[_]: Sleep, A, E](policy: RetryPolicy[M],
-                                            isWorthRetrying: E => Boolean,
+                                            isWorthRetrying: E => M[Boolean],
                                             onError: (E, RetryDetails) => M[Unit])
                                            (action: => M[A])
                                            (implicit ME: MonadError[M, E]): M[A]
@@ -104,9 +101,9 @@ import java.io.IOException
 val httpClient = util.FlakyHttpClient()
 val flakyRequest: IO[String] = IO(httpClient.getCatGif())
 
-def isIOException(e: Throwable): Boolean = e match {
-  case _: IOException => true
-  case _ => false
+def isIOException(e: Throwable): IO[Boolean] = e match {
+  case _: IOException => IO.pure(true)
+  case _ => IO.pure(false)
 }
 
 val io = retryingOnSomeErrors(
@@ -167,8 +164,8 @@ The API (modulo some type-inference trickery) looks like this:
 
 ```scala
 def retryingOnFailuresAndSomeErrors[M[_]: Sleep, A, E](policy: RetryPolicy[M],
-                                                       wasSuccessful: A => Boolean,
-                                                       isWorthRetrying: E => Boolean,
+                                                       wasSuccessful: A => M[Boolean],
+                                                       isWorthRetrying: E => M[Boolean],
                                                        onFailure: (A, RetryDetails) => M[Unit],
                                                        onError: (E, RetryDetails) => M[Unit])
                                                       (action: => M[A])
@@ -194,13 +191,13 @@ import java.util.concurrent.TimeoutException
 val httpClient = util.FlakyHttpClient()
 val flakyRequest: IO[String] = IO(httpClient.getRecordDetails("foo"))
 
-def isTimeoutException(e: Throwable): Boolean = e match {
-  case _: TimeoutException => true
-  case _ => false
+def isTimeoutException(e: Throwable): IO[Boolean] = e match {
+  case _: TimeoutException => IO.pure(true)
+  case _ => IO.pure(false)
 }
 
 val io = retryingOnFailuresAndSomeErrors(
-  wasSuccessful = (_: String) != "pending",
+  wasSuccessful = (s: String) => IO.pure(s != "pending"),
   isWorthRetrying = isTimeoutException,
   policy = RetryPolicies.limitRetries[IO](5),
   onFailure = retry.noop[IO, String],
@@ -222,7 +219,7 @@ The API (modulo some type-inference trickery) looks like this:
 
 ```scala
 def retryingOnFailuresAndAllErrors[M[_]: Sleep, A, E](policy: RetryPolicy[M],
-                                                      wasSuccessful: A => Boolean,
+                                                      wasSuccessful: A => M[Boolean],
                                                       onFailure: (A, RetryDetails) => M[Unit],
                                                       onError: (E, RetryDetails) => M[Unit])
                                                      (action: => M[A])
@@ -248,7 +245,7 @@ val httpClient = util.FlakyHttpClient()
 val flakyRequest: IO[String] = IO(httpClient.getRecordDetails("foo"))
 
 val io = retryingOnFailuresAndAllErrors(
-  wasSuccessful = (_: String) != "pending",
+  wasSuccessful = (s: String) => IO.pure(s != "pending"),
   policy = RetryPolicies.limitRetries[IO](5),
   onFailure = retry.noop[IO, String],
   onError = retry.noop[IO, Throwable]
@@ -270,7 +267,7 @@ import retry.syntax.all._
 // To retry until you get a value you like
 IO(loadedDie.roll()).retryingOnFailures(
   policy = RetryPolicies.limitRetries[IO](2),
-  wasSuccessful = (_: Int) == 6,
+  wasSuccessful = (i: Int) => IO.pure(i == 6),
   onFailure = retry.noop[IO, Int]
 )
 
@@ -291,7 +288,7 @@ IO(httpClient.getCatGif()).retryingOnAllErrors(
 
 // To retry only on errors and results that are worth retrying
 IO(httpClient.getRecordDetails("foo")).retryingOnFailuresAndSomeErrors(
-  wasSuccessful = (_: String) != "pending",
+  wasSuccessful = (s: String) => IO.pure(s != "pending"),
   isWorthRetrying = isTimeoutException,
   policy = RetryPolicies.limitRetries[IO](2),
   onFailure = retry.noop[IO, String],
@@ -300,7 +297,7 @@ IO(httpClient.getRecordDetails("foo")).retryingOnFailuresAndSomeErrors(
 
 // To retry all errors and results that are worth retrying
 IO(httpClient.getRecordDetails("foo")).retryingOnFailuresAndAllErrors(
-  wasSuccessful = (_: String) != "pending",
+  wasSuccessful = (s: String) => IO.pure(s != "pending"),
   policy = RetryPolicies.limitRetries[IO](2),
   onFailure = retry.noop[IO, String],
   onError = retry.noop[IO, Throwable]

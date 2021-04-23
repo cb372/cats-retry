@@ -18,7 +18,8 @@ class PackageObjectSpec extends AnyFlatSpec {
   it should "retry until the action succeeds" in new TestContext {
     val policy = RetryPolicies.constantDelay[F](1.second)
 
-    val isWorthRetrying: String => Boolean = _ == "one more time"
+    val isWorthRetrying: String => F[Boolean] =
+      s => EitherT.pure(s == "one more time")
 
     val finalResult =
       retryingOnSomeErrors(policy, isWorthRetrying, onMtlError) {
@@ -39,7 +40,8 @@ class PackageObjectSpec extends AnyFlatSpec {
   it should "retry only if the error is worth retrying" in new TestContext {
     val policy = RetryPolicies.constantDelay[F](1.second)
 
-    val isWorthRetrying: String => Boolean = _ == "one more time"
+    val isWorthRetrying: String => F[Boolean] =
+      s => EitherT.pure(s == "one more time")
 
     val finalResult =
       retryingOnSomeErrors(policy, isWorthRetrying, onMtlError) {
@@ -62,7 +64,8 @@ class PackageObjectSpec extends AnyFlatSpec {
   it should "retry until the policy chooses to give up" in new TestContext {
     val policy = RetryPolicies.limitRetries[F](2)
 
-    val isWorthRetrying: String => Boolean = _ == "one more time"
+    val isWorthRetrying: String => F[Boolean] =
+      s => EitherT.pure(s == "one more time")
 
     val finalResult =
       retryingOnSomeErrors(policy, isWorthRetrying, onMtlError) {
@@ -81,7 +84,8 @@ class PackageObjectSpec extends AnyFlatSpec {
   it should "retry in a stack-safe way" in new TestContext {
     val policy = RetryPolicies.limitRetries[F](10000)
 
-    val isWorthRetrying: String => Boolean = _ == "one more time"
+    val isWorthRetrying: String => F[Boolean] =
+      s => EitherT.pure(s == "one more time")
 
     val finalResult =
       retryingOnSomeErrors(policy, isWorthRetrying, onMtlError) {

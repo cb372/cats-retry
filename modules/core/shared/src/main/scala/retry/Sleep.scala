@@ -1,6 +1,7 @@
 package retry
 
-import cats.effect.Timer
+import cats.effect.Temporal
+
 import scala.concurrent.duration.FiniteDuration
 
 trait Sleep[M[_]] {
@@ -10,6 +11,6 @@ trait Sleep[M[_]] {
 object Sleep {
   def apply[M[_]](implicit sleep: Sleep[M]): Sleep[M] = sleep
 
-  implicit def sleepUsingTimer[F[_]](implicit timer: Timer[F]): Sleep[F] =
-    (delay: FiniteDuration) => timer.sleep(delay)
+  implicit def sleepUsingTemporal[F[_]](implicit t: Temporal[F]): Sleep[F] =
+    (delay: FiniteDuration) => t.sleep(delay)
 }
