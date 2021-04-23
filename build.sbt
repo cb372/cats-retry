@@ -56,10 +56,10 @@ val moduleSettings = commonSettings ++ Seq(
   scalafmtOnCompile := true
 )
 
-val catsVersion          = "2.3.0"
-val catsEffectVersion    = "2.3.1"
-val catsMtlVersion       = "1.1.1"
-val scalatestVersion     = "3.2.8"
+val catsVersion          = "2.5.0"
+val catsEffectVersion    = "3.1.0"
+val catsMtlVersion       = "1.2.0"
+val scalatestVersion     = "3.2.3"
 val scalaTestPlusVersion = "3.2.2.0"
 val scalacheckVersion    = "1.15.2"
 val disciplineVersion    = "2.1.1"
@@ -132,9 +132,6 @@ val docs = project
     scalacOptions += "-Ydelambdafy:inline",
     addCompilerPlugin(
       "org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full
-    ),
-    libraryDependencies ++= Seq(
-      "io.monix" %%% "monix" % "3.1.0"
     ),
     crossScalaVersions := Nil,
     buildInfoPackage := "retry",
