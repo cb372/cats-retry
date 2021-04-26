@@ -62,7 +62,7 @@ val catsMtlVersion       = "1.2.0"
 val scalatestVersion     = "3.2.3"
 val scalaTestPlusVersion = "3.2.2.0"
 val scalacheckVersion    = "1.15.2"
-val disciplineVersion    = "2.1.1"
+val disciplineVersion    = "2.1.4"
 
 val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/core"))
