@@ -147,7 +147,6 @@ val docs = project
     micrositeGitterChannel := true,
     micrositeGitterChannelUrl := "typelevel/cats-retry",
     micrositeTwitterCreator := "@cbirchall",
-    micrositeCompilingDocsTool := WithMdoc,
     mdocIn := (sourceDirectory in Compile).value / "mdoc",
     micrositeShareOnSocial := true,
     micrositePushSiteWith := GitHub4s,
