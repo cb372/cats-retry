@@ -2,7 +2,7 @@ import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
 lazy val scalaVersion213 = "2.13.5"
 lazy val scalaVersion212 = "2.12.13"
-lazy val scalaVersion3   = "3.0.0-RC2"
+lazy val scalaVersion3   = "3.0.0-RC3"
 lazy val scalaVersions   = List(scalaVersion213, scalaVersion212, scalaVersion3)
 
 ThisBuild / scalaVersion := scalaVersion212
@@ -63,12 +63,11 @@ val moduleJsSettings = Seq(
   Test / scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) }
 )
 
-val catsVersion            = "2.5.0"
-val catsEffectVersion      = "2.4.1"
-val catsMtlVersion         = "1.1.3"
-val munitVersion           = "0.7.23"
-val disciplineMunitVersion = "1.0.7"
-val munitCatsEffectVersion = "0.13.1"
+val catsVersion            = "2.6.0"
+val catsEffectVersion      = "2.5.0"
+val catsMtlVersion         = "1.2.0"
+val munitVersion           = "0.7.25"
+val disciplineMunitVersion = "1.0.8"
 
 val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/core"))
