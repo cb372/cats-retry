@@ -2,11 +2,11 @@ package retry
 
 import cats.instances.all._
 import cats.{Eq, Monoid, Id}
+import cats.catsInstancesForId
 import cats.kernel.laws.discipline.BoundedSemilatticeTests
+import munit._
 import org.scalacheck.{Arbitrary, Cogen, Gen}
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatestplus.scalacheck.Checkers
-import org.typelevel.discipline.scalatest.FunSuiteDiscipline
+import org.scalacheck.Prop._
 
 import scala.concurrent.duration._
 import cats.laws.discipline.ExhaustiveCheck
@@ -14,12 +14,11 @@ import cats.laws.discipline.eq.catsLawsEqForFn1Exhaustive
 import cats.arrow.FunctionK
 import cats.Monad
 
-class RetryPolicyLawsSpec
-    extends AnyFunSuite
-    with FunSuiteDiscipline
-    with Checkers {
-  override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
-    PropertyCheckConfiguration(minSuccessful = 100)
+class RetryPolicyLawsSuite extends DisciplineSuite {
+
+  override def scalaCheckTestParameters =
+    super.scalaCheckTestParameters
+      .withMinSuccessfulTests(100)
 
   implicit val cogenStatus: Cogen[RetryStatus] =
     Cogen { (seed, status) =>
@@ -30,7 +29,7 @@ class RetryPolicyLawsSpec
 
   implicit val arbitraryPolicyDecision: Arbitrary[PolicyDecision] =
     Arbitrary(for {
-      delay <- Gen.choose(0, Long.MaxValue).map(Duration.fromNanos)
+      delay <- Gen.choose(0L, Long.MaxValue).map(Duration.fromNanos)
       decision <- Gen
         .oneOf(PolicyDecision.GiveUp, PolicyDecision.DelayAndRetry(delay))
     } yield decision)
@@ -63,42 +62,42 @@ class RetryPolicyLawsSpec
   implicit val eqForRetryPolicy: Eq[RetryPolicy[Id]] =
     Eq.by(_.decideNextRetry)
 
-  test("meet associativity") {
-    check((p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
+  property("meet associativity") {
+    forAll((p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
       Eq[RetryPolicy[Id]].eqv(p1.meet((p2).meet(p3)), (p1.meet(p2)).meet(p3))
     )
   }
 
-  test("meet commutativity") {
-    check((p1: RetryPolicy[Id], p2: RetryPolicy[Id]) =>
+  property("meet commutativity") {
+    forAll((p1: RetryPolicy[Id], p2: RetryPolicy[Id]) =>
       Eq[RetryPolicy[Id]].eqv(p1.meet(p2), p2.meet(p1))
     )
   }
 
-  test("meet idempotence") {
-    check((p: RetryPolicy[Id]) => Eq[RetryPolicy[Id]].eqv(p.meet(p), p))
+  property("meet idempotence") {
+    forAll((p: RetryPolicy[Id]) => Eq[RetryPolicy[Id]].eqv(p.meet(p), p))
   }
 
-  test("meet identity") {
-    check((p: RetryPolicy[Id]) =>
+  property("meet identity") {
+    forAll((p: RetryPolicy[Id]) =>
       Eq[RetryPolicy[Id]].eqv(p.meet(RetryPolicies.alwaysGiveUp[Id]), p)
     )
   }
 
-  test("join meet absorption") {
-    check((p1: RetryPolicy[Id], p2: RetryPolicy[Id]) =>
+  property("join meet absorption") {
+    forAll((p1: RetryPolicy[Id], p2: RetryPolicy[Id]) =>
       Eq[RetryPolicy[Id]].eqv(p1.meet(p1.join(p2)), p1)
     )
   }
 
-  test("meet join absorption") {
-    check((p1: RetryPolicy[Id], p2: RetryPolicy[Id]) =>
+  property("meet join absorption") {
+    forAll((p1: RetryPolicy[Id], p2: RetryPolicy[Id]) =>
       Eq[RetryPolicy[Id]].eqv(p1.join(p1.meet(p2)), p1)
     )
   }
 
-  test("meet absorption") {
-    check((p: RetryPolicy[Id]) =>
+  property("meet absorption") {
+    forAll((p: RetryPolicy[Id]) =>
       Eq[RetryPolicy[Id]].eqv(
         p.meet(Monoid[RetryPolicy[Id]].empty),
         Monoid[RetryPolicy[Id]].empty
@@ -106,8 +105,8 @@ class RetryPolicyLawsSpec
     )
   }
 
-  test("join absorption") {
-    check((p: RetryPolicy[Id]) =>
+  property("join absorption") {
+    forAll((p: RetryPolicy[Id]) =>
       Eq[RetryPolicy[Id]].eqv(
         p.join(RetryPolicies.alwaysGiveUp[Id]),
         RetryPolicies.alwaysGiveUp[Id]
@@ -115,34 +114,34 @@ class RetryPolicyLawsSpec
     )
   }
 
-  test("join meet distributivity") {
-    check((p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
+  property("join meet distributivity") {
+    forAll((p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
       Eq[RetryPolicy[Id]]
         .eqv(p1.meet(p2.join(p3)), (p1.meet(p2)).join(p1.meet(p3)))
     )
   }
 
-  test("meet join distributivity") {
-    check((p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
+  property("meet join distributivity") {
+    forAll((p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
       Eq[RetryPolicy[Id]]
         .eqv(p1.join(p2.meet(p3)), (p1.join(p2)).meet(p1.join(p3)))
     )
   }
 
-  test("mapK identity") {
-    check((p: RetryPolicy[Id]) =>
+  property("mapK identity") {
+    forAll((p: RetryPolicy[Id]) =>
       Eq[RetryPolicy[Id]].eqv(p.mapK(FunctionK.id), p)
     )
   }
 
-  test("mapDelay identity") {
-    check((p: RetryPolicy[Id]) =>
+  property("mapDelay identity") {
+    forAll((p: RetryPolicy[Id]) =>
       Eq[RetryPolicy[Id]].eqv(p.mapDelay(identity), p)
     )
   }
 
-  test("mapDelay composition") {
-    check(
+  property("mapDelay composition") {
+    forAll(
       (
           p: RetryPolicy[Id],
           f: FiniteDuration => FiniteDuration,
@@ -153,14 +152,14 @@ class RetryPolicyLawsSpec
     )
   }
 
-  test("flatMapDelay identity") {
-    check((p: RetryPolicy[Id]) =>
+  property("flatMapDelay identity") {
+    forAll((p: RetryPolicy[Id]) =>
       Eq[RetryPolicy[Id]].eqv(p.flatMapDelay(Monad[Id].pure), p)
     )
   }
 
-  test("flatMapDelay composition") {
-    check(
+  property("flatMapDelay composition") {
+    forAll(
       (
           p: RetryPolicy[Id],
           f: FiniteDuration => FiniteDuration,
@@ -176,8 +175,8 @@ class RetryPolicyLawsSpec
     BoundedSemilatticeTests[RetryPolicy[Id]].boundedSemilattice
   )
 
-  test("followedBy associativity") {
-    check((p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
+  property("followedBy associativity") {
+    forAll((p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
       Eq[RetryPolicy[Id]].eqv(
         p1.followedBy((p2).followedBy(p3)),
         (p1.followedBy(p2)).followedBy(p3)
@@ -185,14 +184,14 @@ class RetryPolicyLawsSpec
     )
   }
 
-  test("followedBy left identity") {
-    check((p: RetryPolicy[Id]) =>
+  property("followedBy left identity") {
+    forAll((p: RetryPolicy[Id]) =>
       Eq[RetryPolicy[Id]].eqv(RetryPolicies.alwaysGiveUp[Id].followedBy(p), p)
     )
   }
 
-  test("followedBy right identity") {
-    check((p: RetryPolicy[Id]) =>
+  property("followedBy right identity") {
+    forAll((p: RetryPolicy[Id]) =>
       Eq[RetryPolicy[Id]].eqv(p.followedBy(RetryPolicies.alwaysGiveUp), p)
     )
   }

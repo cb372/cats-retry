@@ -161,7 +161,7 @@ import monix.eval.Task
 val customPolicy: RetryPolicy[IO] = 
   limitRetries[IO](5).join(constantDelay[IO](100.milliseconds))
 
-customPolicy.mapK[Kleisli[Task, String, ?]](LiftIO.liftK[Kleisli[Task, String, ?]])
+customPolicy.mapK[Kleisli[Task, String, *]](LiftIO.liftK[Kleisli[Task, String, *]])
 ```
 
 

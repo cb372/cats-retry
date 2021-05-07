@@ -1,7 +1,7 @@
 package retry.alleycats
 
 import cats.instances.future._
-import org.scalatest.flatspec.AnyFlatSpec
+import munit._
 import retry._
 import retry.alleycats.instances._
 
@@ -10,22 +10,25 @@ import scala.concurrent.duration._
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class PackageObjectLazinessSpec extends AnyFlatSpec {
-  behavior of "retryingOnFailures"
+class PackageObjectLazinessSuite extends FunSuite {
+  private val testContext =
+    FunFixture[TestContext](_ => new TestContext, _ => ())
 
   // this test reproduces issue #116
-  it should "not evaluate the next attempt until it has finished sleeping" in new TestContext {
+  testContext.test(
+    "retryingOnFailures should not evaluate the next attempt until it has finished sleeping"
+  ) { ctx =>
     val policy = RetryPolicies.constantDelay[Future](5.second)
 
     // Kick off an operation which will fail, wait 5 seconds, and repeat forever, in a Future
     val _ = retryingOnFailures[String][Future](
       policy,
       _ => false,
-      (a, retryDetails) => Future.successful(onError(a, retryDetails))
+      (a, retryDetails) => ctx.onError(a, retryDetails)
     ) {
       Future {
-        attempts = attempts + 1
-        attempts.toString
+        ctx.attempts = ctx.attempts + 1
+        ctx.attempts.toString
       }
     }
 
@@ -33,9 +36,9 @@ class PackageObjectLazinessSpec extends AnyFlatSpec {
     Thread.sleep(1000)
 
     // Assert that we haven't eagerly evaluated any more attempts.
-    assert(attempts == 1)
-    assert(errors.toList == List("1"))
-    assert(delays.toList == List(5.second))
+    assertEquals(ctx.attempts, 1)
+    assertEquals(ctx.errors.toList, List("1"))
+    assertEquals(ctx.delays.toList, List(5.second))
   }
 
   private class TestContext {
@@ -50,6 +53,7 @@ class PackageObjectLazinessSpec extends AnyFlatSpec {
         details match {
           case RetryDetails.WillDelayAndRetry(delay, _, _) =>
             delays.append(delay)
+            ()
           case RetryDetails.GivingUp(_, _) => gaveUp = true
         }
       }
