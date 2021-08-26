@@ -1,10 +1,11 @@
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
-lazy val scalaVersion213 = "2.13.3"
-lazy val scalaVersion212 = "2.12.12"
-lazy val scalaVersions   = List(scalaVersion213, scalaVersion212)
+lazy val scalaVersion212 = "2.12.14"
+lazy val scalaVersion213 = "2.13.6"
+lazy val scalaVersion3   = "3.0.1"
+lazy val scalaVersions   = List(scalaVersion212, scalaVersion213, scalaVersion3)
 
-ThisBuild / scalaVersion := scalaVersion212
+ThisBuild / scalaVersion := scalaVersion213
 
 val commonSettings = Seq(
   organization := "com.github.cb372",
@@ -38,31 +39,35 @@ val commonSettings = Seq(
 
 val moduleSettings = commonSettings ++ Seq(
   scalacOptions ++= Seq(
-    "-Xfuture",
-    "-Ywarn-dead-code",
-    "-Ywarn-unused",
     "-deprecation",
     "-encoding",
     "UTF-8",
     "-language:higherKinds",
     "-unchecked"
   ),
-  scalacOptions in (Test, compile) ++= {
+  Test / compile / scalacOptions ++= {
     if (scalaVersion.value.startsWith("2.13"))
-      Nil
-    else
-      List("-Ypartial-unification")
+      List("-Ywarn-dead-code", "-Ywarn-unused")
+    else if (scalaVersion.value.startsWith("2.12"))
+      List(
+        "-Ywarn-dead-code",
+        "-Ywarn-unused",
+        "-Ypartial-unification",
+        "-Xfuture"
+      )
+    else // scala 3.x
+      List("-language:implicitConversions")
   },
   scalafmtOnCompile := true
 )
 
-val catsVersion          = "2.5.0"
-val catsEffectVersion    = "3.1.0"
-val catsMtlVersion       = "1.2.0"
-val scalatestVersion     = "3.2.3"
-val scalaTestPlusVersion = "3.2.2.0"
-val scalacheckVersion    = "1.15.2"
-val disciplineVersion    = "2.1.1"
+val catsVersion          = "2.6.1"
+val catsEffectVersion    = "3.1.1"
+val catsMtlVersion       = "1.2.1"
+val scalatestVersion     = "3.2.9"
+val scalaTestPlusVersion = "3.2.9.0"
+val scalacheckVersion    = "1.15.4"
+val disciplineVersion    = "2.1.5"
 
 val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/core"))
@@ -71,13 +76,13 @@ val core = crossProject(JVMPlatform, JSPlatform)
     name               := "cats-retry",
     crossScalaVersions := scalaVersions,
     libraryDependencies ++= Seq(
-      "org.typelevel"     %%% "cats-core"       % catsVersion,
-      "org.typelevel"     %%% "cats-effect"     % catsEffectVersion,
-      "org.scalatest"     %%% "scalatest"       % scalatestVersion     % Test,
-      "org.scalacheck"    %%% "scalacheck"      % scalacheckVersion    % Test,
-      "org.typelevel"     %%% "cats-laws"       % catsVersion          % Test,
-      "org.scalatestplus" %%% "scalacheck-1-14" % scalaTestPlusVersion % Test,
-      "org.typelevel" %%% "discipline-scalatest" % disciplineVersion % Test
+      "org.typelevel"     %%% "cats-core"            % catsVersion,
+      "org.typelevel"     %%% "cats-effect"          % catsEffectVersion,
+      "org.scalatest"     %%% "scalatest"            % scalatestVersion     % Test,
+      "org.scalacheck"    %%% "scalacheck"           % scalacheckVersion    % Test,
+      "org.typelevel"     %%% "cats-laws"            % catsVersion          % Test,
+      "org.scalatestplus" %%% "scalacheck-1-15"      % scalaTestPlusVersion % Test,
+      "org.typelevel"     %%% "discipline-scalatest" % disciplineVersion    % Test
     ),
     mimaPreviousArtifacts := Set.empty
   )
@@ -93,11 +98,11 @@ val alleycatsRetry = crossProject(JVMPlatform, JSPlatform)
     name               := "alleycats-retry",
     crossScalaVersions := scalaVersions,
     libraryDependencies ++= Seq(
-      "org.scalatest"     %%% "scalatest"       % scalatestVersion     % Test,
-      "org.scalacheck"    %%% "scalacheck"      % scalacheckVersion    % Test,
-      "org.typelevel"     %%% "cats-laws"       % catsVersion          % Test,
-      "org.scalatestplus" %%% "scalacheck-1-14" % scalaTestPlusVersion % Test,
-      "org.typelevel" %%% "discipline-scalatest" % disciplineVersion % Test
+      "org.scalatest"     %%% "scalatest"            % scalatestVersion     % Test,
+      "org.scalacheck"    %%% "scalacheck"           % scalacheckVersion    % Test,
+      "org.typelevel"     %%% "cats-laws"            % catsVersion          % Test,
+      "org.scalatestplus" %%% "scalacheck-1-15"      % scalaTestPlusVersion % Test,
+      "org.typelevel"     %%% "discipline-scalatest" % disciplineVersion    % Test
     ),
     mimaPreviousArtifacts := Set.empty
   )
@@ -131,7 +136,7 @@ val docs = project
     scalacOptions -= "-Ywarn-unused",
     scalacOptions += "-Ydelambdafy:inline",
     addCompilerPlugin(
-      "org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full
+      "org.typelevel" %% "kind-projector" % "0.13.0" cross CrossVersion.full
     ),
     crossScalaVersions        := Nil,
     buildInfoPackage          := "retry",
@@ -146,11 +151,11 @@ val docs = project
     micrositeGithubRepo       := "cats-retry",
     micrositeGitterChannel    := true,
     micrositeGitterChannelUrl := "typelevel/cats-retry",
-    micrositeTwitterCreator   := "@cbirchall",
-    mdocIn                    := (sourceDirectory in Compile).value / "mdoc",
-    micrositeShareOnSocial    := true,
-    micrositePushSiteWith     := GitHub4s,
-    micrositeGithubToken      := sys.env.get("GITHUB_TOKEN")
+    micrositeTwitterCreator := "@cbirchall",
+    mdocIn := (Compile / sourceDirectory).value / "mdoc",
+    micrositeShareOnSocial := true,
+    micrositePushSiteWith := GitHub4s,
+    micrositeGithubToken := sys.env.get("GITHUB_TOKEN")
   )
 
 val root = project

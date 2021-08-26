@@ -1,6 +1,6 @@
 package retry
 
-import cats.Id
+import cats.{Id, catsInstancesForId}
 import cats.syntax.semigroup._
 import org.scalatest.flatspec.AnyFlatSpec
 

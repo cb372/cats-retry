@@ -1,7 +1,7 @@
 package retry
 
 import cats.instances.all._
-import cats.{Eq, Monoid, Id}
+import cats.{Eq, Monoid, Id, catsInstancesForId}
 import cats.kernel.laws.discipline.BoundedSemilatticeTests
 import org.scalacheck.{Arbitrary, Cogen, Gen}
 import org.scalatest.funsuite.AnyFunSuite
@@ -30,7 +30,7 @@ class RetryPolicyLawsSpec
 
   implicit val arbitraryPolicyDecision: Arbitrary[PolicyDecision] =
     Arbitrary(for {
-      delay <- Gen.choose(0, Long.MaxValue).map(Duration.fromNanos)
+      delay <- Gen.choose(0L, Long.MaxValue).map(Duration.fromNanos)
       decision <- Gen
         .oneOf(PolicyDecision.GiveUp, PolicyDecision.DelayAndRetry(delay))
     } yield decision)

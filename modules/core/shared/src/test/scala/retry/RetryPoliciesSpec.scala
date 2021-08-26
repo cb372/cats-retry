@@ -3,7 +3,7 @@ package retry
 import java.util.concurrent.TimeUnit
 
 import retry.RetryPolicies._
-import cats.Id
+import cats.{Id, catsInstancesForId}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.Checkers
@@ -74,9 +74,10 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
 
   behavior of "constantDelay"
 
-  it should "always retry with the same delay" in check { status: RetryStatus =>
-    constantDelay[Id](1.second)
-      .decideNextRetry(status) == PolicyDecision.DelayAndRetry(1.second)
+  it should "always retry with the same delay" in check {
+    (status: RetryStatus) =>
+      constantDelay[Id](1.second)
+        .decideNextRetry(status) == PolicyDecision.DelayAndRetry(1.second)
   }
 
   behavior of "exponentialBackoff"
@@ -172,7 +173,7 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
   behavior of "limitRetries"
 
   it should "retry with no delay until the limit is reached" in check {
-    status: RetryStatus =>
+    (status: RetryStatus) =>
       val limit = 500
       val verdict =
         limitRetries[Id](limit).decideNextRetry(status)
@@ -186,12 +187,12 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
   behavior of "capDelay"
 
   it should "cap the delay" in {
-    check { status: RetryStatus =>
+    check { (status: RetryStatus) =>
       capDelay(100.milliseconds, constantDelay[Id](101.milliseconds))
         .decideNextRetry(status) == DelayAndRetry(100.milliseconds)
     }
 
-    check { status: RetryStatus =>
+    check { (status: RetryStatus) =>
       capDelay(100.milliseconds, constantDelay[Id](99.milliseconds))
         .decideNextRetry(status) == DelayAndRetry(99.milliseconds)
     }
@@ -200,12 +201,12 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
   behavior of "limitRetriesByDelay"
 
   it should "give up if the underlying policy chooses a delay greater than the threshold" in {
-    check { status: RetryStatus =>
+    check { (status: RetryStatus) =>
       limitRetriesByDelay(100.milliseconds, constantDelay[Id](101.milliseconds))
         .decideNextRetry(status) == GiveUp
     }
 
-    check { status: RetryStatus =>
+    check { (status: RetryStatus) =>
       limitRetriesByDelay(100.milliseconds, constantDelay[Id](99.milliseconds))
         .decideNextRetry(status) == DelayAndRetry(99.milliseconds)
     }

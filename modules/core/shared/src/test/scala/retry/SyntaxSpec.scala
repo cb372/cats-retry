@@ -1,6 +1,6 @@
 package retry
 
-import cats.Id
+import cats.{Id, catsInstancesForId}
 import org.scalatest.flatspec.AnyFlatSpec
 import retry.syntax.all._
 
