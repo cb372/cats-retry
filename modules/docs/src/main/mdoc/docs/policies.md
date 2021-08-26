@@ -160,7 +160,7 @@ import cats.data.Kleisli
 val customPolicy: RetryPolicy[IO] = 
   limitRetries[IO](5).join(constantDelay[IO](100.milliseconds))
 
-customPolicy.mapK[Kleisli[IO, String, ?]](LiftIO.liftK[Kleisli[IO, String, ?]])
+customPolicy.mapK[Kleisli[IO, String, *]](LiftIO.liftK[Kleisli[IO, String, *]])
 ```
 
 
