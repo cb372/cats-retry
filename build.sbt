@@ -9,7 +9,7 @@ ThisBuild / scalaVersion := scalaVersion213
 
 val commonSettings = Seq(
   organization := "com.github.cb372",
-  publishTo := sonatypePublishToBundle.value,
+  publishTo    := sonatypePublishToBundle.value,
   pomIncludeRepository := { _ =>
     false
   },
@@ -73,16 +73,16 @@ val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/core"))
   .settings(moduleSettings)
   .settings(
-    name := "cats-retry",
+    name               := "cats-retry",
     crossScalaVersions := scalaVersions,
     libraryDependencies ++= Seq(
-      "org.typelevel"     %%% "cats-core"            % catsVersion,
-      "org.typelevel"     %%% "cats-effect"          % catsEffectVersion,
-      "org.scalatest"     %%% "scalatest"            % scalatestVersion     % Test,
-      "org.scalacheck"    %%% "scalacheck"           % scalacheckVersion    % Test,
-      "org.typelevel"     %%% "cats-laws"            % catsVersion          % Test,
-      "org.scalatestplus" %%% "scalacheck-1-15"      % scalaTestPlusVersion % Test,
-      "org.typelevel"     %%% "discipline-scalatest" % disciplineVersion    % Test
+      "org.typelevel"     %%% "cats-core"       % catsVersion,
+      "org.typelevel"     %%% "cats-effect"     % catsEffectVersion,
+      "org.scalatest"     %%% "scalatest"       % scalatestVersion     % Test,
+      "org.scalacheck"    %%% "scalacheck"      % scalacheckVersion    % Test,
+      "org.typelevel"     %%% "cats-laws"       % catsVersion          % Test,
+      "org.scalatestplus" %%% "scalacheck-1-15" % scalaTestPlusVersion % Test,
+      "org.typelevel" %%% "discipline-scalatest" % disciplineVersion % Test
     ),
     mimaPreviousArtifacts := Set.empty
   )
@@ -95,14 +95,14 @@ val alleycatsRetry = crossProject(JVMPlatform, JSPlatform)
   .jsConfigure(_.dependsOn(coreJS))
   .settings(moduleSettings)
   .settings(
-    name := "alleycats-retry",
+    name               := "alleycats-retry",
     crossScalaVersions := scalaVersions,
     libraryDependencies ++= Seq(
-      "org.scalatest"     %%% "scalatest"            % scalatestVersion     % Test,
-      "org.scalacheck"    %%% "scalacheck"           % scalacheckVersion    % Test,
-      "org.typelevel"     %%% "cats-laws"            % catsVersion          % Test,
-      "org.scalatestplus" %%% "scalacheck-1-15"      % scalaTestPlusVersion % Test,
-      "org.typelevel"     %%% "discipline-scalatest" % disciplineVersion    % Test
+      "org.scalatest"     %%% "scalatest"       % scalatestVersion     % Test,
+      "org.scalacheck"    %%% "scalacheck"      % scalacheckVersion    % Test,
+      "org.typelevel"     %%% "cats-laws"       % catsVersion          % Test,
+      "org.scalatestplus" %%% "scalacheck-1-15" % scalaTestPlusVersion % Test,
+      "org.typelevel" %%% "discipline-scalatest" % disciplineVersion % Test
     ),
     mimaPreviousArtifacts := Set.empty
   )
@@ -115,7 +115,7 @@ val mtlRetry = crossProject(JVMPlatform, JSPlatform)
   .jsConfigure(_.dependsOn(coreJS))
   .settings(moduleSettings)
   .settings(
-    name := "cats-retry-mtl",
+    name               := "cats-retry-mtl",
     crossScalaVersions := scalaVersions,
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-mtl"  % catsMtlVersion,
@@ -138,24 +138,24 @@ val docs = project
     addCompilerPlugin(
       "org.typelevel" %% "kind-projector" % "0.13.0" cross CrossVersion.full
     ),
-    crossScalaVersions := Nil,
-    buildInfoPackage := "retry",
-    publishArtifact := false,
-    micrositeName := "cats-retry",
-    micrositeAuthor := "Chris Birchall",
-    micrositeDescription := "cats-retry",
-    micrositeBaseUrl := "/cats-retry",
+    crossScalaVersions        := Nil,
+    buildInfoPackage          := "retry",
+    publishArtifact           := false,
+    micrositeName             := "cats-retry",
+    micrositeAuthor           := "Chris Birchall",
+    micrositeDescription      := "cats-retry",
+    micrositeBaseUrl          := "/cats-retry",
     micrositeDocumentationUrl := "/cats-retry/docs",
-    micrositeHomepage := "https://github.com/cb372/cats-retry",
-    micrositeGithubOwner := "cb372",
-    micrositeGithubRepo := "cats-retry",
-    micrositeGitterChannel := true,
+    micrositeHomepage         := "https://github.com/cb372/cats-retry",
+    micrositeGithubOwner      := "cb372",
+    micrositeGithubRepo       := "cats-retry",
+    micrositeGitterChannel    := true,
     micrositeGitterChannelUrl := "typelevel/cats-retry",
-    micrositeTwitterCreator := "@cbirchall",
-    mdocIn := (Compile / sourceDirectory).value / "mdoc",
-    micrositeShareOnSocial := true,
-    micrositePushSiteWith := GitHub4s,
-    micrositeGithubToken := sys.env.get("GITHUB_TOKEN")
+    micrositeTwitterCreator   := "@cbirchall",
+    mdocIn                    := (Compile / sourceDirectory).value / "mdoc",
+    micrositeShareOnSocial    := true,
+    micrositePushSiteWith     := GitHub4s,
+    micrositeGithubToken      := sys.env.get("GITHUB_TOKEN")
   )
 
 val root = project
@@ -171,6 +171,6 @@ val root = project
   )
   .settings(commonSettings)
   .settings(
-    publishArtifact := false,
+    publishArtifact    := false,
     crossScalaVersions := Nil
   )
