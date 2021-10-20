@@ -7,7 +7,7 @@ import scala.concurrent.duration.FiniteDuration
 
 package object retry {
   @deprecated("Use retryingOnFailures instead", "2.1.0")
-  def retryingM[A]          = new RetryingOnFailuresPartiallyApplied[A]
+  def retryingM[A] = new RetryingOnFailuresPartiallyApplied[A]
   def retryingOnFailures[A] = new RetryingOnFailuresPartiallyApplied[A]
 
   private def retryingOnFailuresImpl[M[_], A](
