@@ -49,6 +49,13 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
           s"exponentialBackoff($baseDelay)"
         )
       ),
+      for {
+        delay      <- genFiniteDuration
+        maxRetries <- Gen.posNum[Int]
+      } yield LabelledRetryPolicy(
+        limitRetriesWithFixedDelay(maxRetries, delay),
+        s"limitRetriesWithFixedDelay($maxRetries, $delay)"
+      ),
       Gen
         .posNum[Int]
         .map(maxRetries =>
@@ -196,6 +203,22 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
       capDelay(100.milliseconds, constantDelay[Id](99.milliseconds))
         .decideNextRetry(status) == DelayAndRetry(99.milliseconds)
     }
+  }
+
+  behavior of "limitRetriesWithFixedDelay"
+
+  it should "always retry with the same delay or give up after maxRetries is reached" in check {
+    (status: RetryStatus) =>
+      val limit = 500
+      val verdict =
+        limitRetriesWithFixedDelay(limit, 1.millisecond).decideNextRetry(
+          status
+        )
+      if (status.retriesSoFar < limit) {
+        verdict == PolicyDecision.DelayAndRetry(1.millisecond)
+      } else {
+        verdict == PolicyDecision.GiveUp
+      }
   }
 
   behavior of "limitRetriesByDelay"

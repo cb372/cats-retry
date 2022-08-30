@@ -77,7 +77,7 @@ object RetryPolicies {
   def limitRetriesWithFixedDelay[M[_]: Applicative](
       maxRetries: Int,
       delay: FiniteDuration
-  ) =
+  ): RetryPolicy[M] =
     RetryPolicies
       .limitRetries[M](maxRetries)
       .join(RetryPolicies.constantDelay(delay))
