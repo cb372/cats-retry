@@ -72,6 +72,16 @@ object RetryPolicies {
       show"limitRetries(maxRetries=$maxRetries)"
     )
 
+  /** Retry up to maxRetries with fixed delay between retries
+    */
+  def limitRetriesWithFixedDelay[M[_]: Applicative](
+      maxRetries: Int,
+      delay: FiniteDuration
+  ) =
+    RetryPolicies
+      .limitRetries[M](maxRetries)
+      .join(RetryPolicies.constantDelay(delay))
+
   /** Delay(n) = Delay(n - 2) + Delay(n - 1)
     *
     * e.g. if `baseDelay` is 10 milliseconds, the delays before each retry will be
