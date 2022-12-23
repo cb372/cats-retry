@@ -17,7 +17,7 @@ class SyntaxSpec extends AnyFlatSpec {
       RetryPolicies.constantDelay[Id](1.second)
     def onFailure: (String, RetryDetails) => Id[Unit] = onErrorId
     def wasSuccessful(res: String): Id[Boolean]       = res.toInt > 3
-    val sleeps                                        = ArrayBuffer.empty[FiniteDuration]
+    val sleeps = ArrayBuffer.empty[FiniteDuration]
 
     implicit val dummySleep: Sleep[Id] =
       (delay: FiniteDuration) => sleeps.append(delay)

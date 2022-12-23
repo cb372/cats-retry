@@ -25,9 +25,10 @@ case class RetryPolicy[M[_]](
       show"$show.followedBy($rp)"
     )
 
-  /** Combine this schedule with another schedule, giving up when either of the schedules want to give up
-    * and choosing the maximum of the two delays when both of the schedules want to delay the next retry.
-    * The dual of the `meet` operation.
+  /** Combine this schedule with another schedule, giving up when either of the
+    * schedules want to give up and choosing the maximum of the two delays when
+    * both of the schedules want to delay the next retry. The dual of the `meet`
+    * operation.
     */
   def join(rp: RetryPolicy[M])(implicit M: Apply[M]): RetryPolicy[M] =
     RetryPolicy.withShow[M](
@@ -39,9 +40,10 @@ case class RetryPolicy[M[_]](
       show"$show.join($rp)"
     )
 
-  /** Combine this schedule with another schedule, giving up when both of the schedules want to give up
-    * and choosing the minimum of the two delays when both of the schedules want to delay the next retry.
-    * The dual of the `join` operation.
+  /** Combine this schedule with another schedule, giving up when both of the
+    * schedules want to give up and choosing the minimum of the two delays when
+    * both of the schedules want to delay the next retry. The dual of the `join`
+    * operation.
     */
   def meet(rp: RetryPolicy[M])(implicit M: Apply[M]): RetryPolicy[M] =
     RetryPolicy.withShow[M](

@@ -31,7 +31,8 @@ object RetryPolicies {
     FiniteDuration(safeResultNanos.toLong, TimeUnit.NANOSECONDS)
   }
 
-  /** Don't retry at all and always give up. Only really useful for combining with other policies.
+  /** Don't retry at all and always give up. Only really useful for combining
+    * with other policies.
     */
   def alwaysGiveUp[M[_]: Applicative]: RetryPolicy[M] =
     RetryPolicy.liftWithShow(Function.const(GiveUp), "alwaysGiveUp")
@@ -77,8 +78,8 @@ object RetryPolicies {
 
   /** Delay(n) = Delay(n - 2) + Delay(n - 1)
     *
-    * e.g. if `baseDelay` is 10 milliseconds, the delays before each retry will be
-    * 10 ms, 10 ms, 20 ms, 30ms, 50ms, 80ms, 130ms, ...
+    * e.g. if `baseDelay` is 10 milliseconds, the delays before each retry will
+    * be 10 ms, 10 ms, 20 ms, 30ms, 50ms, 80ms, 130ms, ...
     */
   def fibonacciBackoff[M[_]: Applicative](
       baseDelay: FiniteDuration
@@ -92,8 +93,8 @@ object RetryPolicies {
       show"fibonacciBackoff(baseDelay=$baseDelay)"
     )
 
-  /** "Full jitter" backoff algorithm.
-    * See https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
+  /** "Full jitter" backoff algorithm. See
+    * https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
     */
   def fullJitter[M[_]: Applicative](baseDelay: FiniteDuration): RetryPolicy[M] =
     RetryPolicy.liftWithShow(
@@ -114,10 +115,10 @@ object RetryPolicies {
   ): RetryPolicy[M] =
     policy.meet(constantDelay(cap))
 
-  /** Add an upper bound to a policy such that once the given time-delay
-    * amount <b>per try</b> has been reached or exceeded, the policy will stop
-    * retrying and give up. If you need to stop retrying once <b>cumulative</b>
-    * delay reaches a time-delay amount, use [[limitRetriesByCumulativeDelay]].
+  /** Add an upper bound to a policy such that once the given time-delay amount
+    * <b>per try</b> has been reached or exceeded, the policy will stop retrying
+    * and give up. If you need to stop retrying once <b>cumulative</b> delay
+    * reaches a time-delay amount, use [[limitRetriesByCumulativeDelay]].
     */
   def limitRetriesByDelay[M[_]: Applicative](
       threshold: FiniteDuration,
@@ -136,9 +137,9 @@ object RetryPolicies {
     )
   }
 
-  /** Add an upperbound to a policy such that once the cumulative delay
-    * over all retries has reached or exceeded the given limit, the
-    * policy will stop retrying and give up.
+  /** Add an upperbound to a policy such that once the cumulative delay over all
+    * retries has reached or exceeded the given limit, the policy will stop
+    * retrying and give up.
     */
   def limitRetriesByCumulativeDelay[M[_]: Applicative](
       threshold: FiniteDuration,
