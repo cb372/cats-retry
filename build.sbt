@@ -59,10 +59,13 @@ val core = crossProject(JVMPlatform, JSPlatform)
     ),
     mimaPreviousArtifacts := Set(
       "com.github.cb372" %%% "cats-retry" % "3.1.0"
-    )
+    ),
+    tpolecatExcludeOptions += ScalacOptions.lintPackageObjectClasses
   )
   .jsSettings(
-    tpolecatScalacOptions += ScalacOptions.other("-scalajs", sv => sv.major == 3L),
+    // work around https://github.com/typelevel/sbt-tpolecat/issues/102
+    tpolecatScalacOptions +=
+      ScalacOptions.other("-scalajs", sv => sv.major == 3L)
   )
 val coreJVM = core.jvm
 val coreJS  = core.js
@@ -86,7 +89,8 @@ val alleycatsRetry = crossProject(JVMPlatform, JSPlatform)
     )
   )
   .jsSettings(
-    tpolecatScalacOptions += ScalacOptions.other("-scalajs", sv => sv.major == 3L),
+    tpolecatScalacOptions += ScalacOptions
+      .other("-scalajs", sv => sv.major == 3L)
   )
 val alleycatsJVM = alleycatsRetry.jvm
 val alleycatsJS  = alleycatsRetry.js
@@ -104,10 +108,13 @@ val mtlRetry = crossProject(JVMPlatform, JSPlatform)
     ),
     mimaPreviousArtifacts := Set(
       "com.github.cb372" %%% "cats-retry-mtl" % "3.1.0"
-    )
+    ),
+    tpolecatExcludeOptions += ScalacOptions.lintPackageObjectClasses
   )
   .jsSettings(
-    tpolecatScalacOptions += ScalacOptions.other("-scalajs", sv => sv.major == 3L),
+    // work around https://github.com/typelevel/sbt-tpolecat/issues/102
+    tpolecatScalacOptions +=
+      ScalacOptions.other("-scalajs", sv => sv.major == 3L)
   )
 val mtlJVM = mtlRetry.jvm
 val mtlJS  = mtlRetry.js
