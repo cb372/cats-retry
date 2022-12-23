@@ -24,7 +24,7 @@ class PackageObjectSpec extends AnyFlatSpec {
     val finalResult = retryingOnFailures[String][Id](
       policy,
       _.toInt > 3,
-      onError
+      onErrorId
     ) {
       attempts = attempts + 1
       attempts.toString
@@ -46,7 +46,7 @@ class PackageObjectSpec extends AnyFlatSpec {
     val finalResult = retryingOnFailures[String][Id](
       policy,
       _.toInt > 3,
-      onError
+      onErrorId
     ) {
       attempts = attempts + 1
       attempts.toString
@@ -67,7 +67,7 @@ class PackageObjectSpec extends AnyFlatSpec {
     val finalResult = retryingOnFailures[String][Id](
       policy,
       _.toInt > 20000,
-      onError
+      onErrorId
     ) {
       attempts = attempts + 1
       attempts.toString
@@ -454,12 +454,16 @@ class PackageObjectSpec extends AnyFlatSpec {
     val delays   = ArrayBuffer.empty[FiniteDuration]
     var gaveUp   = false
 
-    def onError(error: String, details: RetryDetails): Either[String, Unit] = {
+    def onErrorId(error: String, details: RetryDetails): Id[Unit] = {
       errors.append(error)
       details match {
         case RetryDetails.WillDelayAndRetry(delay, _, _) => delays.append(delay)
         case RetryDetails.GivingUp(_, _)                 => gaveUp = true
       }
+    }
+
+    def onError(error: String, details: RetryDetails): Either[String, Unit] = {
+      onErrorId(error, details)
       Right(())
     }
   }

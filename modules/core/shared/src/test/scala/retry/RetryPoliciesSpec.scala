@@ -22,8 +22,8 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
       c <- Gen.option(Gen.choose(b, 10000))
     } yield RetryStatus(
       a,
-      FiniteDuration(b, TimeUnit.MILLISECONDS),
-      c.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
+      FiniteDuration(b.toLong, TimeUnit.MILLISECONDS),
+      c.map(x => FiniteDuration(x.toLong, TimeUnit.MILLISECONDS))
     )
   }
 
