@@ -1,7 +1,7 @@
 package retry
 
 import cats.instances.all._
-import cats.{Eq, Monoid, Id, catsInstancesForId}
+import cats.{Eq, Monoid, Id}
 import cats.kernel.laws.discipline.BoundedSemilatticeTests
 import org.scalacheck.{Arbitrary, Cogen, Gen}
 import org.scalatest.funsuite.AnyFunSuite

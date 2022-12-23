@@ -3,7 +3,7 @@ package retry
 import java.util.concurrent.TimeUnit
 
 import retry.RetryPolicies._
-import cats.{Id, catsInstancesForId}
+import cats.Id
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.Checkers
@@ -22,8 +22,8 @@ class RetryPoliciesSpec extends AnyFlatSpec with Checkers {
       c <- Gen.option(Gen.choose(b, 10000))
     } yield RetryStatus(
       a,
-      FiniteDuration(b, TimeUnit.MILLISECONDS),
-      c.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
+      FiniteDuration(b.toLong, TimeUnit.MILLISECONDS),
+      c.map(x => FiniteDuration(x.toLong, TimeUnit.MILLISECONDS))
     )
   }
 

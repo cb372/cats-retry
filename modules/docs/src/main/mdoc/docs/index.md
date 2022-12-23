@@ -15,7 +15,7 @@ high probability it will fail.
 
 We'll be working with the cats-effect `IO` monad, but any monad will do.
 
-```scala mdoc
+```scala mdoc:silent
 import cats.effect.IO
 
 val httpClient = util.FlakyHttpClient()
@@ -47,7 +47,7 @@ First we'll need a retry policy. We'll keep it simple: retry up to 5 times, with
 no delay between attempts. (See the [retry policies page](policies.html) for
 information on more powerful policies).
 
-```scala mdoc
+```scala mdoc:silent
 import retry._
 
 val retryFiveTimes = RetryPolicies.limitRetries[IO](5)
@@ -57,17 +57,9 @@ We'll also provide an error handler that does some logging before every retry.
 Note how this also happens within whatever monad you're working in, in this case
 the `IO` monad.
 
-```scala mdoc:reset-class
-import cats.effect.IO
+```scala mdoc:silent
 import scala.concurrent.duration.FiniteDuration
-import retry._
 import retry.RetryDetails._
-
-val httpClient = util.FlakyHttpClient()
-
-val flakyRequest: IO[String] = IO {
-  httpClient.getCatGif()
-}
 
 val logMessages = collection.mutable.ArrayBuffer.empty[String]
 
@@ -87,9 +79,11 @@ def logError(err: Throwable, details: RetryDetails): IO[Unit] = details match {
     }
 
 }
+```
 
-// Now we have a retry policy and an error handler, we can wrap our `IO` inretries.
+Now we have a retry policy and an error handler, we can wrap our `IO` in retries.
 
+```scala mdoc:silent
 import cats.effect.unsafe.implicits.global
 
 val flakyRequestWithRetry: IO[String] =
@@ -97,9 +91,11 @@ val flakyRequestWithRetry: IO[String] =
     policy = RetryPolicies.limitRetries[IO](5),
     onError = logError
   )(flakyRequest)
+```
 
-// Let's see it in action.
+Let's see it in action.
 
+```scala mdoc
 flakyRequestWithRetry.unsafeRunSync()
 
 logMessages.foreach(println)

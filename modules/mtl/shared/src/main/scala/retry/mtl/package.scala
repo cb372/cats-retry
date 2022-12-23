@@ -10,6 +10,8 @@ package object mtl {
 
   def retryingOnSomeErrors[A] = new RetryingOnSomeErrorsPartiallyApplied[A]
 
+  def retryingOnAllErrors[A] = new RetryingOnAllErrorsPartiallyApplied[A]
+
   private[retry] class RetryingOnSomeErrorsPartiallyApplied[A] {
 
     def apply[M[_], E](
@@ -51,8 +53,6 @@ package object mtl {
     }
   }
 
-  def retryingOnAllErrors[A] = new RetryingOnAllErrorsPartiallyApplied[A]
-
   private[retry] class RetryingOnAllErrorsPartiallyApplied[A] {
     def apply[M[_], E](
         policy: RetryPolicy[M],
@@ -64,9 +64,11 @@ package object mtl {
         AH: Handle[M, E],
         S: Sleep[M]
     ): M[A] = {
-      retryingOnSomeErrors[A].apply[M, E](policy, _ => M.pure(true), onError)(
-        action
-      )
+      mtl
+        .retryingOnSomeErrors[A]
+        .apply[M, E](policy, _ => M.pure(true), onError)(
+          action
+        )
     }
   }
 

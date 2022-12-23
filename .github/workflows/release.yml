@@ -9,9 +9,12 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: olafurpg/setup-scala@v10
-      - uses: olafurpg/setup-gpg@v3
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'sbt'
       - name: Publish
         run: sbt +test ci-release
         env:
@@ -24,14 +27,18 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: olafurpg/setup-scala@v10
-    - uses: actions/setup-ruby@v1
-      with:
-        ruby-version: 2.6
-    - name: Install Jekyll
-      run: gem install jekyll -v 4
-    - name: Publish the microsite
-      env:
-        GITHUB_TOKEN: ${{ secrets.MICROSITE_GITHUB_TOKEN }}
-      run: sbt -J-Xms4G -J-Xmx4G docs/publishMicrosite
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'sbt'
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.6
+      - name: Install Jekyll
+        run: gem install jekyll -v 4
+      - name: Publish the microsite
+        run: sbt -J-Xms4G -J-Xmx4G docs/publishMicrosite
+        env:
+          GITHUB_TOKEN: ${{ secrets.MICROSITE_GITHUB_TOKEN }}
