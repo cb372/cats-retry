@@ -80,7 +80,9 @@ val core = crossProject(JVMPlatform, JSPlatform)
       "org.scalatestplus" %%% "scalacheck-1-17"      % scalaTestPlusVersion % Test,
       "org.typelevel"     %%% "discipline-scalatest" % disciplineVersion    % Test
     ),
-    mimaPreviousArtifacts := Set.empty
+    mimaPreviousArtifacts := Set(
+      "com.github.cb372" %%% "cats-retry" % "3.1.0"
+    )
   )
 val coreJVM = core.jvm
 val coreJS  = core.js
@@ -100,7 +102,9 @@ val alleycatsRetry = crossProject(JVMPlatform, JSPlatform)
       "org.scalatestplus" %%% "scalacheck-1-17"      % scalaTestPlusVersion % Test,
       "org.typelevel"     %%% "discipline-scalatest" % disciplineVersion    % Test
     ),
-    mimaPreviousArtifacts := Set.empty
+    mimaPreviousArtifacts := Set(
+      "com.github.cb372" %%% "alleycats-retry" % "3.1.0"
+    )
   )
 val alleycatsJVM = alleycatsRetry.jvm
 val alleycatsJS  = alleycatsRetry.js
@@ -117,7 +121,9 @@ val mtlRetry = crossProject(JVMPlatform, JSPlatform)
       "org.typelevel" %%% "cats-mtl"  % catsMtlVersion,
       "org.scalatest" %%% "scalatest" % scalatestVersion % Test
     ),
-    mimaPreviousArtifacts := Set.empty
+    mimaPreviousArtifacts := Set(
+      "com.github.cb372" %%% "cats-retry-mtl" % "3.1.0"
+    )
   )
 val mtlJVM = mtlRetry.jvm
 val mtlJS  = mtlRetry.js
