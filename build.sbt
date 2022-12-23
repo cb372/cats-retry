@@ -5,39 +5,35 @@ lazy val scalaVersion213 = "2.13.10"
 lazy val scalaVersion3   = "3.2.1"
 lazy val scalaVersions   = List(scalaVersion212, scalaVersion213, scalaVersion3)
 
-ThisBuild / scalaVersion := scalaVersion213
-
-val commonSettings = Seq(
-  organization := "com.github.cb372",
-  publishTo := sonatypePublishToBundle.value,
-  pomIncludeRepository := { _ =>
-    false
-  },
-  publishMavenStyle := true,
-  licenses := Seq(
-    "Apache License, Version 2.0" -> url(
-      "http://www.apache.org/licenses/LICENSE-2.0.html"
-    )
-  ),
-  homepage := Some(url("https://cb372.github.io/cats-retry/")),
-  developers := List(
-    Developer(
-      id = "cb372",
-      name = "Chris Birchall",
-      email = "chris.birchall@gmail.com",
-      url = url("https://github.com/cb372")
+inThisBuild(
+  Seq(
+    scalaVersion := scalaVersion213,
+    organization := "com.github.cb372",
+    licenses := Seq(
+      "Apache License, Version 2.0" -> url(
+        "http://www.apache.org/licenses/LICENSE-2.0.html"
+      )
     ),
-    Developer(
-      id = "LukaJCB",
-      name = "Luka Jacobowitz",
-      email = "luka.jacobowitz@gmail.com",
-      url = url("https://github.com/LukaJCB")
-    )
-  ),
-  mimaPreviousArtifacts := Set.empty
+    homepage := Some(url("https://cb372.github.io/cats-retry/")),
+    developers := List(
+      Developer(
+        id = "cb372",
+        name = "Chris Birchall",
+        email = "chris.birchall@gmail.com",
+        url = url("https://github.com/cb372")
+      ),
+      Developer(
+        id = "LukaJCB",
+        name = "Luka Jacobowitz",
+        email = "luka.jacobowitz@gmail.com",
+        url = url("https://github.com/LukaJCB")
+      )
+    ),
+    mimaPreviousArtifacts := Set.empty
+  )
 )
 
-val moduleSettings = commonSettings ++ Seq(
+val moduleSettings = Seq(
   scalacOptions ++= Seq(
     "-deprecation",
     "-encoding",
@@ -169,7 +165,6 @@ val root = project
     mtlJS,
     docs
   )
-  .settings(commonSettings)
   .settings(
     publishArtifact := false,
     crossScalaVersions := Nil
