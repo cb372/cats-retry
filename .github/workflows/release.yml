@@ -15,7 +15,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           cache: 'sbt'
-      - uses: olafurpg/setup-gpg@v3
       - name: Publish
         run: sbt +test ci-release
         env:
