@@ -8,28 +8,44 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: olafurpg/setup-scala@v10
-    - name: Test
-      run: sbt -J-Xms4G -J-Xmx4G +test
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'sbt'
+      - name: Test
+        run: sbt -J-Xms4G -J-Xmx4G +test
   bincompat:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: olafurpg/setup-scala@v10
-    - name: Check binary compatibility
-      run: sbt -J-Xms4G -J-Xmx4G +mimaReportBinaryIssues
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'sbt'
+      - name: Check binary compatibility
+        run: sbt -J-Xms4G -J-Xmx4G +mimaReportBinaryIssues
   docs:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: olafurpg/setup-scala@v10
-    - name: Compile documentation
-      run: sbt -J-Xms4G -J-Xmx4G docs/mdoc
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'sbt'
+      - name: Compile documentation
+        run: sbt -J-Xms4G -J-Xmx4G docs/mdoc
   format:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: olafurpg/setup-scala@v10
-    - name: Check formatting
-      run: sbt -J-Xms4G -J-Xmx4G scalafmtCheckAll scalafmtSbtCheck
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'sbt'
+      - name: Check formatting
+        run: sbt -J-Xms4G -J-Xmx4G scalafmtCheckAll scalafmtSbtCheck
