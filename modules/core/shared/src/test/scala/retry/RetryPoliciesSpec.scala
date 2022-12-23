@@ -3,7 +3,7 @@ package retry
 import java.util.concurrent.TimeUnit
 
 import retry.RetryPolicies._
-import cats.{Id, catsInstancesForId}
+import cats.Id
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.Checkers

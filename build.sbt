@@ -2,7 +2,7 @@ import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
 lazy val scalaVersion212 = "2.12.17"
 lazy val scalaVersion213 = "2.13.10"
-lazy val scalaVersion3   = "3.0.1"
+lazy val scalaVersion3   = "3.2.1"
 lazy val scalaVersions   = List(scalaVersion212, scalaVersion213, scalaVersion3)
 
 ThisBuild / scalaVersion := scalaVersion213
@@ -61,13 +61,13 @@ val moduleSettings = commonSettings ++ Seq(
   scalafmtOnCompile := true
 )
 
-val catsVersion          = "2.6.1"
-val catsEffectVersion    = "3.1.1"
-val catsMtlVersion       = "1.2.1"
-val scalatestVersion     = "3.2.9"
-val scalaTestPlusVersion = "3.2.9.0"
-val scalacheckVersion    = "1.15.4"
-val disciplineVersion    = "2.1.5"
+val catsVersion          = "2.9.0"
+val catsEffectVersion    = "3.4.2"
+val catsMtlVersion       = "1.3.0"
+val scalatestVersion     = "3.2.14"
+val scalaTestPlusVersion = "3.2.14.0"
+val scalacheckVersion    = "1.17.0"
+val disciplineVersion    = "2.2.0"
 
 val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/core"))
@@ -81,7 +81,7 @@ val core = crossProject(JVMPlatform, JSPlatform)
       "org.scalatest"     %%% "scalatest"            % scalatestVersion     % Test,
       "org.scalacheck"    %%% "scalacheck"           % scalacheckVersion    % Test,
       "org.typelevel"     %%% "cats-laws"            % catsVersion          % Test,
-      "org.scalatestplus" %%% "scalacheck-1-15"      % scalaTestPlusVersion % Test,
+      "org.scalatestplus" %%% "scalacheck-1-17"      % scalaTestPlusVersion % Test,
       "org.typelevel"     %%% "discipline-scalatest" % disciplineVersion    % Test
     ),
     mimaPreviousArtifacts := Set.empty
@@ -101,7 +101,7 @@ val alleycatsRetry = crossProject(JVMPlatform, JSPlatform)
       "org.scalatest"     %%% "scalatest"            % scalatestVersion     % Test,
       "org.scalacheck"    %%% "scalacheck"           % scalacheckVersion    % Test,
       "org.typelevel"     %%% "cats-laws"            % catsVersion          % Test,
-      "org.scalatestplus" %%% "scalacheck-1-15"      % scalaTestPlusVersion % Test,
+      "org.scalatestplus" %%% "scalacheck-1-17"      % scalaTestPlusVersion % Test,
       "org.typelevel"     %%% "discipline-scalatest" % disciplineVersion    % Test
     ),
     mimaPreviousArtifacts := Set.empty
