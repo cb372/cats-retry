@@ -1,7 +1,7 @@
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
-lazy val scalaVersion212 = "2.12.14"
-lazy val scalaVersion213 = "2.13.6"
+lazy val scalaVersion212 = "2.12.17"
+lazy val scalaVersion213 = "2.13.10"
 lazy val scalaVersion3   = "3.0.1"
 lazy val scalaVersions   = List(scalaVersion212, scalaVersion213, scalaVersion3)
 
@@ -136,7 +136,7 @@ val docs = project
     scalacOptions -= "-Ywarn-unused",
     scalacOptions += "-Ydelambdafy:inline",
     addCompilerPlugin(
-      "org.typelevel" %% "kind-projector" % "0.13.0" cross CrossVersion.full
+      "org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full
     ),
     crossScalaVersions := Nil,
     buildInfoPackage := "retry",
