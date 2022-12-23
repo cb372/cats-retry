@@ -1,4 +1,5 @@
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
+import _root_.io.github.davidgregory084.TpolecatPlugin.autoImport._
 
 lazy val scalaVersion212 = "2.12.17"
 lazy val scalaVersion213 = "2.13.10"
@@ -29,32 +30,9 @@ inThisBuild(
         url = url("https://github.com/LukaJCB")
       )
     ),
-    mimaPreviousArtifacts := Set.empty
+    mimaPreviousArtifacts := Set.empty,
+    scalafmtOnCompile := true
   )
-)
-
-val moduleSettings = Seq(
-  scalacOptions ++= Seq(
-    "-deprecation",
-    "-encoding",
-    "UTF-8",
-    "-language:higherKinds",
-    "-unchecked"
-  ),
-  Test / compile / scalacOptions ++= {
-    if (scalaVersion.value.startsWith("2.13"))
-      List("-Ywarn-dead-code", "-Ywarn-unused")
-    else if (scalaVersion.value.startsWith("2.12"))
-      List(
-        "-Ywarn-dead-code",
-        "-Ywarn-unused",
-        "-Ypartial-unification",
-        "-Xfuture"
-      )
-    else // scala 3.x
-      List("-language:implicitConversions")
-  },
-  scalafmtOnCompile := true
 )
 
 val catsVersion          = "2.9.0"
@@ -67,7 +45,6 @@ val disciplineVersion    = "2.2.0"
 
 val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/core"))
-  .settings(moduleSettings)
   .settings(
     name := "cats-retry",
     crossScalaVersions := scalaVersions,
@@ -82,6 +59,9 @@ val core = crossProject(JVMPlatform, JSPlatform)
     ),
     mimaPreviousArtifacts := Set.empty
   )
+  .jsSettings(
+    tpolecatScalacOptions += ScalacOptions.other("-scalajs", sv => sv.major == 3L),
+  )
 val coreJVM = core.jvm
 val coreJS  = core.js
 
@@ -89,7 +69,6 @@ val alleycatsRetry = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/alleycats"))
   .jvmConfigure(_.dependsOn(coreJVM))
   .jsConfigure(_.dependsOn(coreJS))
-  .settings(moduleSettings)
   .settings(
     name := "alleycats-retry",
     crossScalaVersions := scalaVersions,
@@ -102,6 +81,9 @@ val alleycatsRetry = crossProject(JVMPlatform, JSPlatform)
     ),
     mimaPreviousArtifacts := Set.empty
   )
+  .jsSettings(
+    tpolecatScalacOptions += ScalacOptions.other("-scalajs", sv => sv.major == 3L),
+  )
 val alleycatsJVM = alleycatsRetry.jvm
 val alleycatsJS  = alleycatsRetry.js
 
@@ -109,7 +91,6 @@ val mtlRetry = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/mtl"))
   .jvmConfigure(_.dependsOn(coreJVM))
   .jsConfigure(_.dependsOn(coreJS))
-  .settings(moduleSettings)
   .settings(
     name := "cats-retry-mtl",
     crossScalaVersions := scalaVersions,
@@ -119,6 +100,9 @@ val mtlRetry = crossProject(JVMPlatform, JSPlatform)
     ),
     mimaPreviousArtifacts := Set.empty
   )
+  .jsSettings(
+    tpolecatScalacOptions += ScalacOptions.other("-scalajs", sv => sv.major == 3L),
+  )
 val mtlJVM = mtlRetry.jvm
 val mtlJS  = mtlRetry.js
 
@@ -126,14 +110,11 @@ val docs = project
   .in(file("modules/docs"))
   .dependsOn(coreJVM, alleycatsJVM, mtlJVM)
   .enablePlugins(MicrositesPlugin, BuildInfoPlugin)
-  .settings(moduleSettings)
   .settings(
-    scalacOptions -= "-Ywarn-dead-code",
-    scalacOptions -= "-Ywarn-unused",
-    scalacOptions += "-Ydelambdafy:inline",
     addCompilerPlugin(
       "org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full
     ),
+    tpolecatExcludeOptions ++= ScalacOptions.warnUnusedOptions,
     crossScalaVersions := Nil,
     buildInfoPackage := "retry",
     publishArtifact := false,

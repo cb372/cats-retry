@@ -15,7 +15,7 @@ class SyntaxSpec extends AnyFlatSpec {
   it should "retry until the action succeeds" in new TestContext {
     val policy: RetryPolicy[Id] =
       RetryPolicies.constantDelay[Id](1.second)
-    def onFailure: (String, RetryDetails) => Id[Unit] = onError
+    def onFailure: (String, RetryDetails) => Id[Unit] = onErrorId
     def wasSuccessful(res: String): Id[Boolean]       = res.toInt > 3
     val sleeps                                        = ArrayBuffer.empty[FiniteDuration]
 
@@ -48,7 +48,7 @@ class SyntaxSpec extends AnyFlatSpec {
     }
 
     val finalResult: Id[String] =
-      action.retryingOnFailures(_.toInt > 3, policy, onError)
+      action.retryingOnFailures(_.toInt > 3, policy, onErrorId)
 
     assert(finalResult == "3")
     assert(attempts == 3)
@@ -195,12 +195,16 @@ class SyntaxSpec extends AnyFlatSpec {
     val delays   = ArrayBuffer.empty[FiniteDuration]
     var gaveUp   = false
 
-    def onError(error: String, details: RetryDetails): Either[String, Unit] = {
+    def onErrorId(error: String, details: RetryDetails): Id[Unit] = {
       errors.append(error)
       details match {
         case RetryDetails.WillDelayAndRetry(delay, _, _) => delays.append(delay)
         case RetryDetails.GivingUp(_, _)                 => gaveUp = true
       }
+    }
+
+    def onError(error: String, details: RetryDetails): Either[String, Unit] = {
+      onErrorId(error, details)
       Right(())
     }
   }

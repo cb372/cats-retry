@@ -52,7 +52,10 @@ object RetryPolicies {
     RetryPolicy.liftWithShow(
       { status =>
         val delay =
-          safeMultiply(baseDelay, Math.pow(2, status.retriesSoFar).toLong)
+          safeMultiply(
+            baseDelay,
+            Math.pow(2.0, status.retriesSoFar.toDouble).toLong
+          )
         DelayAndRetry(delay)
       },
       show"exponentialBackOff(baseDelay=$baseDelay)"
@@ -95,7 +98,7 @@ object RetryPolicies {
   def fullJitter[M[_]: Applicative](baseDelay: FiniteDuration): RetryPolicy[M] =
     RetryPolicy.liftWithShow(
       { status =>
-        val e          = Math.pow(2, status.retriesSoFar).toLong
+        val e          = Math.pow(2.0, status.retriesSoFar.toDouble).toLong
         val maxDelay   = safeMultiply(baseDelay, e)
         val delayNanos = (maxDelay.toNanos * Random.nextDouble()).toLong
         DelayAndRetry(new FiniteDuration(delayNanos, TimeUnit.NANOSECONDS))
