@@ -3,7 +3,7 @@ import _root_.io.github.davidgregory084.TpolecatPlugin.autoImport._
 
 lazy val scalaVersion212 = "2.12.17"
 lazy val scalaVersion213 = "2.13.10"
-lazy val scalaVersion3   = "3.2.1"
+lazy val scalaVersion3   = "3.2.2"
 lazy val scalaVersions   = List(scalaVersion212, scalaVersion213, scalaVersion3)
 
 inThisBuild(
