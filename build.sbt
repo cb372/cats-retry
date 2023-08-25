@@ -1,9 +1,9 @@
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
 import _root_.io.github.davidgregory084.TpolecatPlugin.autoImport._
 
-lazy val scalaVersion212 = "2.12.17"
-lazy val scalaVersion213 = "2.13.10"
-lazy val scalaVersion3   = "3.2.1"
+lazy val scalaVersion212 = "2.12.18"
+lazy val scalaVersion213 = "2.13.11"
+lazy val scalaVersion3   = "3.3.0"
 lazy val scalaVersions   = List(scalaVersion212, scalaVersion213, scalaVersion3)
 
 inThisBuild(
@@ -35,11 +35,11 @@ inThisBuild(
   )
 )
 
-val catsVersion          = "2.9.0"
-val catsEffectVersion    = "3.4.2"
-val catsMtlVersion       = "1.3.0"
-val scalatestVersion     = "3.2.14"
-val scalaTestPlusVersion = "3.2.14.0"
+val catsVersion          = "2.10.0"
+val catsEffectVersion    = "3.5.1"
+val catsMtlVersion       = "1.3.1"
+val scalatestVersion     = "3.2.16"
+val scalaTestPlusVersion = "3.2.16.0"
 val scalacheckVersion    = "1.17.0"
 val disciplineVersion    = "2.2.0"
 
