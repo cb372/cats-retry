@@ -39,7 +39,7 @@ val catsVersion          = "2.9.0"
 val catsEffectVersion    = "3.4.2"
 val catsMtlVersion       = "1.3.0"
 val scalatestVersion     = "3.2.14"
-val scalaTestPlusVersion = "3.2.14.0"
+val scalaTestPlusVersion = "3.2.18.0"
 val scalacheckVersion    = "1.17.0"
 val disciplineVersion    = "2.2.0"
 
