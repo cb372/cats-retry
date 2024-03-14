@@ -1,9 +1,10 @@
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
-import _root_.io.github.davidgregory084.TpolecatPlugin.autoImport._
+import _root_.org.typelevel.sbt.tpolecat.TpolecatPlugin.autoImport._
+import _root_.org.typelevel.scalacoptions.ScalacOptions
 
-lazy val scalaVersion212 = "2.12.17"
-lazy val scalaVersion213 = "2.13.10"
-lazy val scalaVersion3   = "3.2.1"
+lazy val scalaVersion212 = "2.12.19"
+lazy val scalaVersion213 = "2.13.13"
+lazy val scalaVersion3   = "3.3.3"
 lazy val scalaVersions   = List(scalaVersion212, scalaVersion213, scalaVersion3)
 
 inThisBuild(
@@ -35,11 +36,11 @@ inThisBuild(
   )
 )
 
-val catsVersion          = "2.9.0"
-val catsEffectVersion    = "3.4.2"
-val catsMtlVersion       = "1.3.0"
-val scalatestVersion     = "3.2.14"
-val scalaTestPlusVersion = "3.2.14.0"
+val catsVersion          = "2.10.0"
+val catsEffectVersion    = "3.5.4"
+val catsMtlVersion       = "1.4.0"
+val scalatestVersion     = "3.2.18"
+val scalaTestPlusVersion = "3.2.18.0"
 val scalacheckVersion    = "1.17.0"
 val disciplineVersion    = "2.2.0"
 
@@ -60,7 +61,8 @@ val core = crossProject(JVMPlatform, JSPlatform)
     mimaPreviousArtifacts := Set(
       "com.github.cb372" %%% "cats-retry" % "3.1.0"
     ),
-    tpolecatExcludeOptions += ScalacOptions.lintPackageObjectClasses
+    tpolecatExcludeOptions += ScalacOptions.lintPackageObjectClasses,
+    Test / tpolecatExcludeOptions += ScalacOptions.warnNonUnitStatement
   )
   .jsSettings(
     // work around https://github.com/typelevel/sbt-tpolecat/issues/102
@@ -86,7 +88,8 @@ val alleycatsRetry = crossProject(JVMPlatform, JSPlatform)
     ),
     mimaPreviousArtifacts := Set(
       "com.github.cb372" %%% "alleycats-retry" % "3.1.0"
-    )
+    ),
+    Test / tpolecatExcludeOptions += ScalacOptions.warnNonUnitStatement
   )
   .jsSettings(
     tpolecatScalacOptions += ScalacOptions
@@ -109,7 +112,8 @@ val mtlRetry = crossProject(JVMPlatform, JSPlatform)
     mimaPreviousArtifacts := Set(
       "com.github.cb372" %%% "cats-retry-mtl" % "3.1.0"
     ),
-    tpolecatExcludeOptions += ScalacOptions.lintPackageObjectClasses
+    tpolecatExcludeOptions += ScalacOptions.lintPackageObjectClasses,
+    Test / tpolecatExcludeOptions += ScalacOptions.warnNonUnitStatement
   )
   .jsSettings(
     // work around https://github.com/typelevel/sbt-tpolecat/issues/102
@@ -125,9 +129,10 @@ val docs = project
   .enablePlugins(MicrositesPlugin, BuildInfoPlugin)
   .settings(
     addCompilerPlugin(
-      "org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full
+      "org.typelevel" %% "kind-projector" % "0.13.3" cross CrossVersion.full
     ),
     tpolecatExcludeOptions ++= ScalacOptions.warnUnusedOptions,
+    tpolecatExcludeOptions += ScalacOptions.warnNonUnitStatement,
     crossScalaVersions        := Nil,
     buildInfoPackage          := "retry",
     publishArtifact           := false,
