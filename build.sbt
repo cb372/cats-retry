@@ -132,6 +132,7 @@ val docs = project
       "org.typelevel" %% "kind-projector" % "0.13.3" cross CrossVersion.full
     ),
     tpolecatExcludeOptions ++= ScalacOptions.warnUnusedOptions,
+    tpolecatExcludeOptions += ScalacOptions.warnNonUnitStatement,
     crossScalaVersions        := Nil,
     buildInfoPackage          := "retry",
     publishArtifact           := false,
