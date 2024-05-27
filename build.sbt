@@ -44,7 +44,7 @@ val scalaTestPlusVersion = "3.2.18.0"
 val scalacheckVersion    = "1.17.0"
 val disciplineVersion    = "2.2.0"
 
-val core = crossProject(JVMPlatform, JSPlatform)
+val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .in(file("modules/core"))
   .settings(
     name               := "cats-retry",
@@ -69,13 +69,15 @@ val core = crossProject(JVMPlatform, JSPlatform)
     tpolecatScalacOptions +=
       ScalacOptions.other("-scalajs", sv => sv.major == 3L)
   )
-val coreJVM = core.jvm
-val coreJS  = core.js
+val coreJVM    = core.jvm
+val coreJS     = core.js
+val coreNative = core.native
 
-val alleycatsRetry = crossProject(JVMPlatform, JSPlatform)
+val alleycatsRetry = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .in(file("modules/alleycats"))
   .jvmConfigure(_.dependsOn(coreJVM))
   .jsConfigure(_.dependsOn(coreJS))
+  .nativeConfigure(_.dependsOn(coreNative))
   .settings(
     name               := "alleycats-retry",
     crossScalaVersions := scalaVersions,
@@ -95,13 +97,15 @@ val alleycatsRetry = crossProject(JVMPlatform, JSPlatform)
     tpolecatScalacOptions += ScalacOptions
       .other("-scalajs", sv => sv.major == 3L)
   )
-val alleycatsJVM = alleycatsRetry.jvm
-val alleycatsJS  = alleycatsRetry.js
+val alleycatsJVM    = alleycatsRetry.jvm
+val alleycatsJS     = alleycatsRetry.js
+val alleycatsNative = alleycatsRetry.native
 
-val mtlRetry = crossProject(JVMPlatform, JSPlatform)
+val mtlRetry = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .in(file("modules/mtl"))
   .jvmConfigure(_.dependsOn(coreJVM))
   .jsConfigure(_.dependsOn(coreJS))
+  .nativeConfigure(_.dependsOn(coreNative))
   .settings(
     name               := "cats-retry-mtl",
     crossScalaVersions := scalaVersions,
@@ -120,8 +124,9 @@ val mtlRetry = crossProject(JVMPlatform, JSPlatform)
     tpolecatScalacOptions +=
       ScalacOptions.other("-scalajs", sv => sv.major == 3L)
   )
-val mtlJVM = mtlRetry.jvm
-val mtlJS  = mtlRetry.js
+val mtlJVM    = mtlRetry.jvm
+val mtlJS     = mtlRetry.js
+val mtlNative = mtlRetry.native
 
 val docs = project
   .in(file("modules/docs"))
@@ -158,10 +163,13 @@ val root = project
   .aggregate(
     coreJVM,
     coreJS,
+    coreNative,
     alleycatsJVM,
     alleycatsJS,
+    alleycatsNative,
     mtlJVM,
     mtlJS,
+    mtlNative,
     docs
   )
   .settings(
