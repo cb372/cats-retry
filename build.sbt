@@ -36,7 +36,7 @@ inThisBuild(
   )
 )
 
-val catsVersion          = "2.10.0"
+val catsVersion          = "2.12.0"
 val catsEffectVersion    = "3.5.4"
 val catsMtlVersion       = "1.4.0"
 val scalatestVersion     = "3.2.18"
