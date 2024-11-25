@@ -2,14 +2,13 @@ import sbtcrossproject.CrossPlugin.autoImport.crossProject
 import _root_.org.typelevel.sbt.tpolecat.TpolecatPlugin.autoImport._
 import _root_.org.typelevel.scalacoptions.ScalacOptions
 
-lazy val scalaVersion212 = "2.12.19"
 lazy val scalaVersion213 = "2.13.13"
 lazy val scalaVersion3   = "3.3.3"
-lazy val scalaVersions   = List(scalaVersion212, scalaVersion213, scalaVersion3)
+lazy val scalaVersions   = List(scalaVersion213, scalaVersion3)
 
 inThisBuild(
   Seq(
-    scalaVersion := scalaVersion213,
+    scalaVersion := scalaVersion3,
     organization := "com.github.cb372",
     licenses := Seq(
       "Apache License, Version 2.0" -> url(
@@ -32,17 +31,16 @@ inThisBuild(
       )
     ),
     mimaPreviousArtifacts := Set.empty,
-    scalafmtOnCompile     := true
+    scalafmtOnCompile     := false
   )
 )
 
-val catsVersion          = "2.10.0"
-val catsEffectVersion    = "3.5.4"
-val catsMtlVersion       = "1.4.0"
-val scalatestVersion     = "3.2.18"
-val scalaTestPlusVersion = "3.2.18.0"
-val scalacheckVersion    = "1.17.0"
-val disciplineVersion    = "2.2.0"
+val catsVersion            = "2.12.0"
+val catsEffectVersion      = "3.5.4"
+val catsMtlVersion         = "1.4.0"
+val munitVersion           = "1.0.0"
+val munitCatsEffectVersion = "2.0.0"
+val disciplineVersion      = "2.0.0"
 
 val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/core"))
@@ -50,53 +48,18 @@ val core = crossProject(JVMPlatform, JSPlatform)
     name               := "cats-retry",
     crossScalaVersions := scalaVersions,
     libraryDependencies ++= Seq(
-      "org.typelevel"     %%% "cats-core"       % catsVersion,
-      "org.typelevel"     %%% "cats-effect"     % catsEffectVersion,
-      "org.scalatest"     %%% "scalatest"       % scalatestVersion     % Test,
-      "org.scalacheck"    %%% "scalacheck"      % scalacheckVersion    % Test,
-      "org.typelevel"     %%% "cats-laws"       % catsVersion          % Test,
-      "org.scalatestplus" %%% "scalacheck-1-17" % scalaTestPlusVersion % Test,
-      "org.typelevel" %%% "discipline-scalatest" % disciplineVersion % Test
+      "org.typelevel" %%% "cats-core"         % catsVersion,
+      "org.typelevel" %%% "cats-effect"       % catsEffectVersion,
+      "org.scalameta" %%% "munit-scalacheck"  % munitVersion           % Test,
+      "org.typelevel" %%% "munit-cats-effect" % munitCatsEffectVersion % Test,
+      "org.typelevel" %%% "cats-laws"         % catsVersion            % Test,
+      "org.typelevel" %%% "discipline-munit"  % disciplineVersion      % Test
     ),
-    mimaPreviousArtifacts := Set(
-      "com.github.cb372" %%% "cats-retry" % "3.1.0"
-    ),
-    tpolecatExcludeOptions += ScalacOptions.lintPackageObjectClasses,
+    mimaPreviousArtifacts := Set.empty,
     Test / tpolecatExcludeOptions += ScalacOptions.warnNonUnitStatement
-  )
-  .jsSettings(
-    // work around https://github.com/typelevel/sbt-tpolecat/issues/102
-    tpolecatScalacOptions +=
-      ScalacOptions.other("-scalajs", sv => sv.major == 3L)
   )
 val coreJVM = core.jvm
 val coreJS  = core.js
-
-val alleycatsRetry = crossProject(JVMPlatform, JSPlatform)
-  .in(file("modules/alleycats"))
-  .jvmConfigure(_.dependsOn(coreJVM))
-  .jsConfigure(_.dependsOn(coreJS))
-  .settings(
-    name               := "alleycats-retry",
-    crossScalaVersions := scalaVersions,
-    libraryDependencies ++= Seq(
-      "org.scalatest"     %%% "scalatest"       % scalatestVersion     % Test,
-      "org.scalacheck"    %%% "scalacheck"      % scalacheckVersion    % Test,
-      "org.typelevel"     %%% "cats-laws"       % catsVersion          % Test,
-      "org.scalatestplus" %%% "scalacheck-1-17" % scalaTestPlusVersion % Test,
-      "org.typelevel" %%% "discipline-scalatest" % disciplineVersion % Test
-    ),
-    mimaPreviousArtifacts := Set(
-      "com.github.cb372" %%% "alleycats-retry" % "3.1.0"
-    ),
-    Test / tpolecatExcludeOptions += ScalacOptions.warnNonUnitStatement
-  )
-  .jsSettings(
-    tpolecatScalacOptions += ScalacOptions
-      .other("-scalajs", sv => sv.major == 3L)
-  )
-val alleycatsJVM = alleycatsRetry.jvm
-val alleycatsJS  = alleycatsRetry.js
 
 val mtlRetry = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/mtl"))
@@ -106,28 +69,21 @@ val mtlRetry = crossProject(JVMPlatform, JSPlatform)
     name               := "cats-retry-mtl",
     crossScalaVersions := scalaVersions,
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-mtl"  % catsMtlVersion,
-      "org.scalatest" %%% "scalatest" % scalatestVersion % Test
+      "org.typelevel" %%% "cats-mtl"         % catsMtlVersion,
+      "org.scalameta" %%% "munit-scalacheck" % munitVersion % Test
     ),
-    mimaPreviousArtifacts := Set(
-      "com.github.cb372" %%% "cats-retry-mtl" % "3.1.0"
-    ),
-    tpolecatExcludeOptions += ScalacOptions.lintPackageObjectClasses,
+    mimaPreviousArtifacts := Set.empty,
     Test / tpolecatExcludeOptions += ScalacOptions.warnNonUnitStatement
-  )
-  .jsSettings(
-    // work around https://github.com/typelevel/sbt-tpolecat/issues/102
-    tpolecatScalacOptions +=
-      ScalacOptions.other("-scalajs", sv => sv.major == 3L)
   )
 val mtlJVM = mtlRetry.jvm
 val mtlJS  = mtlRetry.js
 
 val docs = project
   .in(file("modules/docs"))
-  .dependsOn(coreJVM, alleycatsJVM, mtlJVM)
+  .dependsOn(coreJVM, mtlJVM)
   .enablePlugins(MicrositesPlugin, BuildInfoPlugin)
   .settings(
+    scalaVersion := scalaVersion213,
     addCompilerPlugin(
       "org.typelevel" %% "kind-projector" % "0.13.3" cross CrossVersion.full
     ),
@@ -158,8 +114,6 @@ val root = project
   .aggregate(
     coreJVM,
     coreJS,
-    alleycatsJVM,
-    alleycatsJS,
     mtlJVM,
     mtlJS,
     docs

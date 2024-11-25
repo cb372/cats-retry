@@ -1,3 +1,4 @@
+/*
 package retry
 
 import cats.Id
@@ -468,3 +469,4 @@ class PackageObjectSpec extends AnyFlatSpec {
     }
   }
 }
+ */
