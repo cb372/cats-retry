@@ -1,7 +1,7 @@
 import cats.{Monad, MonadError}
-import cats.syntax.apply._
-import cats.syntax.functor._
-import cats.syntax.flatMap._
+import cats.syntax.apply.*
+import cats.syntax.functor.*
+import cats.syntax.flatMap.*
 
 import scala.concurrent.duration.FiniteDuration
 

@@ -1,10 +1,10 @@
 package retry
 
 import cats.Id
-import cats.syntax.semigroup._
+import cats.syntax.semigroup.*
 import munit.FunSuite
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 class RetryPolicySuite extends FunSuite {
 

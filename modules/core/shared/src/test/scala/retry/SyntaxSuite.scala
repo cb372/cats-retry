@@ -2,10 +2,10 @@ package retry
 
 import cats.Id
 import munit.FunSuite
-import retry.syntax.all._
+import retry.syntax.all.*
 
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 class SyntaxSuite extends FunSuite {
   type StringOr[A] = Either[String, A]
@@ -96,10 +96,8 @@ class SyntaxSuite extends FunSuite {
 
     def action: StringOr[String] = {
       incrementAttempts()
-      if (attempts < 3)
-        Left("one more time")
-      else
-        Right("yay")
+      if attempts < 3 then Left("one more time")
+      else Right("yay")
     }
 
     val finalResult: StringOr[String] =
@@ -125,10 +123,8 @@ class SyntaxSuite extends FunSuite {
 
     def action: StringOr[Nothing] = {
       incrementAttempts()
-      if (attempts < 3)
-        Left("one more time")
-      else
-        Left("nope")
+      if attempts < 3 then Left("one more time")
+      else Left("nope")
     }
 
     val finalResult =
@@ -186,10 +182,8 @@ class SyntaxSuite extends FunSuite {
 
     def action: StringOr[String] = {
       incrementAttempts()
-      if (attempts < 3)
-        Left("one more time")
-      else
-        Right("yay")
+      if attempts < 3 then Left("one more time")
+      else Right("yay")
     }
 
     val finalResult: StringOr[String] =

@@ -3,12 +3,12 @@ package retry.mtl
 import cats.data.EitherT
 import cats.data.EitherT.catsDataMonadErrorFForEitherT
 import munit.FunSuite
-import retry.syntax.all._
-import retry.mtl.syntax.all._
+import retry.syntax.all.*
+import retry.mtl.syntax.all.*
 import retry.{RetryDetails, RetryPolicies, RetryPolicy, Sleep}
 
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 class SyntaxSuite extends FunSuite {
   type ErrorOr[A] = Either[Throwable, A]

@@ -5,7 +5,7 @@ case class LoadedDie(rolls: Int*) {
 
   def roll(): Int = {
     i = i + 1
-    if (i >= rolls.length) {
+    if i >= rolls.length then {
       i = 0
     }
     rolls(i)

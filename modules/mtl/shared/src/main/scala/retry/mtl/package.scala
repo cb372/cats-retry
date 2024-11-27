@@ -2,9 +2,9 @@ package retry
 
 import cats.Monad
 import cats.mtl.Handle
-import cats.syntax.apply._
-import cats.syntax.flatMap._
-import cats.syntax.functor._
+import cats.syntax.apply.*
+import cats.syntax.flatMap.*
+import cats.syntax.functor.*
 
 package object mtl {
 

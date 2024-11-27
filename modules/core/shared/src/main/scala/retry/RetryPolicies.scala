@@ -3,9 +3,9 @@ package retry
 import java.util.concurrent.TimeUnit
 
 import cats.Applicative
-import cats.syntax.functor._
-import cats.syntax.show._
-import retry.PolicyDecision._
+import cats.syntax.functor.*
+import cats.syntax.show.*
+import retry.PolicyDecision.*
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.util.Random
@@ -66,7 +66,7 @@ object RetryPolicies {
   def limitRetries[M[_]: Applicative](maxRetries: Int): RetryPolicy[M] =
     RetryPolicy.liftWithShow(
       { status =>
-        if (status.retriesSoFar >= maxRetries) {
+        if status.retriesSoFar >= maxRetries then {
           GiveUp
         } else {
           DelayAndRetry(Duration.Zero)
@@ -125,7 +125,7 @@ object RetryPolicies {
     def decideNextRetry(status: RetryStatus): M[PolicyDecision] =
       policy.decideNextRetry(status).map {
         case r @ DelayAndRetry(delay) =>
-          if (delay > threshold) GiveUp else r
+          if delay > threshold then GiveUp else r
         case GiveUp => GiveUp
       }
 
@@ -145,7 +145,7 @@ object RetryPolicies {
     def decideNextRetry(status: RetryStatus): M[PolicyDecision] =
       policy.decideNextRetry(status).map {
         case r @ DelayAndRetry(delay) =>
-          if (status.cumulativeDelay + delay >= threshold) GiveUp else r
+          if status.cumulativeDelay + delay >= threshold then GiveUp else r
         case GiveUp => GiveUp
       }
 

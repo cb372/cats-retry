@@ -2,14 +2,14 @@ package retry
 
 import java.util.concurrent.TimeUnit
 
-import retry.RetryPolicies._
+import retry.RetryPolicies.*
 import cats.Id
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop.forAll
 import munit.ScalaCheckSuite
 import retry.PolicyDecision.{DelayAndRetry, GiveUp}
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import munit.Location
 
 class RetryPoliciesSuite extends ScalaCheckSuite {
@@ -137,7 +137,7 @@ class RetryPoliciesSuite extends ScalaCheckSuite {
         arbitraryCumulativeDelay,
         arbitraryPreviousDelay
       )
-      for (_ <- 1 to 1000) {
+      for _ <- 1 to 1000 do {
         val verdict = policy.decideNextRetry(status)
         val delay   = verdict.asInstanceOf[PolicyDecision.DelayAndRetry].delay
         assert(delay >= Duration.Zero)
@@ -170,7 +170,7 @@ class RetryPoliciesSuite extends ScalaCheckSuite {
       val limit = 500
       val verdict =
         limitRetries[Id](limit).decideNextRetry(status)
-      if (status.retriesSoFar < limit) {
+      if status.retriesSoFar < limit then {
         verdict == PolicyDecision.DelayAndRetry(Duration.Zero)
       } else {
         verdict == PolicyDecision.GiveUp

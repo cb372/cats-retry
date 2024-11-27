@@ -1,5 +1,4 @@
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
-import _root_.org.typelevel.sbt.tpolecat.TpolecatPlugin.autoImport._
 import _root_.org.typelevel.scalacoptions.ScalacOptions
 
 lazy val scalaVersion213 = "2.13.13"
@@ -83,10 +82,6 @@ val docs = project
   .dependsOn(coreJVM, mtlJVM)
   .enablePlugins(MicrositesPlugin, BuildInfoPlugin)
   .settings(
-    scalaVersion := scalaVersion213,
-    addCompilerPlugin(
-      "org.typelevel" %% "kind-projector" % "0.13.3" cross CrossVersion.full
-    ),
     tpolecatExcludeOptions ++= ScalacOptions.warnUnusedOptions,
     tpolecatExcludeOptions += ScalacOptions.warnNonUnitStatement,
     crossScalaVersions        := Nil,

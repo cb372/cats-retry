@@ -2,10 +2,8 @@ package retry
 
 object Fibonacci {
   def fibonacci(n: Int): Long = {
-    if (n > 0)
-      fib(n)._1
-    else
-      0
+    if n > 0 then fib(n)._1
+    else 0
   }
 
   // "Fast doubling" Fibonacci algorithm.
@@ -16,9 +14,7 @@ object Fibonacci {
       val (a, b) = fib(m / 2)
       val c      = a * (b * 2 - a)
       val d      = a * a + b * b
-      if (n % 2 == 0)
-        (c, d)
-      else
-        (d, c + d)
+      if n % 2 == 0 then (c, d)
+      else (d, c + d)
   }
 }

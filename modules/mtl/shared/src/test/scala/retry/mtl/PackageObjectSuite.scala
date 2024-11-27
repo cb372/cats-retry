@@ -5,7 +5,7 @@ import munit.FunSuite
 import retry.{RetryDetails, RetryPolicies, Sleep}
 
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 class PackageObjectSuite extends FunSuite {
   type ErrorOr[A] = Either[Throwable, A]
@@ -49,10 +49,8 @@ class PackageObjectSuite extends FunSuite {
       retryingOnSomeErrors(policy, isWorthRetrying, onMtlError) {
         attempts = attempts + 1
 
-        if (attempts < 3)
-          EitherT.leftT[ErrorOr, String]("one more time")
-        else
-          EitherT.pure[ErrorOr, String]("yay")
+        if attempts < 3 then EitherT.leftT[ErrorOr, String]("one more time")
+        else EitherT.pure[ErrorOr, String]("yay")
       }
 
     assertEquals(finalResult.value, Right(Right("yay")))
@@ -73,10 +71,8 @@ class PackageObjectSuite extends FunSuite {
       retryingOnSomeErrors(policy, isWorthRetrying, onMtlError) {
         attempts = attempts + 1
 
-        if (attempts < 3)
-          EitherT.leftT[ErrorOr, String]("one more time")
-        else
-          EitherT.leftT[ErrorOr, String]("nope")
+        if attempts < 3 then EitherT.leftT[ErrorOr, String]("one more time")
+        else EitherT.leftT[ErrorOr, String]("nope")
       }
 
     assertEquals(finalResult.value, Right(Left("nope")))
@@ -138,10 +134,8 @@ class PackageObjectSuite extends FunSuite {
     val finalResult = retryingOnAllErrors(policy, onMtlError) {
       attempts = attempts + 1
 
-      if (attempts < 3)
-        EitherT.leftT[ErrorOr, String]("one more time")
-      else
-        EitherT.pure[ErrorOr, String]("yay")
+      if attempts < 3 then EitherT.leftT[ErrorOr, String]("one more time")
+      else EitherT.pure[ErrorOr, String]("yay")
     }
 
     assertEquals(finalResult.value, Right(Right("yay")))

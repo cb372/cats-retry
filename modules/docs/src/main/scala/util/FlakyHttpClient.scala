@@ -7,7 +7,7 @@ case class FlakyHttpClient() {
   private var i = 0
 
   def getCatGif(): String = {
-    if (i > 3) {
+    if i > 3 then {
       "cute cat gets sleepy and falls asleep"
     } else {
       i = i + 1
@@ -16,9 +16,9 @@ case class FlakyHttpClient() {
   }
 
   def getRecordDetails(id: String): String = {
-    if (i > 3) {
+    if i > 3 then {
       "got some sweet details"
-    } else if (i == 0) {
+    } else if i == 0 then {
       i = i + 1
       throw new TimeoutException("Timed out getting details")
     } else {

@@ -4,7 +4,7 @@ import cats.Id
 import munit.FunSuite
 
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 class PackageObjectSuite extends FunSuite {
   type StringOr[A] = Either[String, A]
@@ -118,10 +118,8 @@ class PackageObjectSuite extends FunSuite {
       onError
     ) {
       attempts = attempts + 1
-      if (attempts < 3)
-        Left("one more time")
-      else
-        Right("yay")
+      if attempts < 3 then Left("one more time")
+      else Right("yay")
     }
 
     assertEquals(finalResult, Right("yay"))
@@ -141,10 +139,8 @@ class PackageObjectSuite extends FunSuite {
       onError
     ) {
       attempts = attempts + 1
-      if (attempts < 3)
-        Left("one more time")
-      else
-        Left("nope")
+      if attempts < 3 then Left("one more time")
+      else Left("nope")
     }
 
     assertEquals(finalResult, Left("nope"))
@@ -208,10 +204,8 @@ class PackageObjectSuite extends FunSuite {
       onError
     ) {
       attempts = attempts + 1
-      if (attempts < 3)
-        Left("one more time")
-      else
-        Right("yay")
+      if attempts < 3 then Left("one more time")
+      else Right("yay")
     }
 
     assertEquals(finalResult, Right("yay"))
@@ -273,10 +267,8 @@ class PackageObjectSuite extends FunSuite {
       onError
     ) {
       attempts = attempts + 1
-      if (attempts < 3)
-        Left("one more time")
-      else
-        Right("yay")
+      if attempts < 3 then Left("one more time")
+      else Right("yay")
     }
 
     assertEquals(finalResult, Right("yay"))
@@ -298,10 +290,8 @@ class PackageObjectSuite extends FunSuite {
       onError
     ) {
       attempts = attempts + 1
-      if (attempts < 3)
-        Left("one more time")
-      else
-        Left("nope")
+      if attempts < 3 then Left("one more time")
+      else Left("nope")
     }
 
     assertEquals(finalResult, Left("nope"))
@@ -418,10 +408,8 @@ class PackageObjectSuite extends FunSuite {
       onError
     ) {
       attempts = attempts + 1
-      if (attempts < 3)
-        Left("one more time")
-      else
-        Right("yay")
+      if attempts < 3 then Left("one more time")
+      else Right("yay")
     }
 
     assertEquals(finalResult, Right("yay"))

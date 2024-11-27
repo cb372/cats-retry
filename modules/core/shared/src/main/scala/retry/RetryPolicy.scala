@@ -2,12 +2,12 @@ package retry
 
 import cats.{Apply, Applicative, Monad, Functor}
 import cats.kernel.BoundedSemilattice
-import retry.PolicyDecision._
+import retry.PolicyDecision.*
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration.FiniteDuration
 import cats.arrow.FunctionK
-import cats.implicits._
+import cats.implicits.*
 import cats.Show
 
 case class RetryPolicy[M[_]](

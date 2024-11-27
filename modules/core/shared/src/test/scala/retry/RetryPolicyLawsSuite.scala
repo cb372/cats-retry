@@ -1,13 +1,13 @@
 package retry
 
-import cats.instances.all._
+import cats.instances.all.*
 import cats.{Eq, Monoid, Id}
 import cats.kernel.laws.discipline.BoundedSemilatticeTests
 import munit.DisciplineSuite
 import org.scalacheck.{Arbitrary, Cogen, Gen}
 import org.scalacheck.Prop.*
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import cats.laws.discipline.ExhaustiveCheck
 import cats.laws.discipline.eq.catsLawsEqForFn1Exhaustive
 import cats.arrow.FunctionK
