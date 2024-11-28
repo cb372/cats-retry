@@ -14,7 +14,7 @@ import munit.Location
 
 class RetryPoliciesSuite extends ScalaCheckSuite:
 
-  implicit val arbRetryStatus: Arbitrary[RetryStatus] = Arbitrary {
+  given Arbitrary[RetryStatus] = Arbitrary {
     for
       a <- Gen.choose(0, 1000)
       b <- Gen.choose(0, 1000)
@@ -32,7 +32,7 @@ class RetryPoliciesSuite extends ScalaCheckSuite:
   case class LabelledRetryPolicy(policy: RetryPolicy[Id], description: String):
     override def toString: String = description
 
-  implicit val arbRetryPolicy: Arbitrary[LabelledRetryPolicy] = Arbitrary {
+  given Arbitrary[LabelledRetryPolicy] = Arbitrary {
     Gen.oneOf(
       Gen.const(LabelledRetryPolicy(alwaysGiveUp[Id], "alwaysGiveUp")),
       genFiniteDuration.map(delay =>

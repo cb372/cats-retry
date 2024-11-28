@@ -42,7 +42,7 @@ class SyntaxSuite extends FunSuite:
     def wasSuccessful(res: String): Id[Boolean]       = res.toInt > 3
     val sleeps                                        = ArrayBuffer.empty[FiniteDuration]
 
-    implicit val dummySleep: Sleep[Id] =
+    given Sleep[Id] =
       (delay: FiniteDuration) => sleeps.append(delay)
 
     def action: Id[String] =
@@ -64,7 +64,7 @@ class SyntaxSuite extends FunSuite:
     import context.*
 
     val policy: RetryPolicy[Id]        = RetryPolicies.limitRetries[Id](2)
-    implicit val dummySleep: Sleep[Id] = _ => ()
+    given Sleep[Id] = _ => ()
 
     def action: Id[String] =
       incrementAttempts()
@@ -83,7 +83,7 @@ class SyntaxSuite extends FunSuite:
   fixture.test("retryingOnSomeErrors - retry until the action succeeds") { context =>
     import context.*
 
-    implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
+    given Sleep[StringOr] = _ => Right(())
 
     val policy: RetryPolicy[StringOr] =
       RetryPolicies.constantDelay[StringOr](1.second)
@@ -109,7 +109,7 @@ class SyntaxSuite extends FunSuite:
   fixture.test("retryingOnSomeErrors - retry only if the error is worth retrying") { context =>
     import context.*
 
-    implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
+    given Sleep[StringOr] = _ => Right(())
 
     val policy: RetryPolicy[StringOr] =
       RetryPolicies.constantDelay[StringOr](1.second)
@@ -138,7 +138,7 @@ class SyntaxSuite extends FunSuite:
   fixture.test("retryingOnSomeErrors - retry until the policy chooses to give up") { context =>
     import context.*
 
-    implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
+    given Sleep[StringOr] = _ => Right(())
 
     val policy: RetryPolicy[StringOr] =
       RetryPolicies.limitRetries[StringOr](2)
@@ -166,7 +166,7 @@ class SyntaxSuite extends FunSuite:
   fixture.test("retryingOnAllErrors - retry until the action succeeds") { context =>
     import context.*
 
-    implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
+    given Sleep[StringOr] = _ => Right(())
 
     val policy: RetryPolicy[StringOr] =
       RetryPolicies.constantDelay[StringOr](1.second)
@@ -188,7 +188,7 @@ class SyntaxSuite extends FunSuite:
   fixture.test("retryingOnAllErrors - retry until the policy chooses to give up") { context =>
     import context.*
 
-    implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
+    given Sleep[StringOr] = _ => Right(())
 
     val policy: RetryPolicy[StringOr] =
       RetryPolicies.limitRetries[StringOr](2)

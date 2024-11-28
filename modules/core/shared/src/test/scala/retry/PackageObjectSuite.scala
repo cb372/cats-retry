@@ -9,7 +9,7 @@ import scala.concurrent.duration.*
 class PackageObjectSuite extends FunSuite:
   type StringOr[A] = Either[String, A]
 
-  implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
+  given Sleep[StringOr] = _ => Right(())
 
   private class TestContext:
     var attempts = 0
@@ -39,7 +39,7 @@ class PackageObjectSuite extends FunSuite:
 
     val sleeps = ArrayBuffer.empty[FiniteDuration]
 
-    implicit val dummySleep: Sleep[Id] =
+    given Sleep[Id] =
       (delay: FiniteDuration) => sleeps.append(delay)
 
     val finalResult = retryingOnFailures[String][Id](
@@ -64,7 +64,7 @@ class PackageObjectSuite extends FunSuite:
 
     val policy = RetryPolicies.limitRetries[Id](2)
 
-    implicit val dummySleep: Sleep[Id] = _ => ()
+    given Sleep[Id] = _ => ()
 
     val finalResult = retryingOnFailures[String][Id](
       policy,
@@ -87,7 +87,7 @@ class PackageObjectSuite extends FunSuite:
 
     val policy = RetryPolicies.limitRetries[Id](10000)
 
-    implicit val dummySleep: Sleep[Id] = _ => ()
+    given Sleep[Id] = _ => ()
 
     val finalResult = retryingOnFailures[String][Id](
       policy,
