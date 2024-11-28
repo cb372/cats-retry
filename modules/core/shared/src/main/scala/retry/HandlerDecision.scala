@@ -2,7 +2,7 @@ package retry
 
 /** The result of inspecting a result and deciding what to do next
   */
-enum HandlerDecision[+F[_], +A]:
+enum HandlerDecision[+FA]:
   /** We are finished, either because the action returned a successful value, or because it raised an error so
     * heinous we don't want to retry.
     */
@@ -14,4 +14,4 @@ enum HandlerDecision[+F[_], +A]:
 
   /** Switch to a new action for subsequent retries, as long as the retry policy says it's OK to continue.
     */
-  case Adapt(newAction: F[A])
+  case Adapt(newAction: FA)

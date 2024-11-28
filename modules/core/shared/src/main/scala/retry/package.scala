@@ -31,7 +31,7 @@ package object retry:
   /** A handler that inspects the result of an action and decides what to do next. This is also a good place
     * to do any logging.
     */
-  type ResultHandler[F[_], Res, A] = (Res, RetryDetails) => F[HandlerDecision[F, A]]
+  type ResultHandler[F[_], Res, A] = (Res, RetryDetails) => F[HandlerDecision[F[A]]]
 
   /*
    * Partially applied classes
@@ -47,8 +47,8 @@ package object retry:
         M: Monad[M],
         S: Sleep[M]
     ): M[A] = M.tailRecM((action, RetryStatus.NoRetriesYet)) { (currentAction, status) =>
-      currentAction.flatMap { result =>
-        retryingOnFailuresImpl(policy, resultHandler, status, currentAction, result)
+      currentAction.flatMap { actionResult =>
+        retryingOnFailuresImpl(policy, resultHandler, status, currentAction, actionResult)
       }
     }
 
@@ -176,7 +176,7 @@ package object retry:
           M.pure(Right(actionResult)) // stop the recursion
 
     def applyHandlerDecision(
-        handlerDecision: HandlerDecision[M, A],
+        handlerDecision: HandlerDecision[M[A]],
         nextStep: NextStep
     ): M[Either[(M[A], RetryStatus), A]] =
       handlerDecision match
@@ -225,7 +225,7 @@ package object retry:
 
     def applyHandlerDecision(
         error: E,
-        handlerDecision: HandlerDecision[M, A],
+        handlerDecision: HandlerDecision[M[A]],
         nextStep: NextStep
     ): M[Either[(M[A], RetryStatus), A]] =
       handlerDecision match
