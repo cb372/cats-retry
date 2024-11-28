@@ -28,6 +28,13 @@ package object retry {
   def noop[M[_]: Monad, A]: (A, RetryDetails) => M[Unit] =
     (_, _) => Monad[M].pure(())
 
+  /**
+    * A handler that inspects the result of an action and decides
+    * what to do next.
+    * This is also a good place to do any logging.
+    */
+  type ResultHandler[F[_], Res, A] = (Res, RetryDetails) => F[HandlerDecision[F, A]]
+
   /*
    * Partially applied classes
    */
@@ -35,8 +42,7 @@ package object retry {
   private[retry] class RetryingOnFailuresPartiallyApplied[A] {
     def apply[M[_]](
         policy: RetryPolicy[M],
-        wasSuccessful: A => M[Boolean],
-        onFailure: (A, RetryDetails) => M[Unit]
+        resultHandler: ResultHandler[M, A, A]
     )(
         action: => M[A]
     )(implicit
@@ -44,7 +50,7 @@ package object retry {
         S: Sleep[M]
     ): M[A] = M.tailRecM(RetryStatus.NoRetriesYet) { status =>
       action.flatMap { a =>
-        retryingOnFailuresImpl(policy, wasSuccessful, onFailure, status, a)
+        retryingOnFailuresImpl(policy, resultHandler, status, a)
       }
     }
   }
@@ -52,8 +58,7 @@ package object retry {
   private[retry] class RetryingOnSomeErrorsPartiallyApplied[A] {
     def apply[M[_], E](
         policy: RetryPolicy[M],
-        isWorthRetrying: E => M[Boolean],
-        onError: (E, RetryDetails) => M[Unit]
+        errorHandler: ResultHandler[M, E, A]
     )(
         action: => M[A]
     )(implicit
@@ -63,8 +68,7 @@ package object retry {
       ME.attempt(action).flatMap { attempt =>
         retryingOnSomeErrorsImpl(
           policy,
-          isWorthRetrying,
-          onError,
+          errorHandler,
           status,
           attempt
         )
@@ -72,6 +76,10 @@ package object retry {
     }
   }
 
+  // TODO could we get rid of this variant to reduce the surface area of the API?
+  // It feels a bit redundant.
+  // retryingOnSomeErrors could be renamed to simply retryingOnErrors,
+  // since the errorHandler can choose whether to retry on all errors or only some.
   private[retry] class RetryingOnAllErrorsPartiallyApplied[A] {
     def apply[M[_], E](
         policy: RetryPolicy[M],
@@ -82,7 +90,9 @@ package object retry {
         ME: MonadError[M, E],
         S: Sleep[M]
     ): M[A] =
-      retryingOnSomeErrors[A].apply[M, E](policy, _ => ME.pure(true), onError)(
+      val errorHandler: ResultHandler[M, E, A] =
+        (e: E, rd: RetryDetails) => onError(e, rd).as(HandlerDecision.Continue)
+      retryingOnSomeErrors[A].apply[M, E](policy, errorHandler)(
         action
       )
   }
@@ -90,26 +100,26 @@ package object retry {
   private[retry] class RetryingOnFailuresAndSomeErrorsPartiallyApplied[A] {
     def apply[M[_], E](
         policy: RetryPolicy[M],
-        wasSuccessful: A => M[Boolean],
-        isWorthRetrying: E => M[Boolean],
-        onFailure: (A, RetryDetails) => M[Unit],
-        onError: (E, RetryDetails) => M[Unit]
+        resultOrErrorHandler: ResultHandler[M, Either[E, A], A]
     )(
         action: => M[A]
     )(implicit
         ME: MonadError[M, E],
         S: Sleep[M]
     ): M[A] = {
+      val valueHandler: ResultHandler[M, A, A] =
+        (a: A, rd: RetryDetails) => resultOrErrorHandler(Right(a), rd)
+      val errorHandler: ResultHandler[M, E, A] =
+        (e: E, rd: RetryDetails) => resultOrErrorHandler(Left(e), rd)
 
       ME.tailRecM(RetryStatus.NoRetriesYet) { status =>
         ME.attempt(action).flatMap {
           case Right(a) =>
-            retryingOnFailuresImpl(policy, wasSuccessful, onFailure, status, a)
+            retryingOnFailuresImpl(policy, valueHandler, status, a)
           case attempt =>
             retryingOnSomeErrorsImpl(
               policy,
-              isWorthRetrying,
-              onError,
+              errorHandler,
               status,
               attempt
             )
@@ -121,8 +131,7 @@ package object retry {
   private[retry] class RetryingOnFailuresAndAllErrorsPartiallyApplied[A] {
     def apply[M[_], E](
         policy: RetryPolicy[M],
-        wasSuccessful: A => M[Boolean],
-        onFailure: (A, RetryDetails) => M[Unit],
+        resultHandler: ResultHandler[M, A, A],
         onError: (E, RetryDetails) => M[Unit]
     )(
         action: => M[A]
@@ -130,13 +139,16 @@ package object retry {
         ME: MonadError[M, E],
         S: Sleep[M]
     ): M[A] =
+      val resultOrErrorHandler: ResultHandler[M, Either[E, A], A] =
+        (result: Either[E, A], rd: RetryDetails) => result match {
+          case Left(e) => onError(e, rd).as(HandlerDecision.Continue)
+          case Right(a) => resultHandler(a, rd)
+      }
+
       retryingOnFailuresAndSomeErrors[A]
         .apply[M, E](
           policy,
-          wasSuccessful,
-          _ => ME.pure(true),
-          onFailure,
-          onError
+          resultOrErrorHandler
         )(
           action
         )
