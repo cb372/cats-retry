@@ -1,4 +1,5 @@
-import cats.{Monad, MonadError}
+import cats.{Monad}
+import cats.effect.Temporal
 import cats.syntax.apply._
 import cats.syntax.functor._
 import cats.syntax.flatMap._
@@ -40,9 +41,8 @@ package object retry {
     )(
         action: => M[A]
     )(implicit
-        M: Monad[M],
-        S: Sleep[M]
-    ): M[A] = M.tailRecM(RetryStatus.NoRetriesYet) { status =>
+        T: Temporal[M]
+    ): M[A] = T.tailRecM(RetryStatus.NoRetriesYet) { status =>
       action.flatMap { a =>
         retryingOnFailuresImpl(policy, wasSuccessful, onFailure, status, a)
       }
@@ -50,17 +50,16 @@ package object retry {
   }
 
   private[retry] class RetryingOnSomeErrorsPartiallyApplied[A] {
-    def apply[M[_], E](
+    def apply[M[_]](
         policy: RetryPolicy[M],
-        isWorthRetrying: E => M[Boolean],
-        onError: (E, RetryDetails) => M[Unit]
+        isWorthRetrying: Throwable => M[Boolean],
+        onError: (Throwable, RetryDetails) => M[Unit]
     )(
         action: => M[A]
     )(implicit
-        ME: MonadError[M, E],
-        S: Sleep[M]
-    ): M[A] = ME.tailRecM(RetryStatus.NoRetriesYet) { status =>
-      ME.attempt(action).flatMap { attempt =>
+        T: Temporal[M]
+    ): M[A] = T.tailRecM(RetryStatus.NoRetriesYet) { status =>
+      T.attempt(action).flatMap { attempt =>
         retryingOnSomeErrorsImpl(
           policy,
           isWorthRetrying,
@@ -73,36 +72,34 @@ package object retry {
   }
 
   private[retry] class RetryingOnAllErrorsPartiallyApplied[A] {
-    def apply[M[_], E](
+    def apply[M[_]](
         policy: RetryPolicy[M],
-        onError: (E, RetryDetails) => M[Unit]
+        onError: (Throwable, RetryDetails) => M[Unit]
     )(
         action: => M[A]
     )(implicit
-        ME: MonadError[M, E],
-        S: Sleep[M]
+        T: Temporal[M]
     ): M[A] =
-      retryingOnSomeErrors[A].apply[M, E](policy, _ => ME.pure(true), onError)(
+      retryingOnSomeErrors[A].apply[M](policy, _ => T.pure(true), onError)(
         action
       )
   }
 
   private[retry] class RetryingOnFailuresAndSomeErrorsPartiallyApplied[A] {
-    def apply[M[_], E](
+    def apply[M[_]](
         policy: RetryPolicy[M],
         wasSuccessful: A => M[Boolean],
-        isWorthRetrying: E => M[Boolean],
+        isWorthRetrying: Throwable => M[Boolean],
         onFailure: (A, RetryDetails) => M[Unit],
-        onError: (E, RetryDetails) => M[Unit]
+        onError: (Throwable, RetryDetails) => M[Unit]
     )(
         action: => M[A]
     )(implicit
-        ME: MonadError[M, E],
-        S: Sleep[M]
+        T: Temporal[M]
     ): M[A] = {
 
-      ME.tailRecM(RetryStatus.NoRetriesYet) { status =>
-        ME.attempt(action).flatMap {
+      T.tailRecM(RetryStatus.NoRetriesYet) { status =>
+        T.attempt(action).flatMap {
           case Right(a) =>
             retryingOnFailuresImpl(policy, wasSuccessful, onFailure, status, a)
           case attempt =>
@@ -119,22 +116,21 @@ package object retry {
   }
 
   private[retry] class RetryingOnFailuresAndAllErrorsPartiallyApplied[A] {
-    def apply[M[_], E](
+    def apply[M[_]](
         policy: RetryPolicy[M],
         wasSuccessful: A => M[Boolean],
         onFailure: (A, RetryDetails) => M[Unit],
-        onError: (E, RetryDetails) => M[Unit]
+        onError: (Throwable, RetryDetails) => M[Unit]
     )(
         action: => M[A]
     )(implicit
-        ME: MonadError[M, E],
-        S: Sleep[M]
+        T: Temporal[M]
     ): M[A] =
       retryingOnFailuresAndSomeErrors[A]
-        .apply[M, E](
+        .apply[M](
           policy,
           wasSuccessful,
-          _ => ME.pure(true),
+          _ => T.pure(true),
           onFailure,
           onError
         )(
@@ -153,8 +149,7 @@ package object retry {
       status: RetryStatus,
       a: A
   )(implicit
-      M: Monad[M],
-      S: Sleep[M]
+      T: Temporal[M]
   ): M[Either[RetryStatus, A]] = {
 
     def onFalse: M[Either[RetryStatus, A]] = for {
@@ -162,28 +157,27 @@ package object retry {
       _        <- onFailure(a, buildRetryDetails(status, nextStep))
       result <- nextStep match {
         case NextStep.RetryAfterDelay(delay, updatedStatus) =>
-          S.sleep(delay) *>
-            M.pure(Left(updatedStatus)) // continue recursion
+          T.sleep(delay) *>
+            T.pure(Left(updatedStatus)) // continue recursion
         case NextStep.GiveUp =>
-          M.pure(Right(a)) // stop the recursion
+          T.pure(Right(a)) // stop the recursion
       }
     } yield result
 
     wasSuccessful(a).ifM(
-      M.pure(Right(a)), // stop the recursion
+      T.pure(Right(a)), // stop the recursion
       onFalse
     )
   }
 
-  private def retryingOnSomeErrorsImpl[M[_], A, E](
+  private def retryingOnSomeErrorsImpl[M[_], A, E <: Throwable](
       policy: RetryPolicy[M],
       isWorthRetrying: E => M[Boolean],
       onError: (E, RetryDetails) => M[Unit],
       status: RetryStatus,
       attempt: Either[E, A]
   )(implicit
-      ME: MonadError[M, E],
-      S: Sleep[M]
+      T: Temporal[M]
   ): M[Either[RetryStatus, A]] = attempt match {
     case Left(error) =>
       isWorthRetrying(error).ifM(
@@ -192,16 +186,16 @@ package object retry {
           _        <- onError(error, buildRetryDetails(status, nextStep))
           result <- nextStep match {
             case NextStep.RetryAfterDelay(delay, updatedStatus) =>
-              S.sleep(delay) *>
-                ME.pure(Left(updatedStatus)) // continue recursion
+              T.sleep(delay) *>
+                T.pure(Left(updatedStatus)) // continue recursion
             case NextStep.GiveUp =>
-              ME.raiseError[A](error).map(Right(_)) // stop the recursion
+              T.raiseError[A](error).map(Right(_)) // stop the recursion
           }
         } yield result,
-        ME.raiseError[A](error).map(Right(_)) // stop the recursion
+        T.raiseError[A](error).map(Right(_)) // stop the recursion
       )
     case Right(success) =>
-      ME.pure(Right(success)) // stop the recursion
+      T.pure(Right(success)) // stop the recursion
   }
 
   private[retry] def applyPolicy[M[_]: Monad](

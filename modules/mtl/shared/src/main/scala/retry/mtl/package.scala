@@ -1,6 +1,6 @@
 package retry
 
-import cats.Monad
+import cats.effect.Temporal
 import cats.mtl.Handle
 import cats.syntax.apply._
 import cats.syntax.flatMap._
@@ -21,12 +21,11 @@ package object mtl {
     )(
         action: => M[A]
     )(implicit
-        M: Monad[M],
         AH: Handle[M, E],
-        S: Sleep[M]
+        T: Temporal[M]
     ): M[A] = {
 
-      M.tailRecM(RetryStatus.NoRetriesYet) { status =>
+      T.tailRecM(RetryStatus.NoRetriesYet) { status =>
         AH.attempt(action).flatMap {
           case Left(error) =>
             def stopRecursion: M[Either[RetryStatus, A]] =
@@ -37,8 +36,8 @@ package object mtl {
                 _        <- onError(error, buildRetryDetails(status, nextStep))
                 result <- nextStep match {
                   case NextStep.RetryAfterDelay(delay, updatedStatus) =>
-                    S.sleep(delay) *>
-                      M.pure(Left(updatedStatus)) // continue recursion
+                    T.sleep(delay) *>
+                      T.pure(Left(updatedStatus)) // continue recursion
                   case NextStep.GiveUp =>
                     AH.raise[E, A](error).map(Right(_)) // stop the recursion
                 }
@@ -46,7 +45,7 @@ package object mtl {
 
             isWorthRetrying(error).ifM(runRetry, stopRecursion)
           case Right(success) =>
-            M.pure(Right(success)) // stop the recursion
+            T.pure(Right(success)) // stop the recursion
         }
       }
 
@@ -60,13 +59,12 @@ package object mtl {
     )(
         action: => M[A]
     )(implicit
-        M: Monad[M],
         AH: Handle[M, E],
-        S: Sleep[M]
+        T: Temporal[M]
     ): M[A] = {
       mtl
         .retryingOnSomeErrors[A]
-        .apply[M, E](policy, _ => M.pure(true), onError)(
+        .apply[M, E](policy, _ => T.pure(true), onError)(
           action
         )
     }
