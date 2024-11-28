@@ -4,32 +4,28 @@ import cats.Id
 import munit.FunSuite
 
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
-class PackageObjectSuite extends FunSuite {
+class PackageObjectSuite extends FunSuite:
   type StringOr[A] = Either[String, A]
 
-  implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
+  given Sleep[StringOr] = _ => Right(())
 
-  private class TestContext {
+  private class TestContext:
     var attempts = 0
     val errors   = ArrayBuffer.empty[String]
     val delays   = ArrayBuffer.empty[FiniteDuration]
     var gaveUp   = false
 
-    def onErrorId(error: String, details: RetryDetails): Id[Unit] = {
+    def onErrorId(error: String, details: RetryDetails): Id[Unit] =
       errors.append(error)
-      details match {
+      details match
         case RetryDetails.WillDelayAndRetry(delay, _, _) => delays.append(delay)
         case RetryDetails.GivingUp(_, _)                 => gaveUp = true
-      }
-    }
 
-    def onError(error: String, details: RetryDetails): Either[String, Unit] = {
+    def onError(error: String, details: RetryDetails): Either[String, Unit] =
       onErrorId(error, details)
       Right(())
-    }
-  }
 
   private val fixture = FunFixture[TestContext](
     setup = _ => new TestContext,
@@ -43,7 +39,7 @@ class PackageObjectSuite extends FunSuite {
 
     val sleeps = ArrayBuffer.empty[FiniteDuration]
 
-    implicit val dummySleep: Sleep[Id] =
+    given Sleep[Id] =
       (delay: FiniteDuration) => sleeps.append(delay)
 
     val finalResult = retryingOnFailures[String][Id](
@@ -68,7 +64,7 @@ class PackageObjectSuite extends FunSuite {
 
     val policy = RetryPolicies.limitRetries[Id](2)
 
-    implicit val dummySleep: Sleep[Id] = _ => ()
+    given Sleep[Id] = _ => ()
 
     val finalResult = retryingOnFailures[String][Id](
       policy,
@@ -91,7 +87,7 @@ class PackageObjectSuite extends FunSuite {
 
     val policy = RetryPolicies.limitRetries[Id](10000)
 
-    implicit val dummySleep: Sleep[Id] = _ => ()
+    given Sleep[Id] = _ => ()
 
     val finalResult = retryingOnFailures[String][Id](
       policy,
@@ -118,10 +114,8 @@ class PackageObjectSuite extends FunSuite {
       onError
     ) {
       attempts = attempts + 1
-      if (attempts < 3)
-        Left("one more time")
-      else
-        Right("yay")
+      if attempts < 3 then Left("one more time")
+      else Right("yay")
     }
 
     assertEquals(finalResult, Right("yay"))
@@ -141,10 +135,8 @@ class PackageObjectSuite extends FunSuite {
       onError
     ) {
       attempts = attempts + 1
-      if (attempts < 3)
-        Left("one more time")
-      else
-        Left("nope")
+      if attempts < 3 then Left("one more time")
+      else Left("nope")
     }
 
     assertEquals(finalResult, Left("nope"))
@@ -208,10 +200,8 @@ class PackageObjectSuite extends FunSuite {
       onError
     ) {
       attempts = attempts + 1
-      if (attempts < 3)
-        Left("one more time")
-      else
-        Right("yay")
+      if attempts < 3 then Left("one more time")
+      else Right("yay")
     }
 
     assertEquals(finalResult, Right("yay"))
@@ -273,10 +263,8 @@ class PackageObjectSuite extends FunSuite {
       onError
     ) {
       attempts = attempts + 1
-      if (attempts < 3)
-        Left("one more time")
-      else
-        Right("yay")
+      if attempts < 3 then Left("one more time")
+      else Right("yay")
     }
 
     assertEquals(finalResult, Right("yay"))
@@ -298,10 +286,8 @@ class PackageObjectSuite extends FunSuite {
       onError
     ) {
       attempts = attempts + 1
-      if (attempts < 3)
-        Left("one more time")
-      else
-        Left("nope")
+      if attempts < 3 then Left("one more time")
+      else Left("nope")
     }
 
     assertEquals(finalResult, Left("nope"))
@@ -418,10 +404,8 @@ class PackageObjectSuite extends FunSuite {
       onError
     ) {
       attempts = attempts + 1
-      if (attempts < 3)
-        Left("one more time")
-      else
-        Right("yay")
+      if attempts < 3 then Left("one more time")
+      else Right("yay")
     }
 
     assertEquals(finalResult, Right("yay"))
@@ -517,5 +501,4 @@ class PackageObjectSuite extends FunSuite {
       assertEquals(attempts, 1)
       assertEquals(gaveUp, false)
   }
-
-}
+end PackageObjectSuite
