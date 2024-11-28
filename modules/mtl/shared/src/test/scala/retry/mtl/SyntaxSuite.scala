@@ -1,9 +1,8 @@
 package retry.mtl
 
 import cats.data.EitherT
-import cats.data.EitherT.catsDataMonadErrorFForEitherT
 import munit.FunSuite
-import retry.syntax.all.*
+import retry.syntax.*
 import retry.mtl.syntax.all.*
 import retry.{RetryDetails, RetryPolicies, RetryPolicy, Sleep}
 

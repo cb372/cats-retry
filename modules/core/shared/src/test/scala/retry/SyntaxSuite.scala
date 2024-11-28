@@ -1,8 +1,9 @@
 package retry
 
-import cats.Id
+import cats.{Id, MonadError}
 import munit.FunSuite
-import retry.syntax.all.*
+import retry.syntax.*
+import cats.instances.either.*
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.*
@@ -82,8 +83,9 @@ class SyntaxSuite extends FunSuite:
 
   fixture.test("retryingOnSomeErrors - retry until the action succeeds") { context =>
     import context.*
-
     given Sleep[StringOr] = _ => Right(())
+
+    given MonadError[StringOr, String] = cats.instances.either.catsStdInstancesForEither[String]
 
     val policy: RetryPolicy[StringOr] =
       RetryPolicies.constantDelay[StringOr](1.second)
