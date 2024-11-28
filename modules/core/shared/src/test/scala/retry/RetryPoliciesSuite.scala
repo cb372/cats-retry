@@ -2,24 +2,24 @@ package retry
 
 import java.util.concurrent.TimeUnit
 
-import retry.RetryPolicies._
+import retry.RetryPolicies.*
 import cats.Id
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop.forAll
 import munit.ScalaCheckSuite
 import retry.PolicyDecision.{DelayAndRetry, GiveUp}
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import munit.Location
 
-class RetryPoliciesSuite extends ScalaCheckSuite {
+class RetryPoliciesSuite extends ScalaCheckSuite:
 
-  implicit val arbRetryStatus: Arbitrary[RetryStatus] = Arbitrary {
-    for {
+  given Arbitrary[RetryStatus] = Arbitrary {
+    for
       a <- Gen.choose(0, 1000)
       b <- Gen.choose(0, 1000)
       c <- Gen.option(Gen.choose(b, 10000))
-    } yield RetryStatus(
+    yield RetryStatus(
       a,
       FiniteDuration(b.toLong, TimeUnit.MILLISECONDS),
       c.map(x => FiniteDuration(x.toLong, TimeUnit.MILLISECONDS))
@@ -29,11 +29,10 @@ class RetryPoliciesSuite extends ScalaCheckSuite {
   val genFiniteDuration: Gen[FiniteDuration] =
     Gen.posNum[Long].map(FiniteDuration(_, TimeUnit.NANOSECONDS))
 
-  case class LabelledRetryPolicy(policy: RetryPolicy[Id], description: String) {
+  case class LabelledRetryPolicy(policy: RetryPolicy[Id], description: String):
     override def toString: String = description
-  }
 
-  implicit val arbRetryPolicy: Arbitrary[LabelledRetryPolicy] = Arbitrary {
+  given Arbitrary[LabelledRetryPolicy] = Arbitrary {
     Gen.oneOf(
       Gen.const(LabelledRetryPolicy(alwaysGiveUp[Id], "alwaysGiveUp")),
       genFiniteDuration.map(delay =>
@@ -85,7 +84,7 @@ class RetryPoliciesSuite extends ScalaCheckSuite {
     val arbitraryCumulativeDelay = 999.milliseconds
     val arbitraryPreviousDelay   = Some(999.milliseconds)
 
-    def check(retriesSoFar: Int, expectedDelay: FiniteDuration) = {
+    def check(retriesSoFar: Int, expectedDelay: FiniteDuration) =
       val status = RetryStatus(
         retriesSoFar,
         arbitraryCumulativeDelay,
@@ -93,7 +92,6 @@ class RetryPoliciesSuite extends ScalaCheckSuite {
       )
       val verdict = policy.decideNextRetry(status)
       assertEquals(verdict, PolicyDecision.DelayAndRetry(expectedDelay))
-    }
 
     check(0, 100.milliseconds)
     check(1, 200.milliseconds)
@@ -106,7 +104,7 @@ class RetryPoliciesSuite extends ScalaCheckSuite {
     val arbitraryCumulativeDelay = 999.milliseconds
     val arbitraryPreviousDelay   = Some(999.milliseconds)
 
-    def check(retriesSoFar: Int, expectedDelay: FiniteDuration) = {
+    def check(retriesSoFar: Int, expectedDelay: FiniteDuration) =
       val status = RetryStatus(
         retriesSoFar,
         arbitraryCumulativeDelay,
@@ -114,7 +112,6 @@ class RetryPoliciesSuite extends ScalaCheckSuite {
       )
       val verdict = policy.decideNextRetry(status)
       assertEquals(verdict, PolicyDecision.DelayAndRetry(expectedDelay))
-    }
 
     check(0, 100.milliseconds)
     check(1, 100.milliseconds)
@@ -131,19 +128,17 @@ class RetryPoliciesSuite extends ScalaCheckSuite {
     val arbitraryCumulativeDelay = 999.milliseconds
     val arbitraryPreviousDelay   = Some(999.milliseconds)
 
-    def check(retriesSoFar: Int, expectedMaximumDelay: FiniteDuration): Unit = {
+    def check(retriesSoFar: Int, expectedMaximumDelay: FiniteDuration): Unit =
       val status = RetryStatus(
         retriesSoFar,
         arbitraryCumulativeDelay,
         arbitraryPreviousDelay
       )
-      for (_ <- 1 to 1000) {
+      for _ <- 1 to 1000 do
         val verdict = policy.decideNextRetry(status)
         val delay   = verdict.asInstanceOf[PolicyDecision.DelayAndRetry].delay
         assert(delay >= Duration.Zero)
         assert(delay < expectedMaximumDelay)
-      }
-    }
 
     check(0, 100.milliseconds)
     check(1, 200.milliseconds)
@@ -157,11 +152,10 @@ class RetryPoliciesSuite extends ScalaCheckSuite {
     "all built-in policies - never try to create a FiniteDuration of more than Long.MaxValue nanoseconds"
   ) {
     forAll((labelledPolicy: LabelledRetryPolicy, status: RetryStatus) =>
-      labelledPolicy.policy.decideNextRetry(status) match {
+      labelledPolicy.policy.decideNextRetry(status) match
         case PolicyDecision.DelayAndRetry(nextDelay) =>
           nextDelay.toNanos <= Long.MaxValue
         case PolicyDecision.GiveUp => true
-      }
     )
   }
 
@@ -170,11 +164,8 @@ class RetryPoliciesSuite extends ScalaCheckSuite {
       val limit = 500
       val verdict =
         limitRetries[Id](limit).decideNextRetry(status)
-      if (status.retriesSoFar < limit) {
-        verdict == PolicyDecision.DelayAndRetry(Duration.Zero)
-      } else {
-        verdict == PolicyDecision.GiveUp
-      }
+      if status.retriesSoFar < limit then verdict == PolicyDecision.DelayAndRetry(Duration.Zero)
+      else verdict == PolicyDecision.GiveUp
     }
   }
 
@@ -223,14 +214,13 @@ class RetryPoliciesSuite extends ScalaCheckSuite {
     def check(
         underlyingPolicy: RetryPolicy[Id],
         expectedDecision: PolicyDecision
-    ) = {
+    ) =
       val policy = limitRetriesByCumulativeDelay(threshold, underlyingPolicy)
       assertEquals(policy.decideNextRetry(status), expectedDecision)
-    }
 
     check(constantDelay(98.milliseconds), DelayAndRetry(98.milliseconds))
     check(constantDelay(99.milliseconds), DelayAndRetry(99.milliseconds))
     check(constantDelay(100.milliseconds), GiveUp)
     check(constantDelay(101.milliseconds), GiveUp)
   }
-}
+end RetryPoliciesSuite

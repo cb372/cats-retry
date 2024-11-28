@@ -1,47 +1,47 @@
 package retry
 
-import cats.instances.all._
+import cats.instances.all.*
 import cats.{Eq, Monoid, Id}
 import cats.kernel.laws.discipline.BoundedSemilatticeTests
 import munit.DisciplineSuite
 import org.scalacheck.{Arbitrary, Cogen, Gen}
 import org.scalacheck.Prop.*
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import cats.laws.discipline.ExhaustiveCheck
 import cats.laws.discipline.eq.catsLawsEqForFn1Exhaustive
 import cats.arrow.FunctionK
 import cats.Monad
 
-class RetryPolicyLawsSuite extends DisciplineSuite {
+class RetryPolicyLawsSuite extends DisciplineSuite:
 
-  implicit val cogenStatus: Cogen[RetryStatus] =
+  given Cogen[RetryStatus] =
     Cogen { (seed, status) =>
       val a = Cogen[Int].perturb(seed, status.retriesSoFar)
       val b = Cogen[FiniteDuration].perturb(a, status.cumulativeDelay)
       Cogen[Option[FiniteDuration]].perturb(b, status.previousDelay)
     }
 
-  implicit val arbitraryPolicyDecision: Arbitrary[PolicyDecision] =
-    Arbitrary(for {
+  given Arbitrary[PolicyDecision] =
+    Arbitrary(for
       delay <- Gen.choose(0L, Long.MaxValue).map(Duration.fromNanos)
       decision <- Gen
         .oneOf(PolicyDecision.GiveUp, PolicyDecision.DelayAndRetry(delay))
-    } yield decision)
+    yield decision)
 
-  implicit val arbRetryPolicy: Arbitrary[RetryPolicy[Id]] =
+  given Arbitrary[RetryPolicy[Id]] =
     Arbitrary(
       Arbitrary
         .arbitrary[RetryStatus => PolicyDecision]
         .map(RetryPolicy.apply[Id])
     )
 
-  implicit val eqPolicyDecision: Eq[PolicyDecision] = Eq.by(_ match {
+  given Eq[PolicyDecision] = Eq.by {
     case PolicyDecision.GiveUp           => None
     case PolicyDecision.DelayAndRetry(d) => Some(d)
-  })
+  }
 
-  implicit val retryStatusExhaustiveCheck: ExhaustiveCheck[RetryStatus] =
+  given ExhaustiveCheck[RetryStatus] =
     ExhaustiveCheck.instance(
       List(
         RetryStatus.NoRetriesYet,
@@ -54,7 +54,7 @@ class RetryPolicyLawsSuite extends DisciplineSuite {
       )
     )
 
-  implicit val eqForRetryPolicy: Eq[RetryPolicy[Id]] =
+  given Eq[RetryPolicy[Id]] =
     Eq.by(_.decideNextRetry)
 
   property("meet associativity") {
@@ -172,4 +172,4 @@ class RetryPolicyLawsSuite extends DisciplineSuite {
     "BoundedSemilattice[RetryPolicy]",
     BoundedSemilatticeTests[RetryPolicy[Id]].boundedSemilattice
   )
-}
+end RetryPolicyLawsSuite

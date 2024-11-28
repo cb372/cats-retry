@@ -4,21 +4,21 @@ import cats.Monad
 import cats.mtl.Handle
 import retry.{RetryDetails, RetryPolicy, Sleep}
 
-trait RetrySyntax {
+trait RetrySyntax:
+  // TODO how to migrate this to scala 3?
   implicit final def retrySyntaxMtlError[M[_], A](
       action: => M[A]
-  )(implicit M: Monad[M]): RetryingMtlErrorOps[M, A] =
+  )(using M: Monad[M]): RetryingMtlErrorOps[M, A] =
     new RetryingMtlErrorOps[M, A](action)
-}
 
-final class RetryingMtlErrorOps[M[_], A](action: => M[A])(implicit
+final class RetryingMtlErrorOps[M[_], A](action: => M[A])(using
     M: Monad[M]
-) {
+):
 
   def retryingOnAllMtlErrors[E](
       policy: RetryPolicy[M],
       onError: (E, RetryDetails) => M[Unit]
-  )(implicit S: Sleep[M], AH: Handle[M, E]): M[A] =
+  )(using S: Sleep[M], AH: Handle[M, E]): M[A] =
     retry.mtl.retryingOnAllErrors(
       policy = policy,
       onError = onError
@@ -28,11 +28,9 @@ final class RetryingMtlErrorOps[M[_], A](action: => M[A])(implicit
       isWorthRetrying: E => M[Boolean],
       policy: RetryPolicy[M],
       onError: (E, RetryDetails) => M[Unit]
-  )(implicit S: Sleep[M], AH: Handle[M, E]): M[A] =
+  )(using S: Sleep[M], AH: Handle[M, E]): M[A] =
     retry.mtl.retryingOnSomeErrors(
       policy = policy,
       isWorthRetrying = isWorthRetrying,
       onError = onError
     )(action)
-
-}

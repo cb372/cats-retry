@@ -2,17 +2,17 @@ package retry
 
 import cats.Monad
 import cats.mtl.Handle
-import cats.syntax.apply._
-import cats.syntax.flatMap._
-import cats.syntax.functor._
+import cats.syntax.apply.*
+import cats.syntax.flatMap.*
+import cats.syntax.functor.*
 
-package object mtl {
+package object mtl:
 
   def retryingOnSomeErrors[A] = new RetryingOnSomeErrorsPartiallyApplied[A]
 
   def retryingOnAllErrors[A] = new RetryingOnAllErrorsPartiallyApplied[A]
 
-  private[retry] class RetryingOnSomeErrorsPartiallyApplied[A] {
+  private[retry] class RetryingOnSomeErrorsPartiallyApplied[A]:
 
     def apply[M[_], E](
         policy: RetryPolicy[M],
@@ -20,56 +20,49 @@ package object mtl {
         onError: (E, RetryDetails) => M[Unit]
     )(
         action: => M[A]
-    )(implicit
+    )(using
         M: Monad[M],
         AH: Handle[M, E],
         S: Sleep[M]
-    ): M[A] = {
-
+    ): M[A] =
       M.tailRecM(RetryStatus.NoRetriesYet) { status =>
         AH.attempt(action).flatMap {
           case Left(error) =>
             def stopRecursion: M[Either[RetryStatus, A]] =
               AH.raise[E, A](error).map(Right(_))
             def runRetry: M[Either[RetryStatus, A]] =
-              for {
+              for
                 nextStep <- applyPolicy(policy, status)
                 _        <- onError(error, buildRetryDetails(status, nextStep))
-                result <- nextStep match {
+                result <- nextStep match
                   case NextStep.RetryAfterDelay(delay, updatedStatus) =>
                     S.sleep(delay) *>
                       M.pure(Left(updatedStatus)) // continue recursion
                   case NextStep.GiveUp =>
                     AH.raise[E, A](error).map(Right(_)) // stop the recursion
-                }
-              } yield result
+              yield result
 
             isWorthRetrying(error).ifM(runRetry, stopRecursion)
           case Right(success) =>
             M.pure(Right(success)) // stop the recursion
         }
       }
+  end RetryingOnSomeErrorsPartiallyApplied
 
-    }
-  }
-
-  private[retry] class RetryingOnAllErrorsPartiallyApplied[A] {
+  private[retry] class RetryingOnAllErrorsPartiallyApplied[A]:
     def apply[M[_], E](
         policy: RetryPolicy[M],
         onError: (E, RetryDetails) => M[Unit]
     )(
         action: => M[A]
-    )(implicit
+    )(using
         M: Monad[M],
         AH: Handle[M, E],
         S: Sleep[M]
-    ): M[A] = {
+    ): M[A] =
       mtl
         .retryingOnSomeErrors[A]
         .apply[M, E](policy, _ => M.pure(true), onError)(
           action
         )
-    }
-  }
-
-}
+end mtl
