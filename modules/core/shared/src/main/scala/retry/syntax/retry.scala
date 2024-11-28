@@ -3,7 +3,8 @@ package retry.syntax
 import cats.{Monad, MonadError}
 import retry.{RetryDetails, RetryPolicy, Sleep}
 
-trait RetrySyntax {
+trait RetrySyntax:
+  // TODO how to translate these to methods to scala3?
   implicit final def retrySyntaxBase[M[_], A](
       action: => M[A]
   ): RetryingOps[M, A] =
@@ -11,9 +12,8 @@ trait RetrySyntax {
 
   implicit final def retrySyntaxError[M[_], A, E](
       action: => M[A]
-  )(implicit M: MonadError[M, E]): RetryingErrorOps[M, A, E] =
+  )(using M: MonadError[M, E]): RetryingErrorOps[M, A, E] =
     new RetryingErrorOps[M, A, E](action)
-}
 
 final class RetryingOps[M[_], A](action: => M[A]) {
   @deprecated("Use retryingOnFailures instead", "2.1.0")
@@ -21,7 +21,7 @@ final class RetryingOps[M[_], A](action: => M[A]) {
       wasSuccessful: A => M[Boolean],
       policy: RetryPolicy[M],
       onFailure: (A, RetryDetails) => M[Unit]
-  )(implicit
+  )(using
       M: Monad[M],
       S: Sleep[M]
   ): M[A] = retryingOnFailures(wasSuccessful, policy, onFailure)
@@ -30,7 +30,7 @@ final class RetryingOps[M[_], A](action: => M[A]) {
       wasSuccessful: A => M[Boolean],
       policy: RetryPolicy[M],
       onFailure: (A, RetryDetails) => M[Unit]
-  )(implicit
+  )(using
       M: Monad[M],
       S: Sleep[M]
   ): M[A] =
@@ -41,13 +41,13 @@ final class RetryingOps[M[_], A](action: => M[A]) {
     )(action)
 }
 
-final class RetryingErrorOps[M[_], A, E](action: => M[A])(implicit
+final class RetryingErrorOps[M[_], A, E](action: => M[A])(using
     M: MonadError[M, E]
 ) {
   def retryingOnAllErrors(
       policy: RetryPolicy[M],
       onError: (E, RetryDetails) => M[Unit]
-  )(implicit S: Sleep[M]): M[A] =
+  )(using S: Sleep[M]): M[A] =
     retry.retryingOnAllErrors(
       policy = policy,
       onError = onError
@@ -57,7 +57,7 @@ final class RetryingErrorOps[M[_], A, E](action: => M[A])(implicit
       isWorthRetrying: E => M[Boolean],
       policy: RetryPolicy[M],
       onError: (E, RetryDetails) => M[Unit]
-  )(implicit S: Sleep[M]): M[A] =
+  )(using S: Sleep[M]): M[A] =
     retry.retryingOnSomeErrors(
       policy = policy,
       isWorthRetrying = isWorthRetrying,
@@ -69,7 +69,7 @@ final class RetryingErrorOps[M[_], A, E](action: => M[A])(implicit
       policy: RetryPolicy[M],
       onFailure: (A, RetryDetails) => M[Unit],
       onError: (E, RetryDetails) => M[Unit]
-  )(implicit S: Sleep[M]): M[A] =
+  )(using S: Sleep[M]): M[A] =
     retry.retryingOnFailuresAndAllErrors(
       policy = policy,
       wasSuccessful = wasSuccessful,
@@ -83,7 +83,7 @@ final class RetryingErrorOps[M[_], A, E](action: => M[A])(implicit
       policy: RetryPolicy[M],
       onFailure: (A, RetryDetails) => M[Unit],
       onError: (E, RetryDetails) => M[Unit]
-  )(implicit S: Sleep[M]): M[A] =
+  )(using S: Sleep[M]): M[A] =
     retry.retryingOnFailuresAndSomeErrors(
       policy = policy,
       wasSuccessful = wasSuccessful,
