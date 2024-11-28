@@ -11,7 +11,7 @@ class PackageObjectSuite extends FunSuite:
   type ErrorOr[A] = Either[Throwable, A]
   type F[A]       = EitherT[ErrorOr, String, A]
 
-  implicit val sleepForEitherT: Sleep[F] = _ => EitherT.pure(())
+  given Sleep[F] = _ => EitherT.pure(())
 
   private class TestContext:
     var attempts = 0

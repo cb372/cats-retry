@@ -37,7 +37,7 @@ class RetryPolicyLawsSuite extends DisciplineSuite:
     )
 
   given Eq[PolicyDecision] = Eq.by {
-    case PolicyDecision.GiveUp => None
+    case PolicyDecision.GiveUp           => None
     case PolicyDecision.DelayAndRetry(d) => Some(d)
   }
 

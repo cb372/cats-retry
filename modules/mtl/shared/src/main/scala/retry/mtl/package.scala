@@ -20,7 +20,7 @@ package object mtl:
         onError: (E, RetryDetails) => M[Unit]
     )(
         action: => M[A]
-    )(implicit
+    )(using
         M: Monad[M],
         AH: Handle[M, E],
         S: Sleep[M]
@@ -55,7 +55,7 @@ package object mtl:
         onError: (E, RetryDetails) => M[Unit]
     )(
         action: => M[A]
-    )(implicit
+    )(using
         M: Monad[M],
         AH: Handle[M, E],
         S: Sleep[M]

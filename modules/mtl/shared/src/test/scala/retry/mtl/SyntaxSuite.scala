@@ -44,7 +44,7 @@ class SyntaxSuite extends FunSuite:
   fixture.test("retryingOnSomeMtlErrors - retry until the action succeeds") { context =>
     import context.*
 
-    implicit val sleepForEither: Sleep[F] = _ => EitherT.pure(())
+    given Sleep[F] = _ => EitherT.pure(())
 
     val error                  = new RuntimeException("Boom!")
     val policy: RetryPolicy[F] = RetryPolicies.constantDelay[F](1.second)
@@ -74,7 +74,7 @@ class SyntaxSuite extends FunSuite:
   fixture.test("retryingOnSomeMtlErrors - retry only if the error is worth retrying") { context =>
     import context.*
 
-    implicit val sleepForEither: Sleep[F] = _ => EitherT.pure(())
+    given Sleep[F] = _ => EitherT.pure(())
 
     val error                  = new RuntimeException("Boom!")
     val policy: RetryPolicy[F] = RetryPolicies.constantDelay[F](1.second)
@@ -107,7 +107,7 @@ class SyntaxSuite extends FunSuite:
   fixture.test("retryingOnSomeMtlErrors - retry until the policy chooses to give up") { context =>
     import context.*
 
-    implicit val sleepForEither: Sleep[F] = _ => EitherT.pure(())
+    given Sleep[F] = _ => EitherT.pure(())
 
     val error                  = new RuntimeException("Boom!")
     val policy: RetryPolicy[F] = RetryPolicies.limitRetries[F](2)
@@ -145,7 +145,7 @@ class SyntaxSuite extends FunSuite:
   fixture.test("retryingOnAllMtlErrors - retry until the action succeeds") { context =>
     import context.*
 
-    implicit val sleepForEither: Sleep[F] = _ => EitherT.pure(())
+    given Sleep[F] = _ => EitherT.pure(())
 
     val error                  = new RuntimeException("Boom!")
     val policy: RetryPolicy[F] = RetryPolicies.constantDelay[F](1.second)
@@ -171,7 +171,7 @@ class SyntaxSuite extends FunSuite:
   fixture.test("retryingOnAllMtlErrors - retry until the policy chooses to give up") { context =>
     import context.*
 
-    implicit val sleepForEither: Sleep[F] = _ => EitherT.pure(())
+    given Sleep[F] = _ => EitherT.pure(())
 
     val error                  = new RuntimeException("Boom!")
     val policy: RetryPolicy[F] = RetryPolicies.limitRetries[F](2)

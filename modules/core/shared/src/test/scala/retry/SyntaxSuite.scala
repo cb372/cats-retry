@@ -63,8 +63,8 @@ class SyntaxSuite extends FunSuite:
   fixture.test("retryingOnFailures - retry until the policy chooses to give up") { context =>
     import context.*
 
-    val policy: RetryPolicy[Id]        = RetryPolicies.limitRetries[Id](2)
-    given Sleep[Id] = _ => ()
+    val policy: RetryPolicy[Id] = RetryPolicies.limitRetries[Id](2)
+    given Sleep[Id]             = _ => ()
 
     def action: Id[String] =
       incrementAttempts()
