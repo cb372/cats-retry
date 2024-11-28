@@ -47,6 +47,7 @@ package object mtl:
             M.pure(Right(success)) // stop the recursion
         }
       }
+  end RetryingOnSomeErrorsPartiallyApplied
 
   private[retry] class RetryingOnAllErrorsPartiallyApplied[A]:
     def apply[M[_], E](
@@ -64,3 +65,4 @@ package object mtl:
         .apply[M, E](policy, _ => M.pure(true), onError)(
           action
         )
+end mtl

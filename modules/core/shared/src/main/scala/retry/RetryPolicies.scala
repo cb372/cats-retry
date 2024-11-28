@@ -148,3 +148,4 @@ object RetryPolicies:
       decideNextRetry,
       show"limitRetriesByCumulativeDelay(threshold=$threshold, $policy)"
     )
+end RetryPolicies

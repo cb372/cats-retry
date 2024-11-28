@@ -201,3 +201,4 @@ class SyntaxSuite extends FunSuite:
     )
     assertEquals(gaveUp, true)
   }
+end SyntaxSuite

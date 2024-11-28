@@ -223,3 +223,4 @@ class RetryPoliciesSuite extends ScalaCheckSuite:
     check(constantDelay(100.milliseconds), GiveUp)
     check(constantDelay(101.milliseconds), GiveUp)
   }
+end RetryPoliciesSuite

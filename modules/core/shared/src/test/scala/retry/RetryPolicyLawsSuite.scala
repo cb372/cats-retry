@@ -172,3 +172,4 @@ class RetryPolicyLawsSuite extends DisciplineSuite:
     "BoundedSemilattice[RetryPolicy]",
     BoundedSemilatticeTests[RetryPolicy[Id]].boundedSemilattice
   )
+end RetryPolicyLawsSuite

@@ -90,3 +90,4 @@ final class RetryingErrorOps[M[_], A, E](action: => M[A])(using
       onFailure = onFailure,
       onError = onError
     )(action)
+end RetryingErrorOps

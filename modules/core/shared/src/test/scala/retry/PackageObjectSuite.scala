@@ -501,3 +501,4 @@ class PackageObjectSuite extends FunSuite:
       assertEquals(attempts, 1)
       assertEquals(gaveUp, false)
   }
+end PackageObjectSuite

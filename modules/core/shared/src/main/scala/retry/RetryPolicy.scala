@@ -84,6 +84,7 @@ case class RetryPolicy[M[_]](
       status => nt(decideNextRetry(status)),
       show"$show.mapK(<FunctionK>)"
     )
+end RetryPolicy
 
 object RetryPolicy:
   def lift[M[_]](
@@ -121,3 +122,4 @@ object RetryPolicy:
 
   given [M[_]]: Show[RetryPolicy[M]] =
     Show.show(_.show)
+end RetryPolicy

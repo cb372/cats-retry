@@ -45,3 +45,4 @@ class RetryPolicySuite extends FunSuite:
       PolicyDecision.DelayAndRetry(2.seconds)
     )
   }
+end RetryPolicySuite
