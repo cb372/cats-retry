@@ -1,8 +1,8 @@
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
 import _root_.org.typelevel.scalacoptions.ScalacOptions
 
-lazy val scalaVersion3   = "3.3.3"
-lazy val scalaVersions   = List(scalaVersion3)
+lazy val scalaVersion3 = "3.3.3"
+lazy val scalaVersions = List(scalaVersion3)
 
 inThisBuild(
   Seq(
