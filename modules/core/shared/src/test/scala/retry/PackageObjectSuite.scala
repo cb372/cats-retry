@@ -6,30 +6,26 @@ import munit.FunSuite
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.*
 
-class PackageObjectSuite extends FunSuite {
+class PackageObjectSuite extends FunSuite:
   type StringOr[A] = Either[String, A]
 
   implicit val sleepForEither: Sleep[StringOr] = _ => Right(())
 
-  private class TestContext {
+  private class TestContext:
     var attempts = 0
     val errors   = ArrayBuffer.empty[String]
     val delays   = ArrayBuffer.empty[FiniteDuration]
     var gaveUp   = false
 
-    def onErrorId(error: String, details: RetryDetails): Id[Unit] = {
+    def onErrorId(error: String, details: RetryDetails): Id[Unit] =
       errors.append(error)
-      details match {
+      details match
         case RetryDetails.WillDelayAndRetry(delay, _, _) => delays.append(delay)
         case RetryDetails.GivingUp(_, _)                 => gaveUp = true
-      }
-    }
 
-    def onError(error: String, details: RetryDetails): Either[String, Unit] = {
+    def onError(error: String, details: RetryDetails): Either[String, Unit] =
       onErrorId(error, details)
       Right(())
-    }
-  }
 
   private val fixture = FunFixture[TestContext](
     setup = _ => new TestContext,
@@ -505,5 +501,3 @@ class PackageObjectSuite extends FunSuite {
       assertEquals(attempts, 1)
       assertEquals(gaveUp, false)
   }
-
-}

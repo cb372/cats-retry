@@ -7,13 +7,13 @@ import retry.{RetryDetails, RetryPolicies, Sleep}
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.*
 
-class PackageObjectSuite extends FunSuite {
+class PackageObjectSuite extends FunSuite:
   type ErrorOr[A] = Either[Throwable, A]
   type F[A]       = EitherT[ErrorOr, String, A]
 
   implicit val sleepForEitherT: Sleep[F] = _ => EitherT.pure(())
 
-  private class TestContext {
+  private class TestContext:
     var attempts = 0
     val errors   = ArrayBuffer.empty[String]
     val delays   = ArrayBuffer.empty[FiniteDuration]
@@ -22,15 +22,12 @@ class PackageObjectSuite extends FunSuite {
     def onMtlError(
         error: String,
         details: RetryDetails
-    ): F[Unit] = {
+    ): F[Unit] =
       errors.append(error)
-      details match {
+      details match
         case RetryDetails.WillDelayAndRetry(delay, _, _) => delays.append(delay)
         case RetryDetails.GivingUp(_, _)                 => gaveUp = true
-      }
       EitherT.pure(())
-    }
-  }
 
   private val fixture = FunFixture[TestContext](
     setup = _ => new TestContext,
@@ -177,5 +174,3 @@ class PackageObjectSuite extends FunSuite {
     assertEquals(attempts, 10001)
     assertEquals(gaveUp, true)
   }
-
-}

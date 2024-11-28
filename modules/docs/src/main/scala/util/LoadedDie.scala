@@ -1,13 +1,9 @@
 package util
 
-case class LoadedDie(rolls: Int*) {
+case class LoadedDie(rolls: Int*):
   private var i = -1
 
-  def roll(): Int = {
+  def roll(): Int =
     i = i + 1
-    if i >= rolls.length then {
-      i = 0
-    }
+    if i >= rolls.length then i = 0
     rolls(i)
-  }
-}

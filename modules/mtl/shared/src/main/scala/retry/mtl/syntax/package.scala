@@ -1,5 +1,4 @@
 package retry.mtl
 
-package object syntax {
+package object syntax:
   object all extends AllSyntax
-}

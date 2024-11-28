@@ -6,7 +6,7 @@ import munit.FunSuite
 
 import scala.concurrent.duration.*
 
-class RetryPolicySuite extends FunSuite {
+class RetryPolicySuite extends FunSuite:
 
   test(
     "BoundedSemilattice append - gives up if either of the composed policies decides to give up"
@@ -45,4 +45,3 @@ class RetryPolicySuite extends FunSuite {
       PolicyDecision.DelayAndRetry(2.seconds)
     )
   }
-}

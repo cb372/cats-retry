@@ -4,16 +4,15 @@ import cats.Monad
 import cats.mtl.Handle
 import retry.{RetryDetails, RetryPolicy, Sleep}
 
-trait RetrySyntax {
+trait RetrySyntax:
   implicit final def retrySyntaxMtlError[M[_], A](
       action: => M[A]
   )(implicit M: Monad[M]): RetryingMtlErrorOps[M, A] =
     new RetryingMtlErrorOps[M, A](action)
-}
 
 final class RetryingMtlErrorOps[M[_], A](action: => M[A])(implicit
     M: Monad[M]
-) {
+):
 
   def retryingOnAllMtlErrors[E](
       policy: RetryPolicy[M],
@@ -34,5 +33,3 @@ final class RetryingMtlErrorOps[M[_], A](action: => M[A])(implicit
       isWorthRetrying = isWorthRetrying,
       onError = onError
     )(action)
-
-}

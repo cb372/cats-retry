@@ -12,7 +12,7 @@ import cats.Show
 
 case class RetryPolicy[M[_]](
     decideNextRetry: RetryStatus => M[PolicyDecision]
-) {
+):
   def show: String = toString
 
   def followedBy(rp: RetryPolicy[M])(using M: Apply[M]): RetryPolicy[M] =
@@ -84,7 +84,6 @@ case class RetryPolicy[M[_]](
       status => nt(decideNextRetry(status)),
       show"$show.mapK(<FunctionK>)"
     )
-}
 
 object RetryPolicy:
   def lift[M[_]](
@@ -98,10 +97,9 @@ object RetryPolicy:
       decideNextRetry: RetryStatus => M[PolicyDecision],
       pretty: => String
   ): RetryPolicy[M] =
-    new RetryPolicy[M](decideNextRetry) {
+    new RetryPolicy[M](decideNextRetry):
       override def show: String     = pretty
       override def toString: String = pretty
-    }
 
   def liftWithShow[M[_]: Applicative](
       decideNextRetry: RetryStatus => PolicyDecision,
@@ -112,7 +110,7 @@ object RetryPolicy:
   given [M[_]](using
       M: Applicative[M]
   ): BoundedSemilattice[RetryPolicy[M]] =
-    new BoundedSemilattice[RetryPolicy[M]] {
+    new BoundedSemilattice[RetryPolicy[M]]:
       override def empty: RetryPolicy[M] =
         RetryPolicies.constantDelay[M](Duration.Zero)
 
@@ -120,7 +118,6 @@ object RetryPolicy:
           x: RetryPolicy[M],
           y: RetryPolicy[M]
       ): RetryPolicy[M] = x.join(y)
-    }
 
   given [M[_]]: Show[RetryPolicy[M]] =
     Show.show(_.show)

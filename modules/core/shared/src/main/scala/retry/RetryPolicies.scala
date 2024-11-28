@@ -10,7 +10,7 @@ import retry.PolicyDecision.*
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.util.Random
 
-object RetryPolicies {
+object RetryPolicies:
   private val LongMax: BigInt = BigInt(Long.MaxValue)
 
   /*
@@ -24,12 +24,11 @@ object RetryPolicies {
   private def safeMultiply(
       duration: FiniteDuration,
       multiplier: Long
-  ): FiniteDuration = {
+  ): FiniteDuration =
     val durationNanos   = BigInt(duration.toNanos)
     val resultNanos     = durationNanos * BigInt(multiplier)
     val safeResultNanos = resultNanos min LongMax
     FiniteDuration(safeResultNanos.toLong, TimeUnit.NANOSECONDS)
-  }
 
   /** Don't retry at all and always give up. Only really useful for combining with other policies.
     */
@@ -66,11 +65,8 @@ object RetryPolicies {
   def limitRetries[M[_]: Applicative](maxRetries: Int): RetryPolicy[M] =
     RetryPolicy.liftWithShow(
       { status =>
-        if status.retriesSoFar >= maxRetries then {
-          GiveUp
-        } else {
-          DelayAndRetry(Duration.Zero)
-        }
+        if status.retriesSoFar >= maxRetries then GiveUp
+        else DelayAndRetry(Duration.Zero)
       },
       show"limitRetries(maxRetries=$maxRetries)"
     )
@@ -121,7 +117,7 @@ object RetryPolicies {
   def limitRetriesByDelay[M[_]: Applicative](
       threshold: FiniteDuration,
       policy: RetryPolicy[M]
-  ): RetryPolicy[M] = {
+  ): RetryPolicy[M] =
     def decideNextRetry(status: RetryStatus): M[PolicyDecision] =
       policy.decideNextRetry(status).map {
         case r @ DelayAndRetry(delay) =>
@@ -133,7 +129,6 @@ object RetryPolicies {
       decideNextRetry,
       show"limitRetriesByDelay(threshold=$threshold, $policy)"
     )
-  }
 
   /** Add an upperbound to a policy such that once the cumulative delay over all retries has reached or
     * exceeded the given limit, the policy will stop retrying and give up.
@@ -141,7 +136,7 @@ object RetryPolicies {
   def limitRetriesByCumulativeDelay[M[_]: Applicative](
       threshold: FiniteDuration,
       policy: RetryPolicy[M]
-  ): RetryPolicy[M] = {
+  ): RetryPolicy[M] =
     def decideNextRetry(status: RetryStatus): M[PolicyDecision] =
       policy.decideNextRetry(status).map {
         case r @ DelayAndRetry(delay) =>
@@ -153,5 +148,3 @@ object RetryPolicies {
       decideNextRetry,
       show"limitRetriesByCumulativeDelay(threshold=$threshold, $policy)"
     )
-  }
-}

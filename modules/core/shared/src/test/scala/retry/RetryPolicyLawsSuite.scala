@@ -13,7 +13,7 @@ import cats.laws.discipline.eq.catsLawsEqForFn1Exhaustive
 import cats.arrow.FunctionK
 import cats.Monad
 
-class RetryPolicyLawsSuite extends DisciplineSuite {
+class RetryPolicyLawsSuite extends DisciplineSuite:
 
   implicit val cogenStatus: Cogen[RetryStatus] =
     Cogen { (seed, status) =>
@@ -23,11 +23,11 @@ class RetryPolicyLawsSuite extends DisciplineSuite {
     }
 
   implicit val arbitraryPolicyDecision: Arbitrary[PolicyDecision] =
-    Arbitrary(for {
+    Arbitrary(for
       delay <- Gen.choose(0L, Long.MaxValue).map(Duration.fromNanos)
       decision <- Gen
         .oneOf(PolicyDecision.GiveUp, PolicyDecision.DelayAndRetry(delay))
-    } yield decision)
+    yield decision)
 
   implicit val arbRetryPolicy: Arbitrary[RetryPolicy[Id]] =
     Arbitrary(
@@ -36,10 +36,10 @@ class RetryPolicyLawsSuite extends DisciplineSuite {
         .map(RetryPolicy.apply[Id])
     )
 
-  implicit val eqPolicyDecision: Eq[PolicyDecision] = Eq.by(_ match {
+  implicit val eqPolicyDecision: Eq[PolicyDecision] = Eq.by(_ match
     case PolicyDecision.GiveUp           => None
     case PolicyDecision.DelayAndRetry(d) => Some(d)
-  })
+  )
 
   implicit val retryStatusExhaustiveCheck: ExhaustiveCheck[RetryStatus] =
     ExhaustiveCheck.instance(
@@ -172,4 +172,3 @@ class RetryPolicyLawsSuite extends DisciplineSuite {
     "BoundedSemilattice[RetryPolicy]",
     BoundedSemilatticeTests[RetryPolicy[Id]].boundedSemilattice
   )
-}

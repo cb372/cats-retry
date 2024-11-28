@@ -10,11 +10,11 @@ import retry.{RetryDetails, RetryPolicies, RetryPolicy, Sleep}
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.*
 
-class SyntaxSuite extends FunSuite {
+class SyntaxSuite extends FunSuite:
   type ErrorOr[A] = Either[Throwable, A]
   type F[A]       = EitherT[ErrorOr, String, A]
 
-  private class TestContext {
+  private class TestContext:
     var attempts = 0
     val errors   = ArrayBuffer.empty[Either[Throwable, String]]
     val delays   = ArrayBuffer.empty[FiniteDuration]
@@ -29,15 +29,12 @@ class SyntaxSuite extends FunSuite {
     private def onErrorInternal(
         error: Either[Throwable, String],
         details: RetryDetails
-    ): F[Unit] = {
+    ): F[Unit] =
       errors.append(error)
-      details match {
+      details match
         case RetryDetails.WillDelayAndRetry(delay, _, _) => delays.append(delay)
         case RetryDetails.GivingUp(_, _)                 => gaveUp = true
-      }
       EitherT.pure(())
-    }
-  }
 
   private val fixture = FunFixture[TestContext](
     setup = _ => new TestContext,
@@ -52,15 +49,13 @@ class SyntaxSuite extends FunSuite {
     val error                  = new RuntimeException("Boom!")
     val policy: RetryPolicy[F] = RetryPolicies.constantDelay[F](1.second)
 
-    def action: F[String] = {
+    def action: F[String] =
       attempts = attempts + 1
 
-      attempts match {
+      attempts match
         case 1 => EitherT.leftT[ErrorOr, String]("one more time")
         case 2 => EitherT[ErrorOr, String, String](Left(error))
         case _ => EitherT.pure[ErrorOr, String]("yay")
-      }
-    }
 
     val finalResult: F[String] = action
       .retryingOnSomeErrors(s => EitherT.pure(s == error), policy, onError)
@@ -84,15 +79,13 @@ class SyntaxSuite extends FunSuite {
     val error                  = new RuntimeException("Boom!")
     val policy: RetryPolicy[F] = RetryPolicies.constantDelay[F](1.second)
 
-    def action: F[String] = {
+    def action: F[String] =
       attempts = attempts + 1
 
-      attempts match {
+      attempts match
         case 1 => EitherT.leftT[ErrorOr, String]("one more time")
         case 2 => EitherT[ErrorOr, String, String](Left(error))
         case _ => EitherT.leftT[ErrorOr, String]("nope")
-      }
-    }
 
     val finalResult: F[String] = action
       .retryingOnSomeErrors(s => EitherT.pure(s == error), policy, onError)
@@ -119,15 +112,13 @@ class SyntaxSuite extends FunSuite {
     val error                  = new RuntimeException("Boom!")
     val policy: RetryPolicy[F] = RetryPolicies.limitRetries[F](2)
 
-    def action: F[String] = {
+    def action: F[String] =
       attempts = attempts + 1
 
-      attempts match {
+      attempts match
         case 1 => EitherT.leftT[ErrorOr, String]("one more time")
         case 2 => EitherT[ErrorOr, String, String](Left(error))
         case _ => EitherT.leftT[ErrorOr, String]("one more time")
-      }
-    }
 
     val finalResult: F[String] = action
       .retryingOnSomeErrors(s => EitherT.pure(s == error), policy, onError)
@@ -159,15 +150,13 @@ class SyntaxSuite extends FunSuite {
     val error                  = new RuntimeException("Boom!")
     val policy: RetryPolicy[F] = RetryPolicies.constantDelay[F](1.second)
 
-    def action: F[String] = {
+    def action: F[String] =
       attempts = attempts + 1
 
-      attempts match {
+      attempts match
         case 1 => EitherT.leftT[ErrorOr, String]("one more time")
         case 2 => EitherT[ErrorOr, String, String](Left(error))
         case _ => EitherT.pure[ErrorOr, String]("yay")
-      }
-    }
 
     val finalResult: F[String] = action
       .retryingOnAllErrors(policy, onError)
@@ -187,15 +176,13 @@ class SyntaxSuite extends FunSuite {
     val error                  = new RuntimeException("Boom!")
     val policy: RetryPolicy[F] = RetryPolicies.limitRetries[F](2)
 
-    def action: F[String] = {
+    def action: F[String] =
       attempts = attempts + 1
 
-      attempts match {
+      attempts match
         case 1 => EitherT.leftT[ErrorOr, String]("one more time")
         case 2 => EitherT[ErrorOr, String, String](Left(error))
         case _ => EitherT.leftT[ErrorOr, String]("one more time")
-      }
-    }
 
     val finalResult: F[String] = action
       .retryingOnAllErrors(policy, onError)
@@ -214,5 +201,3 @@ class SyntaxSuite extends FunSuite {
     )
     assertEquals(gaveUp, true)
   }
-
-}

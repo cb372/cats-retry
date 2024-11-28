@@ -15,7 +15,7 @@ trait RetrySyntax:
   )(using M: MonadError[M, E]): RetryingErrorOps[M, A, E] =
     new RetryingErrorOps[M, A, E](action)
 
-final class RetryingOps[M[_], A](action: => M[A]) {
+final class RetryingOps[M[_], A](action: => M[A]):
   @deprecated("Use retryingOnFailures instead", "2.1.0")
   def retryingM[E](
       wasSuccessful: A => M[Boolean],
@@ -39,11 +39,10 @@ final class RetryingOps[M[_], A](action: => M[A]) {
       wasSuccessful = wasSuccessful,
       onFailure = onFailure
     )(action)
-}
 
 final class RetryingErrorOps[M[_], A, E](action: => M[A])(using
     M: MonadError[M, E]
-) {
+):
   def retryingOnAllErrors(
       policy: RetryPolicy[M],
       onError: (E, RetryDetails) => M[Unit]
@@ -91,4 +90,3 @@ final class RetryingErrorOps[M[_], A, E](action: => M[A])(using
       onFailure = onFailure,
       onError = onError
     )(action)
-}
