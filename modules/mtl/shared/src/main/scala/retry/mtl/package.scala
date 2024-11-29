@@ -6,13 +6,13 @@ import cats.syntax.apply.*
 import cats.syntax.flatMap.*
 import cats.syntax.functor.*
 
-package object mtl {
+package object mtl:
 
   def retryingOnSomeErrors[A] = new RetryingOnSomeErrorsPartiallyApplied[A]
 
   def retryingOnAllErrors[A] = new RetryingOnAllErrorsPartiallyApplied[A]
 
-  private[retry] class RetryingOnSomeErrorsPartiallyApplied[A] {
+  private[retry] class RetryingOnSomeErrorsPartiallyApplied[A]:
 
     def apply[M[_], E](
         policy: RetryPolicy[M],
@@ -23,36 +23,32 @@ package object mtl {
     )(using
         AH: Handle[M, E],
         T: Temporal[M]
-    ): M[A] = {
-
+    ): M[A] =
       T.tailRecM(RetryStatus.NoRetriesYet) { status =>
         AH.attempt(action).flatMap {
           case Left(error) =>
             def stopRecursion: M[Either[RetryStatus, A]] =
               AH.raise[E, A](error).map(Right(_))
             def runRetry: M[Either[RetryStatus, A]] =
-              for {
+              for
                 nextStep <- applyPolicy(policy, status)
                 _        <- onError(error, buildRetryDetails(status, nextStep))
-                result <- nextStep match {
+                result <- nextStep match
                   case NextStep.RetryAfterDelay(delay, updatedStatus) =>
                     T.sleep(delay) *>
                       T.pure(Left(updatedStatus)) // continue recursion
                   case NextStep.GiveUp =>
                     AH.raise[E, A](error).map(Right(_)) // stop the recursion
-                }
-              } yield result
+              yield result
 
             isWorthRetrying(error).ifM(runRetry, stopRecursion)
           case Right(success) =>
             T.pure(Right(success)) // stop the recursion
         }
       }
+  end RetryingOnSomeErrorsPartiallyApplied
 
-    }
-  }
-
-  private[retry] class RetryingOnAllErrorsPartiallyApplied[A] {
+  private[retry] class RetryingOnAllErrorsPartiallyApplied[A]:
     def apply[M[_], E](
         policy: RetryPolicy[M],
         onError: (E, RetryDetails) => M[Unit]
@@ -61,13 +57,10 @@ package object mtl {
     )(using
         AH: Handle[M, E],
         T: Temporal[M]
-    ): M[A] = {
+    ): M[A] =
       mtl
         .retryingOnSomeErrors[A]
         .apply[M, E](policy, _ => T.pure(true), onError)(
           action
         )
-    }
-  }
-
-}
+end mtl

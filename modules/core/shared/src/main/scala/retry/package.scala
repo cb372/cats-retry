@@ -69,7 +69,7 @@ package object retry:
       }
     }
 
-  private[retry] class RetryingOnAllErrorsPartiallyApplied[A] :
+  private[retry] class RetryingOnAllErrorsPartiallyApplied[A]:
     def apply[M[_]](
         policy: RetryPolicy[M],
         onError: (Throwable, RetryDetails) => M[Unit]
@@ -82,7 +82,7 @@ package object retry:
         action
       )
 
-  private[retry] class RetryingOnFailuresAndSomeErrorsPartiallyApplied[A] :
+  private[retry] class RetryingOnFailuresAndSomeErrorsPartiallyApplied[A]:
     def apply[M[_]](
         policy: RetryPolicy[M],
         wasSuccessful: A => M[Boolean],
@@ -93,8 +93,7 @@ package object retry:
         action: => M[A]
     )(using
         T: Temporal[M]
-    ): M[A] = {
-
+    ): M[A] =
       T.tailRecM(RetryStatus.NoRetriesYet) { status =>
         T.attempt(action).flatMap {
           case Right(a) =>
@@ -110,7 +109,7 @@ package object retry:
         }
       }
 
-  private[retry] class RetryingOnFailuresAndAllErrorsPartiallyApplied[A] :
+  private[retry] class RetryingOnFailuresAndAllErrorsPartiallyApplied[A]:
     def apply[M[_]](
         policy: RetryPolicy[M],
         wasSuccessful: A => M[Boolean],
@@ -144,8 +143,7 @@ package object retry:
       a: A
   )(using
       T: Temporal[M]
-  ): M[Either[RetryStatus, A]] = {
-
+  ): M[Either[RetryStatus, A]] =
     def onFalse: M[Either[RetryStatus, A]] = for
       nextStep <- applyPolicy(policy, status)
       _        <- onFailure(a, buildRetryDetails(status, nextStep))
@@ -155,7 +153,6 @@ package object retry:
             T.pure(Left(updatedStatus)) // continue recursion
         case NextStep.GiveUp =>
           T.pure(Right(a)) // stop the recursion
-
     yield result
 
     wasSuccessful(a).ifM(
@@ -171,25 +168,23 @@ package object retry:
       attempt: Either[E, A]
   )(using
       T: Temporal[M]
-  ): M[Either[RetryStatus, A]] = attempt match {
+  ): M[Either[RetryStatus, A]] = attempt match
     case Left(error) =>
       isWorthRetrying(error).ifM(
-        for {
+        for
           nextStep <- applyPolicy(policy, status)
           _        <- onError(error, buildRetryDetails(status, nextStep))
-          result <- nextStep match {
+          result <- nextStep match
             case NextStep.RetryAfterDelay(delay, updatedStatus) =>
               T.sleep(delay) *>
                 T.pure(Left(updatedStatus)) // continue recursion
             case NextStep.GiveUp =>
               T.raiseError[A](error).map(Right(_)) // stop the recursion
-          }
-        } yield result,
+        yield result,
         T.raiseError[A](error).map(Right(_)) // stop the recursion
       )
     case Right(success) =>
       T.pure(Right(success)) // stop the recursion
-  }
 
   private[retry] def applyPolicy[M[_]: Monad](
       policy: RetryPolicy[M],

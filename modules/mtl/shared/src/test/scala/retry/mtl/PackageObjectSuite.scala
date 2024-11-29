@@ -4,11 +4,11 @@ import cats.data.EitherT
 import munit.CatsEffectSuite
 import retry.{RetryDetails, RetryPolicies}
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import cats.effect.IO
 import cats.effect.kernel.Ref
 
-class PackageObjectSuite extends CatsEffectSuite {
+class PackageObjectSuite extends CatsEffectSuite:
 
   case class AppError(msg: String)
   type Effect[A] = EitherT[IO, AppError, A]
@@ -21,14 +21,14 @@ class PackageObjectSuite extends CatsEffectSuite {
       gaveUp: Boolean = false
   )
 
-  private class Fixture(stateRef: Ref[IO, State]) {
+  private class Fixture(stateRef: Ref[IO, State]):
     def incrementAttempts(): IO[Unit] =
       stateRef.update(state => state.copy(attempts = state.attempts + 1))
 
     def onError(error: Throwable, details: RetryDetails): Effect[Unit] =
       EitherT.liftF {
         stateRef.update { state =>
-          details match {
+          details match
             case RetryDetails.WillDelayAndRetry(delay, _, _) =>
               state.copy(
                 errors = state.errors :+ error.getMessage,
@@ -39,7 +39,6 @@ class PackageObjectSuite extends CatsEffectSuite {
                 errors = state.errors :+ error.getMessage,
                 gaveUp = true
               )
-          }
         }
       }
 
@@ -48,7 +47,7 @@ class PackageObjectSuite extends CatsEffectSuite {
         details: RetryDetails
     ): Effect[Unit] = EitherT.liftF {
       stateRef.update { state =>
-        details match {
+        details match
           case RetryDetails.WillDelayAndRetry(delay, _, _) =>
             state.copy(
               appErrors = state.appErrors :+ error,
@@ -59,13 +58,12 @@ class PackageObjectSuite extends CatsEffectSuite {
               appErrors = state.appErrors :+ error,
               gaveUp = true
             )
-        }
       }
     }
 
     def getState: IO[State]  = stateRef.get
     def getAttempts: IO[Int] = getState.map(_.attempts)
-  }
+  end Fixture
 
   private val mkFixture: IO[Fixture] = Ref.of[IO, State](State()).map(new Fixture(_))
 
@@ -78,23 +76,20 @@ class PackageObjectSuite extends CatsEffectSuite {
 
     def action(fixture: Fixture): Effect[String] =
       EitherT.liftF(fixture.incrementAttempts() >> fixture.getAttempts).flatMap { attempts =>
-        if (attempts < 3)
-          EitherT.leftT(AppError("one more time"))
-        else
-          EitherT.pure("yay")
+        if attempts < 3 then EitherT.leftT(AppError("one more time"))
+        else EitherT.pure("yay")
       }
 
-    for {
+    for
       fixture     <- mkFixture
       finalResult <- retryingOnSomeErrors(policy, isWorthRetrying, fixture.onMtlError)(action(fixture)).value
       state       <- fixture.getState
-    } yield {
+    yield
       assertEquals(finalResult, Right("yay"))
       assertEquals(state.attempts, 3)
       assertEquals(state.appErrors.toList, List(AppError("one more time"), AppError("one more time")))
       assertEquals(state.delays.toList, List(1.second, 1.second))
       assertEquals(state.gaveUp, false)
-    }
   }
 
   test("retryingOnSomeErrors - retry only if the error is worth retrying") {
@@ -105,22 +100,19 @@ class PackageObjectSuite extends CatsEffectSuite {
 
     def action(fixture: Fixture): Effect[String] =
       EitherT.liftF(fixture.incrementAttempts() >> fixture.getAttempts).flatMap { attempts =>
-        if (attempts < 3)
-          EitherT.leftT(AppError("one more time"))
-        else
-          EitherT.leftT(AppError("nope"))
+        if attempts < 3 then EitherT.leftT(AppError("one more time"))
+        else EitherT.leftT(AppError("nope"))
       }
 
-    for {
+    for
       fixture     <- mkFixture
       finalResult <- retryingOnSomeErrors(policy, isWorthRetrying, fixture.onMtlError)(action(fixture)).value
       state       <- fixture.getState
-    } yield {
+    yield
       assertEquals(finalResult, Left(AppError("nope")))
       assertEquals(state.attempts, 3)
       assertEquals(state.appErrors.toList, List(AppError("one more time"), AppError("one more time")))
       assertEquals(state.gaveUp, false)
-    }
   }
 
   test("retryingOnSomeErrors - retry until the policy chooses to give up") {
@@ -135,11 +127,11 @@ class PackageObjectSuite extends CatsEffectSuite {
         EitherT.leftT(AppError("one more time"))
       }
 
-    for {
+    for
       fixture     <- mkFixture
       finalResult <- retryingOnSomeErrors(policy, isWorthRetrying, fixture.onMtlError)(action(fixture)).value
       state       <- fixture.getState
-    } yield {
+    yield
       assertEquals(finalResult, Left(AppError("one more time")))
       assertEquals(state.attempts, 3)
       assertEquals(
@@ -147,7 +139,6 @@ class PackageObjectSuite extends CatsEffectSuite {
         List(AppError("one more time"), AppError("one more time"), AppError("one more time"))
       )
       assertEquals(state.gaveUp, true)
-    }
   }
 
   test("retryingOnSomeErrors - retry in a stack-safe way") {
@@ -162,15 +153,14 @@ class PackageObjectSuite extends CatsEffectSuite {
         EitherT.leftT(AppError("one more time"))
       }
 
-    for {
+    for
       fixture     <- mkFixture
       finalResult <- retryingOnSomeErrors(policy, isWorthRetrying, fixture.onMtlError)(action(fixture)).value
       state       <- fixture.getState
-    } yield {
+    yield
       assertEquals(finalResult, Left(AppError("one more time")))
       assertEquals(state.attempts, 10_001)
       assertEquals(state.gaveUp, true)
-    }
   }
 
   test("retryingOnAllErrors - retry until the action succeeds") {
@@ -179,23 +169,20 @@ class PackageObjectSuite extends CatsEffectSuite {
 
     def action(fixture: Fixture): Effect[String] =
       EitherT.liftF(fixture.incrementAttempts() >> fixture.getAttempts).flatMap { attempts =>
-        if (attempts < 3)
-          EitherT.leftT(AppError("one more time"))
-        else
-          EitherT.pure("yay")
+        if attempts < 3 then EitherT.leftT(AppError("one more time"))
+        else EitherT.pure("yay")
       }
 
-    for {
+    for
       fixture     <- mkFixture
       finalResult <- retryingOnAllErrors(policy, fixture.onMtlError)(action(fixture)).value
       state       <- fixture.getState
-    } yield {
+    yield
       assertEquals(finalResult, Right("yay"))
       assertEquals(state.attempts, 3)
       assertEquals(state.appErrors.toList, List(AppError("one more time"), AppError("one more time")))
       assertEquals(state.delays.toList, List(1.second, 1.second))
       assertEquals(state.gaveUp, false)
-    }
   }
 
   test("retryingOnAllErrors - retry until the policy chooses to give up") {
@@ -207,11 +194,11 @@ class PackageObjectSuite extends CatsEffectSuite {
         EitherT.leftT(AppError("one more time"))
       }
 
-    for {
+    for
       fixture     <- mkFixture
       finalResult <- retryingOnAllErrors(policy, fixture.onMtlError)(action(fixture)).value
       state       <- fixture.getState
-    } yield {
+    yield
       assertEquals(finalResult, Left(AppError("one more time")))
       assertEquals(state.attempts, 3)
       assertEquals(
@@ -219,7 +206,6 @@ class PackageObjectSuite extends CatsEffectSuite {
         List(AppError("one more time"), AppError("one more time"), AppError("one more time"))
       )
       assertEquals(state.gaveUp, true)
-    }
   }
 
   test("retryingOnAllErrors - retry in a stack-safe way") {
@@ -230,15 +216,13 @@ class PackageObjectSuite extends CatsEffectSuite {
         EitherT.leftT(AppError("one more time"))
       }
 
-    for {
+    for
       fixture     <- mkFixture
       finalResult <- retryingOnAllErrors(policy, fixture.onMtlError)(action(fixture)).value
       state       <- fixture.getState
-    } yield {
+    yield
       assertEquals(finalResult, Left(AppError("one more time")))
       assertEquals(state.attempts, 10_001)
       assertEquals(state.gaveUp, true)
-    }
   }
-
-}
+end PackageObjectSuite
