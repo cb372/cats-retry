@@ -160,12 +160,12 @@ package object retry:
       onFalse
     )
 
-  private def retryingOnSomeErrorsImpl[M[_], A, E <: Throwable](
+  private def retryingOnSomeErrorsImpl[M[_], A](
       policy: RetryPolicy[M],
-      isWorthRetrying: E => M[Boolean],
-      onError: (E, RetryDetails) => M[Unit],
+      isWorthRetrying: Throwable => M[Boolean],
+      onError: (Throwable, RetryDetails) => M[Unit],
       status: RetryStatus,
-      attempt: Either[E, A]
+      attempt: Either[Throwable, A]
   )(using
       T: Temporal[M]
   ): M[Either[RetryStatus, A]] = attempt match

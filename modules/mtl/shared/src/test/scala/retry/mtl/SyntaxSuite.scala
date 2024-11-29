@@ -71,7 +71,7 @@ class SyntaxSuite extends CatsEffectSuite:
 
   test("retryingOnSomeMtlErrors - retry until the action succeeds") {
 
-    val policy: RetryPolicy[Effect] = RetryPolicies.constantDelay[Effect](1.second)
+    val policy: RetryPolicy[Effect] = RetryPolicies.constantDelay[Effect](1.milli)
 
     def action(fixture: Fixture): Effect[String] =
       EitherT.liftF(fixture.incrementAttempts() >> fixture.getAttempts).flatMap {
@@ -104,7 +104,7 @@ class SyntaxSuite extends CatsEffectSuite:
 
   test("retryingOnSomeMtlErrors - retry only if the error is worth retrying") {
 
-    val policy: RetryPolicy[Effect] = RetryPolicies.constantDelay[Effect](1.second)
+    val policy: RetryPolicy[Effect] = RetryPolicies.constantDelay[Effect](1.milli)
 
     def action(fixture: Fixture): Effect[String] =
       EitherT.liftF(fixture.incrementAttempts() >> fixture.getAttempts).flatMap {
@@ -170,7 +170,7 @@ class SyntaxSuite extends CatsEffectSuite:
 
   test("retryingOnAllMtlErrors - retry until the action succeeds") {
 
-    val policy: RetryPolicy[Effect] = RetryPolicies.constantDelay[Effect](1.second)
+    val policy: RetryPolicy[Effect] = RetryPolicies.constantDelay[Effect](1.milli)
 
     def action(fixture: Fixture): Effect[String] =
       EitherT.liftF(fixture.incrementAttempts() >> fixture.getAttempts).flatMap {

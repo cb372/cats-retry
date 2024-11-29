@@ -69,7 +69,7 @@ class PackageObjectSuite extends CatsEffectSuite:
 
   test("retryingOnSomeErrors - retry until the action succeeds") {
 
-    val policy = RetryPolicies.constantDelay[Effect](1.second)
+    val policy = RetryPolicies.constantDelay[Effect](1.milli)
 
     val isWorthRetrying: AppError => Effect[Boolean] =
       s => EitherT.pure(s == AppError("one more time"))
@@ -88,7 +88,7 @@ class PackageObjectSuite extends CatsEffectSuite:
       assertEquals(finalResult, Right("yay"))
       assertEquals(state.attempts, 3)
       assertEquals(state.appErrors.toList, List(AppError("one more time"), AppError("one more time")))
-      assertEquals(state.delays.toList, List(1.second, 1.second))
+      assertEquals(state.delays.toList, List(1.milli, 1.milli))
       assertEquals(state.gaveUp, false)
   }
 
@@ -165,7 +165,7 @@ class PackageObjectSuite extends CatsEffectSuite:
 
   test("retryingOnAllErrors - retry until the action succeeds") {
 
-    val policy = RetryPolicies.constantDelay[Effect](1.second)
+    val policy = RetryPolicies.constantDelay[Effect](1.milli)
 
     def action(fixture: Fixture): Effect[String] =
       EitherT.liftF(fixture.incrementAttempts() >> fixture.getAttempts).flatMap { attempts =>
@@ -181,7 +181,7 @@ class PackageObjectSuite extends CatsEffectSuite:
       assertEquals(finalResult, Right("yay"))
       assertEquals(state.attempts, 3)
       assertEquals(state.appErrors.toList, List(AppError("one more time"), AppError("one more time")))
-      assertEquals(state.delays.toList, List(1.second, 1.second))
+      assertEquals(state.delays.toList, List(1.milli, 1.milli))
       assertEquals(state.gaveUp, false)
   }
 

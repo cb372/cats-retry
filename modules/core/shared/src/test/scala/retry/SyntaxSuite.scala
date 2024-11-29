@@ -42,7 +42,7 @@ class SyntaxSuite extends CatsEffectSuite:
 
   test("retryingOnFailures - retry until the action succeeds") {
 
-    val policy: RetryPolicy[IO]                 = RetryPolicies.constantDelay[IO](1.second)
+    val policy: RetryPolicy[IO]                 = RetryPolicies.constantDelay[IO](1.milli)
     def wasSuccessful(res: String): IO[Boolean] = IO.pure(res.toInt > 3)
 
     def action(fixture: Fixture): IO[String] =
@@ -56,7 +56,7 @@ class SyntaxSuite extends CatsEffectSuite:
       assertEquals(finalResult, "4")
       assertEquals(state.attempts, 4)
       assertEquals(state.errors.toList, List("1", "2", "3"))
-      assertEquals(state.delays.toList, List(1.second, 1.second, 1.second))
+      assertEquals(state.delays.toList, List(1.milli, 1.milli, 1.milli))
       assertEquals(state.gaveUp, false)
   }
 
@@ -83,7 +83,7 @@ class SyntaxSuite extends CatsEffectSuite:
 
   test("retryingOnSomeErrors - retry until the action succeeds") {
 
-    val policy: RetryPolicy[IO] = RetryPolicies.constantDelay[IO](1.second)
+    val policy: RetryPolicy[IO] = RetryPolicies.constantDelay[IO](1.milli)
 
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
@@ -109,7 +109,7 @@ class SyntaxSuite extends CatsEffectSuite:
 
   test("retryingOnSomeErrors - retry only if the error is worth retrying") {
 
-    val policy: RetryPolicy[IO] = RetryPolicies.constantDelay[IO](1.second)
+    val policy: RetryPolicy[IO] = RetryPolicies.constantDelay[IO](1.milli)
 
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
@@ -164,7 +164,7 @@ class SyntaxSuite extends CatsEffectSuite:
   }
 
   test("retryingOnAllErrors - retry until the action succeeds") {
-    val policy: RetryPolicy[IO] = RetryPolicies.constantDelay[IO](1.second)
+    val policy: RetryPolicy[IO] = RetryPolicies.constantDelay[IO](1.milli)
 
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
