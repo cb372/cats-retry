@@ -13,15 +13,10 @@ package object retry:
 
   def retryingOnFailures[A] = new RetryingOnFailuresPartiallyApplied[A]
 
-  def retryingOnSomeErrors[A] = new RetryingOnSomeErrorsPartiallyApplied[A]
+  def retryingOnErrors[A] = new RetryingOnErrorsPartiallyApplied[A]
 
-  def retryingOnAllErrors[A] = new RetryingOnAllErrorsPartiallyApplied[A]
-
-  def retryingOnFailuresAndSomeErrors[A] =
-    new RetryingOnFailuresAndSomeErrorsPartiallyApplied[A]
-
-  def retryingOnFailuresAndAllErrors[A] =
-    new RetryingOnFailuresAndAllErrorsPartiallyApplied[A]
+  def retryingOnFailuresAndErrors[A] =
+    new RetryingOnFailuresAndErrorsPartiallyApplied[A]
 
   def noop[M[_]: Applicative, A]: (A, RetryDetails) => M[Unit] =
     (_, _) => Applicative[M].unit
@@ -62,7 +57,7 @@ package object retry:
       }
     }
 
-  private[retry] class RetryingOnSomeErrorsPartiallyApplied[A]:
+  private[retry] class RetryingOnErrorsPartiallyApplied[A]:
     def apply[M[_], E](
         policy: RetryPolicy[M],
         errorHandler: ResultHandler[M, E, A]
@@ -83,27 +78,7 @@ package object retry:
       }
     }
 
-  // TODO could we get rid of this variant to reduce the surface area of the API?
-  // It feels a bit redundant.
-  // retryingOnSomeErrors could be renamed to simply retryingOnErrors,
-  // since the errorHandler can choose whether to retry on all errors or only some.
-  private[retry] class RetryingOnAllErrorsPartiallyApplied[A]:
-    def apply[M[_], E](
-        policy: RetryPolicy[M],
-        onError: (E, RetryDetails) => M[Unit]
-    )(
-        action: => M[A]
-    )(using
-        ME: MonadError[M, E],
-        S: Sleep[M]
-    ): M[A] =
-      val errorHandler: ResultHandler[M, E, A] = ResultHandler.alwaysRetry(onError)
-
-      retryingOnSomeErrors[A].apply[M, E](policy, errorHandler)(
-        action
-      )
-
-  private[retry] class RetryingOnFailuresAndSomeErrorsPartiallyApplied[A]:
+  private[retry] class RetryingOnFailuresAndErrorsPartiallyApplied[A]:
     def apply[M[_], E](
         policy: RetryPolicy[M],
         resultOrErrorHandler: ResultHandler[M, Either[E, A], A]
@@ -132,33 +107,7 @@ package object retry:
             )
         }
       }
-  end RetryingOnFailuresAndSomeErrorsPartiallyApplied
-
-  private[retry] class RetryingOnFailuresAndAllErrorsPartiallyApplied[A]:
-    def apply[M[_], E](
-        policy: RetryPolicy[M],
-        resultHandler: ResultHandler[M, A, A],
-        onError: (E, RetryDetails) => M[Unit]
-    )(
-        action: => M[A]
-    )(using
-        ME: MonadError[M, E],
-        S: Sleep[M]
-    ): M[A] =
-      val errorHandler: ResultHandler[M, E, A] = ResultHandler.alwaysRetry(onError)
-      val resultOrErrorHandler: ResultHandler[M, Either[E, A], A] =
-        (result: Either[E, A], rd: RetryDetails) =>
-          result match
-            case Left(e)  => errorHandler(e, rd)
-            case Right(a) => resultHandler(a, rd)
-
-      retryingOnFailuresAndSomeErrors[A]
-        .apply[M, E](
-          policy,
-          resultOrErrorHandler
-        )(
-          action
-        )
+  end RetryingOnFailuresAndErrorsPartiallyApplied
 
   /*
    * Implementation

@@ -1,7 +1,7 @@
 package retry.syntax
 
 import cats.{Monad, MonadError}
-import retry.{ResultHandler, RetryDetails, RetryPolicy, Sleep}
+import retry.{ResultHandler, RetryPolicy, Sleep}
 
 trait RetrySyntax:
   // TODO how to translate these to methods to scala3?
@@ -31,41 +31,21 @@ final class RetryingOps[M[_], A](action: => M[A]):
 final class RetryingErrorOps[M[_], A, E](action: => M[A])(using
     M: MonadError[M, E]
 ):
-  def retryingOnAllErrors(
-      policy: RetryPolicy[M],
-      onError: (E, RetryDetails) => M[Unit]
-  )(using S: Sleep[M]): M[A] =
-    retry.retryingOnAllErrors(
-      policy = policy,
-      onError = onError
-    )(action)
 
-  def retryingOnSomeErrors(
+  def retryingOnErrors(
       policy: RetryPolicy[M],
       errorHandler: ResultHandler[M, E, A]
   )(using S: Sleep[M]): M[A] =
-    retry.retryingOnSomeErrors(
+    retry.retryingOnErrors(
       policy = policy,
       errorHandler = errorHandler
     )(action)
 
-  def retryingOnFailuresAndAllErrors(
-      policy: RetryPolicy[M],
-      resultHandler: ResultHandler[M, A, A],
-      onError: (E, RetryDetails) => M[Unit]
-  )(using S: Sleep[M]): M[A] =
-    retry.retryingOnFailuresAndAllErrors(
-      policy = policy,
-      resultHandler = resultHandler,
-      onError = onError
-    )(action)
-
-  def retryingOnFailuresAndSomeErrors(
+  def retryingOnFailuresAndErrors(
       policy: RetryPolicy[M],
       resultOrErrorHandler: ResultHandler[M, Either[E, A], A]
   )(using S: Sleep[M]): M[A] =
-    retry.retryingOnFailuresAndSomeErrors(
+    retry.retryingOnFailuresAndErrors(
       policy = policy,
       resultOrErrorHandler = resultOrErrorHandler
     )(action)
-end RetryingErrorOps
