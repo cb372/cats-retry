@@ -69,7 +69,7 @@ package object retry:
         S: Sleep[M]
     ): M[A] = ME.tailRecM((action, RetryStatus.NoRetriesYet)) { (currentAction, status) =>
       ME.attempt(currentAction).flatMap { attempt =>
-        retryingOnSomeErrorsImpl(
+        retryingOnErrorsImpl(
           policy,
           errorHandler,
           status,
@@ -99,7 +99,7 @@ package object retry:
           case Right(actionResult) =>
             retryingOnFailuresImpl(policy, valueHandler, status, currentAction, actionResult)
           case attempt =>
-            retryingOnSomeErrorsImpl(
+            retryingOnErrorsImpl(
               policy,
               errorHandler,
               status,
@@ -161,7 +161,7 @@ package object retry:
     yield result
   end retryingOnFailuresImpl
 
-  private def retryingOnSomeErrorsImpl[M[_], A, E](
+  private def retryingOnErrorsImpl[M[_], A, E](
       policy: RetryPolicy[M],
       errorHandler: ResultHandler[M, E, A],
       status: RetryStatus,
@@ -192,7 +192,7 @@ package object retry:
       handlerDecision match
         case HandlerDecision.Done =>
           // Error is not worth retrying. Stop the recursion and raise the error.
-          ME.raiseError[A](error).map(Right(_)) // stop the recursion
+          ME.raiseError[A](error).map(Right(_))
         case HandlerDecision.Continue =>
           // Depending on what the retry policy decided,
           // either delay and then retry the same action, or give up
@@ -212,7 +212,7 @@ package object retry:
         yield result
       case Right(success) =>
         ME.pure(Right(success)) // stop the recursion
-  end retryingOnSomeErrorsImpl
+  end retryingOnErrorsImpl
 
   private[retry] def applyPolicy[M[_]: Monad](
       policy: RetryPolicy[M],

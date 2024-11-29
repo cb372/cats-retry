@@ -2,7 +2,7 @@ package retry.mtl.syntax
 
 import cats.Monad
 import cats.mtl.Handle
-import retry.{RetryDetails, RetryPolicy, Sleep}
+import retry.{ResultHandler, RetryDetails, RetryPolicy, Sleep}
 
 trait RetrySyntax:
   // TODO how to migrate this to scala 3?
@@ -15,22 +15,11 @@ final class RetryingMtlErrorOps[M[_], A](action: => M[A])(using
     M: Monad[M]
 ):
 
-  def retryingOnAllMtlErrors[E](
+  def retryingOnMtlErrors[E](
       policy: RetryPolicy[M],
-      onError: (E, RetryDetails) => M[Unit]
+      errorHandler: ResultHandler[M, E, A]
   )(using S: Sleep[M], AH: Handle[M, E]): M[A] =
-    retry.mtl.retryingOnAllErrors(
+    retry.mtl.retryingOnErrors(
       policy = policy,
-      onError = onError
-    )(action)
-
-  def retryingOnSomeMtlErrors[E](
-      isWorthRetrying: E => M[Boolean],
-      policy: RetryPolicy[M],
-      onError: (E, RetryDetails) => M[Unit]
-  )(using S: Sleep[M], AH: Handle[M, E]): M[A] =
-    retry.mtl.retryingOnSomeErrors(
-      policy = policy,
-      isWorthRetrying = isWorthRetrying,
-      onError = onError
+      errorHandler = errorHandler
     )(action)
