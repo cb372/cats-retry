@@ -150,7 +150,7 @@ Cats-retry-mtl include some syntactic sugar in order to reduce boilerplate.
 ```scala mdoc:reset
 import retry._
 import cats.data.EitherT
-import cats.effect.{Sync, IO}
+import cats.effect.{Sync, IO, Temporal}
 import cats.syntax.functor._
 import cats.syntax.flatMap._
 import cats.mtl.Handle
