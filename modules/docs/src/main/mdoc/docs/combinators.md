@@ -30,7 +30,7 @@ errors, but you want to retry until it returns a value that you are happy with.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnFailures[M[_]: Monad: Temporal, A](policy: RetryPolicy[M],
+def retryingOnFailures[M[_]: Temporal, A](policy: RetryPolicy[M],
                                               wasSuccessful: A => M[Boolean],
                                               onFailure: (A, RetryDetails) => M[Unit])
                                               (action: => M[A]): M[A]

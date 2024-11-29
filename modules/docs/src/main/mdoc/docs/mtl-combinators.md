@@ -50,7 +50,7 @@ whether a given error is worth retrying.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnSomeErrors[M[_]: Monad: Temporal, A, E: Handle[M, *]](
+def retryingOnSomeErrors[M[_]: Temporal, A, E: Handle[M, *]](
   policy: RetryPolicy[M],
   isWorthRetrying: E => M[Boolean],
   onError: (E, RetryDetails) => M[Unit]
@@ -103,7 +103,7 @@ retry on all errors.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnSomeErrors[M[_]: Monad: Temporal, A, E: Handle[M, *]](
+def retryingOnSomeErrors[M[_]: Temporal, A, E: Handle[M, *]](
   policy: RetryPolicy[M],
   onError: (E, RetryDetails) => M[Unit]
 )(action: => M[A]): M[A]
