@@ -39,8 +39,10 @@ class PackageObjectSuite extends CatsEffectSuite:
 
   private val mkFixture: IO[Fixture] = Ref.of[IO, State](State()).map(new Fixture(_))
 
-  test("retryingOnFailures - retry until the action succeeds") {
+  private val oneMoreTimeException      = new RuntimeException("one more time")
+  private val notWorthRetryingException = new RuntimeException("nope")
 
+  test("retryingOnFailures - retry until the action succeeds") {
     val policy = RetryPolicies.constantDelay[IO](1.milli)
 
     def action(fixture: Fixture): IO[String] =
@@ -63,7 +65,6 @@ class PackageObjectSuite extends CatsEffectSuite:
   }
 
   test("retryingOnFailures - retry until the policy chooses to give up") {
-
     val policy = RetryPolicies.limitRetries[IO](2)
 
     def action(fixture: Fixture): IO[String] =
@@ -86,7 +87,6 @@ class PackageObjectSuite extends CatsEffectSuite:
   }
 
   test("retryingOnFailures - retry in a stack-safe way") {
-
     val policy = RetryPolicies.limitRetries[IO](10_000)
 
     def action(fixture: Fixture): IO[String] =
@@ -112,7 +112,7 @@ class PackageObjectSuite extends CatsEffectSuite:
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
         fixture.getAttempts.flatMap { attempts =>
-          if attempts < 3 then IO.raiseError(new RuntimeException("one more time"))
+          if attempts < 3 then IO.raiseError(oneMoreTimeException)
           else IO.pure("yay")
         }
 
@@ -137,8 +137,8 @@ class PackageObjectSuite extends CatsEffectSuite:
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
         fixture.getAttempts.flatMap { attempts =>
-          if attempts < 3 then IO.raiseError[String](new RuntimeException("one more time"))
-          else IO.raiseError[String](new RuntimeException("nope"))
+          if attempts < 3 then IO.raiseError[String](oneMoreTimeException)
+          else IO.raiseError[String](notWorthRetryingException)
         }
 
     for
@@ -147,11 +147,10 @@ class PackageObjectSuite extends CatsEffectSuite:
         policy,
         e => IO.pure(e.getMessage == "one more time"),
         (err, rd) => fixture.onError(err.getMessage, rd)
-      )(action(fixture))
-        .recover { case e => e.getMessage }
+      )(action(fixture)).attempt
       state <- fixture.getState
     yield
-      assertEquals(result, "nope")
+      assertEquals(result, Left(notWorthRetryingException))
       assertEquals(state.attempts, 3)
       assertEquals(state.errors.toList, List("one more time", "one more time"))
       assertEquals(
@@ -165,7 +164,7 @@ class PackageObjectSuite extends CatsEffectSuite:
 
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
-        IO.raiseError[String](new RuntimeException("one more time"))
+        IO.raiseError[String](oneMoreTimeException)
 
     for
       fixture <- mkFixture
@@ -173,11 +172,10 @@ class PackageObjectSuite extends CatsEffectSuite:
         policy,
         e => IO.pure(e.getMessage == "one more time"),
         (err, rd) => fixture.onError(err.getMessage, rd)
-      )(action(fixture))
-        .recover { case e => e.getMessage }
+      )(action(fixture)).attempt
       state <- fixture.getState
     yield
-      assertEquals(result, "one more time")
+      assertEquals(result, Left(oneMoreTimeException))
       assertEquals(state.attempts, 3)
       assertEquals(state.errors.toList, List("one more time", "one more time", "one more time"))
       assertEquals(state.gaveUp, true)
@@ -188,7 +186,7 @@ class PackageObjectSuite extends CatsEffectSuite:
 
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
-        IO.raiseError[String](new RuntimeException("one more time"))
+        IO.raiseError[String](oneMoreTimeException)
 
     for
       fixture <- mkFixture
@@ -196,11 +194,10 @@ class PackageObjectSuite extends CatsEffectSuite:
         policy,
         e => IO.pure(e.getMessage == "one more time"),
         (err, rd) => fixture.onError(err.getMessage, rd)
-      )(action(fixture))
-        .recover { case e => e.getMessage }
+      )(action(fixture)).attempt
       state <- fixture.getState
     yield
-      assertEquals(result, "one more time")
+      assertEquals(result, Left(oneMoreTimeException))
       assertEquals(state.attempts, 10_001)
       assertEquals(state.gaveUp, true)
   }
@@ -211,7 +208,7 @@ class PackageObjectSuite extends CatsEffectSuite:
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
         fixture.getAttempts.flatMap { attempts =>
-          if attempts < 3 then IO.raiseError(new RuntimeException("one more time"))
+          if attempts < 3 then IO.raiseError(oneMoreTimeException)
           else IO.pure("yay")
         }
 
@@ -234,18 +231,17 @@ class PackageObjectSuite extends CatsEffectSuite:
 
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
-        IO.raiseError[String](new RuntimeException("one more time"))
+        IO.raiseError[String](oneMoreTimeException)
 
     for
       fixture <- mkFixture
       result <- retryingOnAllErrors[String][IO](
         policy,
         (err, rd) => fixture.onError(err.getMessage, rd)
-      )(action(fixture))
-        .recover { case e => e.getMessage }
+      )(action(fixture)).attempt
       state <- fixture.getState
     yield
-      assertEquals(result, "one more time")
+      assertEquals(result, Left(oneMoreTimeException))
       assertEquals(state.attempts, 3)
       assertEquals(state.errors.toList, List("one more time", "one more time", "one more time"))
       assertEquals(state.gaveUp, true)
@@ -256,32 +252,31 @@ class PackageObjectSuite extends CatsEffectSuite:
 
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
-        IO.raiseError[String](new RuntimeException("one more time"))
+        IO.raiseError[String](oneMoreTimeException)
 
     for
       fixture <- mkFixture
       result <- retryingOnAllErrors[String][IO](
         policy,
         (err, rd) => fixture.onError(err.getMessage, rd)
-      )(action(fixture))
-        .recover { case e => e.getMessage }
+      )(action(fixture)).attempt
       state <- fixture.getState
     yield
-      assertEquals(result, "one more time")
+      assertEquals(result, Left(oneMoreTimeException))
       assertEquals(state.attempts, 10_001)
       assertEquals(state.gaveUp, true)
   }
 
   test("retryingOnFailuresAndSomeErrors - retry until the action succeeds") {
-
     val policy = RetryPolicies.constantDelay[IO](1.milli)
 
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
         fixture.getAttempts.flatMap { attempts =>
-          if attempts < 3 then IO.raiseError(new RuntimeException("one more time"))
+          if attempts < 3 then IO.raiseError(oneMoreTimeException)
           else IO.pure("yay")
         }
+
     for
       fixture <- mkFixture
       finalResult <- retryingOnFailuresAndSomeErrors[String](
@@ -306,9 +301,10 @@ class PackageObjectSuite extends CatsEffectSuite:
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
         fixture.getAttempts.flatMap { attempts =>
-          if attempts < 3 then IO.raiseError(new RuntimeException("one more time"))
-          else IO.raiseError(new RuntimeException("nope"))
+          if attempts < 3 then IO.raiseError(oneMoreTimeException)
+          else IO.raiseError(notWorthRetryingException)
         }
+
     for
       fixture <- mkFixture
       finalResult <- retryingOnFailuresAndSomeErrors[String](
@@ -317,11 +313,10 @@ class PackageObjectSuite extends CatsEffectSuite:
         e => IO.pure(e.getMessage == "one more time"),
         fixture.onError,
         (err, rd) => fixture.onError(err.getMessage, rd)
-      )(action(fixture))
-        .recover { case e => e.getMessage }
+      )(action(fixture)).attempt
       state <- fixture.getState
     yield
-      assertEquals(finalResult, "nope")
+      assertEquals(finalResult, Left(notWorthRetryingException))
       assertEquals(state.attempts, 3)
       assertEquals(state.errors.toList, List("one more time", "one more time"))
       assertEquals(
@@ -335,7 +330,7 @@ class PackageObjectSuite extends CatsEffectSuite:
 
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
-        IO.raiseError(new RuntimeException("one more time"))
+        IO.raiseError(oneMoreTimeException)
     for
       fixture <- mkFixture
       finalResult <- retryingOnFailuresAndSomeErrors[String](
@@ -344,11 +339,10 @@ class PackageObjectSuite extends CatsEffectSuite:
         e => IO.pure(e.getMessage == "one more time"),
         fixture.onError,
         (err, rd) => fixture.onError(err.getMessage, rd)
-      )(action(fixture))
-        .recover { case e => e.getMessage }
+      )(action(fixture)).attempt
       state <- fixture.getState
     yield
-      assertEquals(finalResult, "one more time")
+      assertEquals(finalResult, Left(oneMoreTimeException))
       assertEquals(state.attempts, 3)
       assertEquals(state.errors.toList, List("one more time", "one more time", "one more time"))
       assertEquals(state.gaveUp, true)
@@ -361,6 +355,7 @@ class PackageObjectSuite extends CatsEffectSuite:
 
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts().as("boo")
+
     for
       fixture <- mkFixture
       finalResult <- retryingOnFailuresAndSomeErrors[String](
@@ -370,7 +365,6 @@ class PackageObjectSuite extends CatsEffectSuite:
         fixture.onError,
         (err, rd) => fixture.onError(err.getMessage, rd)
       )(action(fixture))
-        .recover { case e => e.getMessage }
       state <- fixture.getState
     yield
       assertEquals(finalResult, "boo")
@@ -380,12 +374,11 @@ class PackageObjectSuite extends CatsEffectSuite:
   }
 
   test("retryingOnFailuresAndSomeErrors - retry in a stack-safe way") {
-
     val policy = RetryPolicies.limitRetries[IO](10_000)
 
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
-        IO.raiseError(new RuntimeException("one more time"))
+        IO.raiseError(oneMoreTimeException)
 
     for
       fixture <- mkFixture
@@ -395,47 +388,45 @@ class PackageObjectSuite extends CatsEffectSuite:
         e => IO.pure(e.getMessage == "one more time"),
         fixture.onError,
         (err, rd) => fixture.onError(err.getMessage, rd)
-      )(action(fixture))
-        .recover { case e => e.getMessage }
+      )(action(fixture)).attempt
       state <- fixture.getState
     yield
-      assertEquals(finalResult, "one more time")
+      assertEquals(finalResult, Left(oneMoreTimeException))
       assertEquals(state.attempts, 10_001)
       assertEquals(state.gaveUp, true)
   }
 
   test("retryingOnFailuresAndSomeErrors - should fail fast if isWorthRetrying's effect fails") {
-    val policy = RetryPolicies.limitRetries[IO](10_000)
+    val policy                 = RetryPolicies.limitRetries[IO](10_000)
+    val errorInIsWorthRetrying = new RuntimeException("an error was raised!")
 
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
-        IO.raiseError(new RuntimeException("one more time"))
+        IO.raiseError(oneMoreTimeException)
 
     for
       fixture <- mkFixture
       finalResult <- retryingOnFailuresAndSomeErrors[String](
         policy,
         s => IO.pure(s == "does not matter"),
-        e => IO.raiseError(new RuntimeException("an error was raised!")),
+        e => IO.raiseError(errorInIsWorthRetrying),
         fixture.onError,
         (err, rd) => fixture.onError(err.getMessage, rd)
-      )(action(fixture))
-        .recover { case e => e.getMessage }
+      )(action(fixture)).attempt
       state <- fixture.getState
     yield
-      assertEquals(finalResult, "an error was raised!")
+      assertEquals(finalResult, Left(errorInIsWorthRetrying))
       assertEquals(state.attempts, 1)
       assertEquals(state.gaveUp, false)
   }
 
   test("retryingOnFailuresAndAllErrors - retry until the action succeeds") {
-
     val policy = RetryPolicies.constantDelay[IO](1.milli)
 
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
         fixture.getAttempts.flatMap { attempts =>
-          if attempts < 3 then IO.raiseError(new RuntimeException("one more time"))
+          if attempts < 3 then IO.raiseError(oneMoreTimeException)
           else IO.pure("yay")
         }
 
@@ -447,7 +438,6 @@ class PackageObjectSuite extends CatsEffectSuite:
         fixture.onError,
         (e, rd) => fixture.onError(e.getMessage, rd)
       )(action(fixture))
-        .recover { case e => e.getMessage }
       state <- fixture.getState
     yield
       assertEquals(finalResult, "yay")
@@ -457,12 +447,11 @@ class PackageObjectSuite extends CatsEffectSuite:
   }
 
   test("retryingOnFailuresAndAllErrors - retry until the policy chooses to give up due to errors") {
-
     val policy = RetryPolicies.limitRetries[IO](2)
 
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
-        IO.raiseError(new RuntimeException("one more time"))
+        IO.raiseError(oneMoreTimeException)
 
     for
       fixture <- mkFixture
@@ -471,18 +460,16 @@ class PackageObjectSuite extends CatsEffectSuite:
         s => IO.pure(s == "will never happen"),
         fixture.onError,
         (e, rd) => fixture.onError(e.getMessage, rd)
-      )(action(fixture))
-        .recover { case e => e.getMessage }
+      )(action(fixture)).attempt
       state <- fixture.getState
     yield
-      assertEquals(finalResult, "one more time")
+      assertEquals(finalResult, Left(oneMoreTimeException))
       assertEquals(state.attempts, 3)
       assertEquals(state.errors.toList, List("one more time", "one more time", "one more time"))
       assertEquals(state.gaveUp, true)
   }
 
   test("retryingOnFailuresAndAllErrors - retry until the policy chooses to give up due to failures") {
-
     val policy = RetryPolicies.limitRetries[IO](2)
 
     def action(fixture: Fixture): IO[String] =
@@ -496,7 +483,6 @@ class PackageObjectSuite extends CatsEffectSuite:
         fixture.onError,
         (e, rd) => fixture.onError(e.getMessage, rd)
       )(action(fixture))
-        .recover { case e => e.getMessage }
       state <- fixture.getState
     yield
       assertEquals(finalResult, "boo")
@@ -506,12 +492,11 @@ class PackageObjectSuite extends CatsEffectSuite:
   }
 
   test("retryingOnFailuresAndAllErrors - retry in a stack-safe way") {
-
     val policy = RetryPolicies.limitRetries[IO](10_000)
 
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
-        IO.raiseError(new RuntimeException("one more time"))
+        IO.raiseError(oneMoreTimeException)
 
     for
       fixture <- mkFixture
@@ -520,19 +505,17 @@ class PackageObjectSuite extends CatsEffectSuite:
         s => IO.pure(s == "will never happen"),
         fixture.onError,
         (e, rd) => fixture.onError(e.getMessage, rd)
-      )(action(fixture))
-        .recover { case e => e.getMessage }
+      )(action(fixture)).attempt
       state <- fixture.getState
     yield
-      assertEquals(finalResult, "one more time")
+      assertEquals(finalResult, Left(oneMoreTimeException))
       assertEquals(state.attempts, 10_001)
       assertEquals(state.gaveUp, true)
   }
 
   test("retryingOnFailuresAndAllErrors - should fail fast if wasSuccessful's effect fails") {
-
-    val policy       = RetryPolicies.limitRetries[IO](2)
-    val runtimeError = new RuntimeException("an error was raised!")
+    val policy               = RetryPolicies.limitRetries[IO](2)
+    val errorInWasSuccessful = new RuntimeException("an error was raised!")
 
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts().as("boo")
@@ -541,13 +524,13 @@ class PackageObjectSuite extends CatsEffectSuite:
       fixture <- mkFixture
       finalResult <- retryingOnFailuresAndAllErrors[String](
         policy,
-        _ => IO.raiseError(runtimeError),
+        _ => IO.raiseError(errorInWasSuccessful),
         fixture.onError,
         (e, rd) => fixture.onError(e.getMessage, rd)
       )(action(fixture)).attempt
       state <- fixture.getState
     yield
-      assertEquals(finalResult, Left(runtimeError))
+      assertEquals(finalResult, Left(errorInWasSuccessful))
       assertEquals(state.attempts, 1)
       assertEquals(state.gaveUp, false)
   }

@@ -40,8 +40,10 @@ class SyntaxSuite extends CatsEffectSuite:
 
   private val mkFixture: IO[Fixture] = Ref.of[IO, State](State()).map(new Fixture(_))
 
-  test("retryingOnFailures - retry until the action succeeds") {
+  private val oneMoreTimeException      = new RuntimeException("one more time")
+  private val notWorthRetryingException = new RuntimeException("nope")
 
+  test("retryingOnFailures - retry until the action succeeds") {
     val policy: RetryPolicy[IO]                 = RetryPolicies.constantDelay[IO](1.milli)
     def wasSuccessful(res: String): IO[Boolean] = IO.pure(res.toInt > 3)
 
@@ -61,7 +63,6 @@ class SyntaxSuite extends CatsEffectSuite:
   }
 
   test("retryingOnFailures - retry until the policy chooses to give up") {
-
     val policy: RetryPolicy[IO]                 = RetryPolicies.limitRetries[IO](2)
     def wasSuccessful(res: String): IO[Boolean] = IO.pure(res.toInt > 3)
 
@@ -82,13 +83,12 @@ class SyntaxSuite extends CatsEffectSuite:
   }
 
   test("retryingOnSomeErrors - retry until the action succeeds") {
-
     val policy: RetryPolicy[IO] = RetryPolicies.constantDelay[IO](1.milli)
 
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
         fixture.getAttempts.flatMap { attempts =>
-          if attempts < 3 then IO.raiseError(new RuntimeException("one more time"))
+          if attempts < 3 then IO.raiseError(oneMoreTimeException)
           else IO.pure("yay")
         }
 
@@ -108,14 +108,13 @@ class SyntaxSuite extends CatsEffectSuite:
   }
 
   test("retryingOnSomeErrors - retry only if the error is worth retrying") {
-
     val policy: RetryPolicy[IO] = RetryPolicies.constantDelay[IO](1.milli)
 
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
         fixture.getAttempts.flatMap { attempts =>
-          if attempts < 3 then IO.raiseError[String](new RuntimeException("one more time"))
-          else IO.raiseError[String](new RuntimeException("nope"))
+          if attempts < 3 then IO.raiseError[String](oneMoreTimeException)
+          else IO.raiseError[String](notWorthRetryingException)
         }
 
     for
@@ -126,10 +125,10 @@ class SyntaxSuite extends CatsEffectSuite:
           policy,
           (err, rd) => fixture.onError(err.getMessage, rd)
         )
-        .recover { case e => e.getMessage }
+        .attempt
       state <- fixture.getState
     yield
-      assertEquals(result, "nope")
+      assertEquals(result, Left(notWorthRetryingException))
       assertEquals(state.attempts, 3)
       assertEquals(state.errors.toList, List("one more time", "one more time"))
       assertEquals(
@@ -139,12 +138,11 @@ class SyntaxSuite extends CatsEffectSuite:
   }
 
   test("retryingOnSomeErrors - retry until the policy chooses to give up") {
-
     val policy: RetryPolicy[IO] = RetryPolicies.limitRetries[IO](2)
 
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
-        IO.raiseError[String](new RuntimeException("one more time"))
+        IO.raiseError[String](oneMoreTimeException)
 
     for
       fixture <- mkFixture
@@ -154,10 +152,10 @@ class SyntaxSuite extends CatsEffectSuite:
           policy,
           (err, rd) => fixture.onError(err.getMessage, rd)
         )
-        .recover { case e => e.getMessage }
+        .attempt
       state <- fixture.getState
     yield
-      assertEquals(result, "one more time")
+      assertEquals(result, Left(oneMoreTimeException))
       assertEquals(state.attempts, 3)
       assertEquals(state.errors.toList, List("one more time", "one more time", "one more time"))
       assertEquals(state.gaveUp, true)
@@ -169,7 +167,7 @@ class SyntaxSuite extends CatsEffectSuite:
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
         fixture.getAttempts.flatMap { attempts =>
-          if attempts < 3 then IO.raiseError(new RuntimeException("one more time"))
+          if attempts < 3 then IO.raiseError(oneMoreTimeException)
           else IO.pure("yay")
         }
 
@@ -192,7 +190,7 @@ class SyntaxSuite extends CatsEffectSuite:
 
     def action(fixture: Fixture): IO[String] =
       fixture.incrementAttempts() >>
-        IO.raiseError[String](new RuntimeException("one more time"))
+        IO.raiseError[String](oneMoreTimeException)
 
     for
       fixture <- mkFixture
@@ -201,10 +199,10 @@ class SyntaxSuite extends CatsEffectSuite:
           policy,
           (err, rd) => fixture.onError(err.getMessage, rd)
         )
-        .recover { case e => e.getMessage }
+        .attempt
       state <- fixture.getState
     yield
-      assertEquals(result, "one more time")
+      assertEquals(result, Left(oneMoreTimeException))
       assertEquals(state.attempts, 3)
       assertEquals(state.errors.toList, List("one more time", "one more time", "one more time"))
       assertEquals(state.gaveUp, true)
