@@ -1,6 +1,6 @@
 package retry
 
-import retry.syntax.all.*
+import retry.syntax.*
 
 import scala.concurrent.duration.*
 import munit.CatsEffectSuite
