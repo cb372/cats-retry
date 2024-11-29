@@ -18,9 +18,6 @@ package object retry:
   def retryingOnFailuresAndErrors[A] =
     new RetryingOnFailuresAndErrorsPartiallyApplied[A]
 
-  def noop[M[_]: Applicative, A]: (A, RetryDetails) => M[Unit] =
-    (_, _) => Applicative[M].unit
-
   /** A handler that inspects the result of an action and decides what to do next. This is also a good place
     * to do any logging.
     */
@@ -37,6 +34,10 @@ package object retry:
         log: (Res, RetryDetails) => F[Unit]
     ): ResultHandler[F, Res, A] =
       (res: Res, retryDetails: RetryDetails) => log(res, retryDetails).as(HandlerDecision.Continue)
+
+    /** Pass this to [[alwaysRetry]] if you don't need to do any logging */
+    def noop[M[_]: Applicative, A]: (A, RetryDetails) => M[Unit] =
+      (_, _) => Applicative[M].unit
 
   /*
    * Partially applied classes
