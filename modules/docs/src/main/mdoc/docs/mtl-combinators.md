@@ -161,7 +161,7 @@ import cats.effect.unsafe.implicits.global
 
 case class AppError(reason: String)
 
-class Service[F[_]](client: util.FlakyHttpClient)(implicit F: Async[F],  AH: Handle[F, AppError]) {
+class Service[F[_]](client: util.FlakyHttpClient)(implicit F: Async[F], AH: Handle[F, AppError]) {
 
   // evaluates retry exclusively on errors produced by Handle.
   def findCoolCatGifRetryMtl(policy: RetryPolicy[F]): F[String] =
