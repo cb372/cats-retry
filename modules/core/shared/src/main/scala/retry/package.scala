@@ -1,4 +1,4 @@
-import cats.{Monad, MonadError}
+import cats.{Applicative, Functor, Monad, MonadError}
 import cats.syntax.apply.*
 import cats.syntax.functor.*
 import cats.syntax.flatMap.*
@@ -11,8 +11,6 @@ package object retry:
    * API
    */
 
-  @deprecated("Use retryingOnFailures instead", "2.1.0")
-  def retryingM[A]          = new RetryingOnFailuresPartiallyApplied[A]
   def retryingOnFailures[A] = new RetryingOnFailuresPartiallyApplied[A]
 
   def retryingOnSomeErrors[A] = new RetryingOnSomeErrorsPartiallyApplied[A]
@@ -25,13 +23,25 @@ package object retry:
   def retryingOnFailuresAndAllErrors[A] =
     new RetryingOnFailuresAndAllErrorsPartiallyApplied[A]
 
-  def noop[M[_]: Monad, A]: (A, RetryDetails) => M[Unit] =
-    (_, _) => Monad[M].pure(())
+  def noop[M[_]: Applicative, A]: (A, RetryDetails) => M[Unit] =
+    (_, _) => Applicative[M].unit
 
   /** A handler that inspects the result of an action and decides what to do next. This is also a good place
     * to do any logging.
     */
-  type ResultHandler[F[_], Res, A] = (Res, RetryDetails) => F[HandlerDecision[F[A]]]
+  type ResultHandler[F[_], -Res, A] = (Res, RetryDetails) => F[HandlerDecision[F[A]]]
+
+  object ResultHandler:
+    /** Construct a ResultHandler that always chooses to retry the same action, no matter what the failure or
+      * error.
+      *
+      * @param log
+      *   A chance to do logging, increment metrics, etc
+      */
+    def alwaysRetry[F[_]: Functor, Res, A](
+        log: (Res, RetryDetails) => F[Unit]
+    ): ResultHandler[F, Res, A] =
+      (res: Res, retryDetails: RetryDetails) => log(res, retryDetails).as(HandlerDecision.Continue)
 
   /*
    * Partially applied classes
@@ -87,8 +97,8 @@ package object retry:
         ME: MonadError[M, E],
         S: Sleep[M]
     ): M[A] =
-      val errorHandler: ResultHandler[M, E, A] =
-        (e: E, rd: RetryDetails) => onError(e, rd).as(HandlerDecision.Continue)
+      val errorHandler: ResultHandler[M, E, A] = ResultHandler.alwaysRetry(onError)
+
       retryingOnSomeErrors[A].apply[M, E](policy, errorHandler)(
         action
       )
@@ -135,10 +145,11 @@ package object retry:
         ME: MonadError[M, E],
         S: Sleep[M]
     ): M[A] =
+      val errorHandler: ResultHandler[M, E, A] = ResultHandler.alwaysRetry(onError)
       val resultOrErrorHandler: ResultHandler[M, Either[E, A], A] =
         (result: Either[E, A], rd: RetryDetails) =>
           result match
-            case Left(e)  => onError(e, rd).as(HandlerDecision.Continue)
+            case Left(e)  => errorHandler(e, rd)
             case Right(a) => resultHandler(a, rd)
 
       retryingOnFailuresAndSomeErrors[A]
