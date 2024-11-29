@@ -131,11 +131,13 @@ class SyntaxSuite extends CatsEffectSuite {
 
     for {
       fixture <- mkFixture
-      result <- action(fixture).retryingOnSomeErrors(
-        e => IO.pure(e.getMessage == "one more time"),
-        policy,
-        (err, rd) => fixture.onError(err.getMessage, rd)
-      )
+      result <- action(fixture)
+        .retryingOnSomeErrors(
+          e => IO.pure(e.getMessage == "one more time"),
+          policy,
+          (err, rd) => fixture.onError(err.getMessage, rd)
+        )
+        .recover { case e => e.getMessage }
       state <- fixture.getState
     } yield {
       assertEquals(result, "nope")
@@ -223,7 +225,7 @@ class SyntaxSuite extends CatsEffectSuite {
     } yield {
       assertEquals(result, "one more time")
       assertEquals(state.attempts, 3)
-      assertEquals(state.errors.toList, List("one more time", "one more time"))
+      assertEquals(state.errors.toList, List("one more time", "one more time", "one more time"))
       assertEquals(state.gaveUp, true)
     }
   }
