@@ -1,504 +1,537 @@
 package retry
 
-import cats.Id
-import munit.FunSuite
+import munit.CatsEffectSuite
 
-import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.*
+import cats.effect.kernel.Ref
+import cats.effect.IO
 
-class PackageObjectSuite extends FunSuite:
-  type StringOr[A] = Either[String, A]
+class PackageObjectSuite extends CatsEffectSuite:
 
-  given Sleep[StringOr] = _ => Right(())
-
-  private class TestContext:
-    var attempts = 0
-    val errors   = ArrayBuffer.empty[String]
-    val delays   = ArrayBuffer.empty[FiniteDuration]
-    var gaveUp   = false
-
-    def onErrorId(error: String, details: RetryDetails): Id[Unit] =
-      errors.append(error)
-      details match
-        case RetryDetails.WillDelayAndRetry(delay, _, _) => delays.append(delay)
-        case RetryDetails.GivingUp(_, _)                 => gaveUp = true
-
-    def onError(error: String, details: RetryDetails): Either[String, Unit] =
-      onErrorId(error, details)
-      Right(())
-
-  private val fixture = FunFixture[TestContext](
-    setup = _ => new TestContext,
-    teardown = _ => ()
+  private case class State(
+      attempts: Int = 0,
+      errors: Vector[String] = Vector.empty,
+      delays: Vector[FiniteDuration] = Vector.empty,
+      gaveUp: Boolean = false
   )
 
-  fixture.test("retryingOnFailures - retry until the action succeeds") { context =>
-    import context.*
+  private class Fixture(stateRef: Ref[IO, State]):
+    def incrementAttempts(): IO[Unit] =
+      stateRef.update(state => state.copy(attempts = state.attempts + 1))
 
-    val policy = RetryPolicies.constantDelay[Id](1.second)
-
-    val sleeps = ArrayBuffer.empty[FiniteDuration]
-
-    given Sleep[Id] =
-      (delay: FiniteDuration) => sleeps.append(delay)
-
-    val finalResult = retryingOnFailures[String][Id](
-      policy,
-      _.toInt > 3,
-      onErrorId
-    ) {
-      attempts = attempts + 1
-      attempts.toString
-    }
-
-    assertEquals(finalResult, "4")
-    assertEquals(attempts, 4)
-    assertEquals(errors.toList, List("1", "2", "3"))
-    assertEquals(delays.toList, List(1.second, 1.second, 1.second))
-    assertEquals(sleeps.toList, delays.toList)
-    assertEquals(gaveUp, false)
-  }
-
-  fixture.test("retryingOnFailures - retry until the policy chooses to give up") { context =>
-    import context.*
-
-    val policy = RetryPolicies.limitRetries[Id](2)
-
-    given Sleep[Id] = _ => ()
-
-    val finalResult = retryingOnFailures[String][Id](
-      policy,
-      _.toInt > 3,
-      onErrorId
-    ) {
-      attempts = attempts + 1
-      attempts.toString
-    }
-
-    assertEquals(finalResult, "3")
-    assertEquals(attempts, 3)
-    assertEquals(errors.toList, List("1", "2", "3"))
-    assertEquals(delays.toList, List(Duration.Zero, Duration.Zero))
-    assertEquals(gaveUp, true)
-  }
-
-  fixture.test("retryingOnFailures - retry in a stack-safe way") { context =>
-    import context.*
-
-    val policy = RetryPolicies.limitRetries[Id](10000)
-
-    given Sleep[Id] = _ => ()
-
-    val finalResult = retryingOnFailures[String][Id](
-      policy,
-      _.toInt > 20000,
-      onErrorId
-    ) {
-      attempts = attempts + 1
-      attempts.toString
-    }
-
-    assertEquals(finalResult, "10001")
-    assertEquals(attempts, 10001)
-    assertEquals(gaveUp, true)
-  }
-
-  fixture.test("retryingOnSomeErrors - retry until the action succeeds") { context =>
-    import context.*
-
-    val policy = RetryPolicies.constantDelay[StringOr](1.second)
-
-    val finalResult = retryingOnSomeErrors(
-      policy,
-      (s: String) => Right(s == "one more time"),
-      onError
-    ) {
-      attempts = attempts + 1
-      if attempts < 3 then Left("one more time")
-      else Right("yay")
-    }
-
-    assertEquals(finalResult, Right("yay"))
-    assertEquals(attempts, 3)
-    assertEquals(errors.toList, List("one more time", "one more time"))
-    assertEquals(gaveUp, false)
-  }
-
-  fixture.test("retryingOnSomeErrors - retry only if the error is worth retrying") { context =>
-    import context.*
-
-    val policy = RetryPolicies.constantDelay[StringOr](1.second)
-
-    val finalResult = retryingOnSomeErrors(
-      policy,
-      (s: String) => Right(s == "one more time"),
-      onError
-    ) {
-      attempts = attempts + 1
-      if attempts < 3 then Left("one more time")
-      else Left("nope")
-    }
-
-    assertEquals(finalResult, Left("nope"))
-    assertEquals(attempts, 3)
-    assertEquals(errors.toList, List("one more time", "one more time"))
-    assertEquals(
-      gaveUp,
-      false // false because onError is only called when the error is worth retrying
-    )
-  }
-
-  fixture.test("retryingOnSomeErrors - retry until the policy chooses to give up") { context =>
-    import context.*
-
-    val policy = RetryPolicies.limitRetries[StringOr](2)
-
-    val finalResult = retryingOnSomeErrors(
-      policy,
-      (s: String) => Right(s == "one more time"),
-      onError
-    ) {
-      attempts = attempts + 1
-      Left("one more time")
-    }
-
-    assertEquals(finalResult, Left("one more time"))
-    assertEquals(attempts, 3)
-    assertEquals(
-      errors.toList,
-      List("one more time", "one more time", "one more time")
-    )
-    assertEquals(gaveUp, true)
-  }
-
-  fixture.test("retryingOnSomeErrors - retry in a stack-safe way") { context =>
-    import context.*
-
-    val policy = RetryPolicies.limitRetries[StringOr](10000)
-
-    val finalResult = retryingOnSomeErrors(
-      policy,
-      (s: String) => Right(s == "one more time"),
-      onError
-    ) {
-      attempts = attempts + 1
-      Left("one more time")
-    }
-
-    assertEquals(finalResult, Left("one more time"))
-    assertEquals(attempts, 10001)
-    assertEquals(gaveUp, true)
-  }
-
-  fixture.test("retryingOnAllErrors - retry until the action succeeds") { context =>
-    import context.*
-
-    val policy = RetryPolicies.constantDelay[StringOr](1.second)
-
-    val finalResult = retryingOnAllErrors(
-      policy,
-      onError
-    ) {
-      attempts = attempts + 1
-      if attempts < 3 then Left("one more time")
-      else Right("yay")
-    }
-
-    assertEquals(finalResult, Right("yay"))
-    assertEquals(attempts, 3)
-    assertEquals(errors.toList, List("one more time", "one more time"))
-    assertEquals(gaveUp, false)
-  }
-
-  fixture.test("retryingOnAllErrors - retry until the policy chooses to give up") { context =>
-    import context.*
-
-    val policy = RetryPolicies.limitRetries[StringOr](2)
-
-    val finalResult = retryingOnAllErrors(
-      policy,
-      onError
-    ) {
-      attempts = attempts + 1
-      Left("one more time")
-    }
-
-    assertEquals(finalResult, Left("one more time"))
-    assertEquals(attempts, 3)
-    assertEquals(
-      errors.toList,
-      List("one more time", "one more time", "one more time")
-    )
-    assertEquals(gaveUp, true)
-  }
-
-  fixture.test("retryingOnAllErrors - retry in a stack-safe way") { context =>
-    import context.*
-
-    val policy = RetryPolicies.limitRetries[StringOr](10000)
-
-    val finalResult = retryingOnAllErrors(
-      policy,
-      onError
-    ) {
-      attempts = attempts + 1
-      Left("one more time")
-    }
-
-    assertEquals(finalResult, Left("one more time"))
-    assertEquals(attempts, 10001)
-    assertEquals(gaveUp, true)
-  }
-
-  fixture.test("retryingOnFailuresAndSomeErrors - retry until the action succeeds") { context =>
-    import context.*
-
-    val policy = RetryPolicies.constantDelay[StringOr](1.second)
-
-    val finalResult = retryingOnFailuresAndSomeErrors[String](
-      policy,
-      s => Right(s == "yay"),
-      (s: String) => Right(s == "one more time"),
-      onError,
-      onError
-    ) {
-      attempts = attempts + 1
-      if attempts < 3 then Left("one more time")
-      else Right("yay")
-    }
-
-    assertEquals(finalResult, Right("yay"))
-    assertEquals(attempts, 3)
-    assertEquals(errors.toList, List("one more time", "one more time"))
-    assertEquals(gaveUp, false)
-  }
-
-  fixture.test("retryingOnFailuresAndSomeErrors - retry only if the error is worth retrying") { context =>
-    import context.*
-
-    val policy = RetryPolicies.constantDelay[StringOr](1.second)
-
-    val finalResult = retryingOnFailuresAndSomeErrors[String](
-      policy,
-      s => Right(s == "will never happen"),
-      (s: String) => Right(s == "one more time"),
-      onError,
-      onError
-    ) {
-      attempts = attempts + 1
-      if attempts < 3 then Left("one more time")
-      else Left("nope")
-    }
-
-    assertEquals(finalResult, Left("nope"))
-    assertEquals(attempts, 3)
-    assertEquals(errors.toList, List("one more time", "one more time"))
-    assertEquals(
-      gaveUp,
-      false // false because onError is only called when the error is worth retrying
-    )
-  }
-
-  fixture.test("retryingOnFailuresAndSomeErrors - retry until the policy chooses to give up due to errors") {
-    context =>
-      import context.*
-
-      val policy = RetryPolicies.limitRetries[StringOr](2)
-
-      val finalResult = retryingOnFailuresAndSomeErrors[String](
-        policy,
-        s => Right(s == "will never happen"),
-        (s: String) => Right(s == "one more time"),
-        onError,
-        onError
-      ) {
-        attempts = attempts + 1
-        Left("one more time")
+    def onError(error: String, details: RetryDetails): IO[Unit] =
+      stateRef.update { state =>
+        details match
+          case RetryDetails.WillDelayAndRetry(delay, _, _) =>
+            state.copy(
+              errors = state.errors :+ error,
+              delays = state.delays :+ delay
+            )
+          case RetryDetails.GivingUp(_, _) =>
+            state.copy(
+              errors = state.errors :+ error,
+              gaveUp = true
+            )
       }
 
-      assertEquals(finalResult, Left("one more time"))
-      assertEquals(attempts, 3)
-      assertEquals(
-        errors.toList,
-        List("one more time", "one more time", "one more time")
-      )
-      assertEquals(gaveUp, true)
+    def getState: IO[State]  = stateRef.get
+    def getAttempts: IO[Int] = getState.map(_.attempts)
+
+  private val mkFixture: IO[Fixture] = Ref.of[IO, State](State()).map(new Fixture(_))
+
+  private val oneMoreTimeException      = new RuntimeException("one more time")
+  private val notWorthRetryingException = new RuntimeException("nope")
+
+  test("retryingOnFailures - retry until the action succeeds") {
+    val policy = RetryPolicies.constantDelay[IO](1.milli)
+
+    def action(fixture: Fixture): IO[String] =
+      fixture.incrementAttempts() >> fixture.getState.map(_.attempts.toString)
+
+    for
+      fixture <- mkFixture
+      finalResult <- retryingOnFailures[String][IO](
+        policy,
+        (attempts: String) => IO.pure(attempts.toInt > 3),
+        fixture.onError
+      )(action(fixture))
+      state <- fixture.getState
+    yield
+      assertEquals(finalResult, "4")
+      assertEquals(state.attempts, 4)
+      assertEquals(state.errors.toList, List("1", "2", "3"))
+      assertEquals(state.delays.toList, List(1.milli, 1.milli, 1.milli))
+      assertEquals(state.gaveUp, false)
   }
 
-  fixture.test(
+  test("retryingOnFailures - retry until the policy chooses to give up") {
+    val policy = RetryPolicies.limitRetries[IO](2)
+
+    def action(fixture: Fixture): IO[String] =
+      fixture.incrementAttempts() >> fixture.getState.map(_.attempts.toString)
+
+    for
+      fixture <- mkFixture
+      finalResult <- retryingOnFailures[String][IO](
+        policy,
+        (attempts: String) => IO.pure(attempts.toInt > 3),
+        fixture.onError
+      )(action(fixture))
+      state <- fixture.getState
+    yield
+      assertEquals(finalResult, "3")
+      assertEquals(state.attempts, 3)
+      assertEquals(state.errors.toList, List("1", "2", "3"))
+      assertEquals(state.delays.toList, List(Duration.Zero, Duration.Zero))
+      assertEquals(state.gaveUp, true)
+  }
+
+  test("retryingOnFailures - retry in a stack-safe way") {
+    val policy = RetryPolicies.limitRetries[IO](10_000)
+
+    def action(fixture: Fixture): IO[String] =
+      fixture.incrementAttempts() >> fixture.getState.map(_.attempts.toString)
+
+    for
+      fixture <- mkFixture
+      finalResult <- retryingOnFailures[String][IO](
+        policy,
+        (attempts: String) => IO.pure(attempts.toInt > 20_000),
+        fixture.onError
+      )(action(fixture))
+      state <- fixture.getState
+    yield
+      assertEquals(finalResult, "10001")
+      assertEquals(state.attempts, 10_001)
+      assertEquals(state.gaveUp, true)
+  }
+
+  test("retryingOnSomeErrors - retry until the action succeeds") {
+    val policy: RetryPolicy[IO] = RetryPolicies.constantDelay[IO](1.milli)
+
+    def action(fixture: Fixture): IO[String] =
+      fixture.incrementAttempts() >>
+        fixture.getAttempts.flatMap { attempts =>
+          if attempts < 3 then IO.raiseError(oneMoreTimeException)
+          else IO.pure("yay")
+        }
+
+    for
+      fixture <- mkFixture
+      result <- retryingOnSomeErrors[String][IO](
+        policy,
+        e => IO.pure(e.getMessage == "one more time"),
+        (err, rd) => fixture.onError(err.getMessage, rd)
+      )(action(fixture))
+      state <- fixture.getState
+    yield
+      assertEquals(result, "yay")
+      assertEquals(state.attempts, 3)
+      assertEquals(state.errors.toList, List("one more time", "one more time"))
+      assertEquals(state.gaveUp, false)
+  }
+
+  test("retryingOnSomeErrors - retry only if the error is worth retrying") {
+    val policy: RetryPolicy[IO] = RetryPolicies.constantDelay[IO](1.milli)
+
+    def action(fixture: Fixture): IO[String] =
+      fixture.incrementAttempts() >>
+        fixture.getAttempts.flatMap { attempts =>
+          if attempts < 3 then IO.raiseError[String](oneMoreTimeException)
+          else IO.raiseError[String](notWorthRetryingException)
+        }
+
+    for
+      fixture <- mkFixture
+      result <- retryingOnSomeErrors(
+        policy,
+        e => IO.pure(e.getMessage == "one more time"),
+        (err, rd) => fixture.onError(err.getMessage, rd)
+      )(action(fixture)).attempt
+      state <- fixture.getState
+    yield
+      assertEquals(result, Left(notWorthRetryingException))
+      assertEquals(state.attempts, 3)
+      assertEquals(state.errors.toList, List("one more time", "one more time"))
+      assertEquals(
+        state.gaveUp,
+        false // false because onError is only called when the error is worth retrying
+      )
+  }
+
+  test("retryingOnSomeErrors - retry until the policy chooses to give up") {
+    val policy: RetryPolicy[IO] = RetryPolicies.limitRetries[IO](2)
+
+    def action(fixture: Fixture): IO[String] =
+      fixture.incrementAttempts() >>
+        IO.raiseError[String](oneMoreTimeException)
+
+    for
+      fixture <- mkFixture
+      result <- retryingOnSomeErrors[String][IO](
+        policy,
+        e => IO.pure(e.getMessage == "one more time"),
+        (err, rd) => fixture.onError(err.getMessage, rd)
+      )(action(fixture)).attempt
+      state <- fixture.getState
+    yield
+      assertEquals(result, Left(oneMoreTimeException))
+      assertEquals(state.attempts, 3)
+      assertEquals(state.errors.toList, List("one more time", "one more time", "one more time"))
+      assertEquals(state.gaveUp, true)
+  }
+
+  test("retryingOnSomeErrors - retry in a stack-safe way") {
+    val policy: RetryPolicy[IO] = RetryPolicies.limitRetries[IO](10_000)
+
+    def action(fixture: Fixture): IO[String] =
+      fixture.incrementAttempts() >>
+        IO.raiseError[String](oneMoreTimeException)
+
+    for
+      fixture <- mkFixture
+      result <- retryingOnSomeErrors[String][IO](
+        policy,
+        e => IO.pure(e.getMessage == "one more time"),
+        (err, rd) => fixture.onError(err.getMessage, rd)
+      )(action(fixture)).attempt
+      state <- fixture.getState
+    yield
+      assertEquals(result, Left(oneMoreTimeException))
+      assertEquals(state.attempts, 10_001)
+      assertEquals(state.gaveUp, true)
+  }
+
+  test("retryingOnAllErrors - retry until the action succeeds") {
+    val policy: RetryPolicy[IO] = RetryPolicies.constantDelay[IO](1.milli)
+
+    def action(fixture: Fixture): IO[String] =
+      fixture.incrementAttempts() >>
+        fixture.getAttempts.flatMap { attempts =>
+          if attempts < 3 then IO.raiseError(oneMoreTimeException)
+          else IO.pure("yay")
+        }
+
+    for
+      fixture <- mkFixture
+      result <- retryingOnAllErrors[String][IO](
+        policy,
+        (err, rd) => fixture.onError(err.getMessage, rd)
+      )(action(fixture))
+      state <- fixture.getState
+    yield
+      assertEquals(result, "yay")
+      assertEquals(state.attempts, 3)
+      assertEquals(state.errors.toList, List("one more time", "one more time"))
+      assertEquals(state.gaveUp, false)
+  }
+
+  test("retryingOnAllErrors - retry until the policy chooses to give up") {
+    val policy: RetryPolicy[IO] = RetryPolicies.limitRetries[IO](2)
+
+    def action(fixture: Fixture): IO[String] =
+      fixture.incrementAttempts() >>
+        IO.raiseError[String](oneMoreTimeException)
+
+    for
+      fixture <- mkFixture
+      result <- retryingOnAllErrors[String][IO](
+        policy,
+        (err, rd) => fixture.onError(err.getMessage, rd)
+      )(action(fixture)).attempt
+      state <- fixture.getState
+    yield
+      assertEquals(result, Left(oneMoreTimeException))
+      assertEquals(state.attempts, 3)
+      assertEquals(state.errors.toList, List("one more time", "one more time", "one more time"))
+      assertEquals(state.gaveUp, true)
+  }
+
+  test("retryingOnAllErrors - retry in a stack-safe way") {
+    val policy: RetryPolicy[IO] = RetryPolicies.limitRetries[IO](10_000)
+
+    def action(fixture: Fixture): IO[String] =
+      fixture.incrementAttempts() >>
+        IO.raiseError[String](oneMoreTimeException)
+
+    for
+      fixture <- mkFixture
+      result <- retryingOnAllErrors[String][IO](
+        policy,
+        (err, rd) => fixture.onError(err.getMessage, rd)
+      )(action(fixture)).attempt
+      state <- fixture.getState
+    yield
+      assertEquals(result, Left(oneMoreTimeException))
+      assertEquals(state.attempts, 10_001)
+      assertEquals(state.gaveUp, true)
+  }
+
+  test("retryingOnFailuresAndSomeErrors - retry until the action succeeds") {
+    val policy = RetryPolicies.constantDelay[IO](1.milli)
+
+    def action(fixture: Fixture): IO[String] =
+      fixture.incrementAttempts() >>
+        fixture.getAttempts.flatMap { attempts =>
+          if attempts < 3 then IO.raiseError(oneMoreTimeException)
+          else IO.pure("yay")
+        }
+
+    for
+      fixture <- mkFixture
+      finalResult <- retryingOnFailuresAndSomeErrors[String](
+        policy,
+        s => IO.pure(s == "yay"),
+        e => IO.pure(e.getMessage == "one more time"),
+        fixture.onError,
+        (err, rd) => fixture.onError(err.getMessage, rd)
+      )(action(fixture))
+      state <- fixture.getState
+    yield
+      assertEquals(finalResult, "yay")
+      assertEquals(state.attempts, 3)
+      assertEquals(state.errors.toList, List("one more time", "one more time"))
+      assertEquals(state.gaveUp, false)
+
+  }
+
+  test("retryingOnFailuresAndSomeErrors - retry only if the error is worth retrying") {
+    val policy = RetryPolicies.constantDelay[IO](1.milli)
+
+    def action(fixture: Fixture): IO[String] =
+      fixture.incrementAttempts() >>
+        fixture.getAttempts.flatMap { attempts =>
+          if attempts < 3 then IO.raiseError(oneMoreTimeException)
+          else IO.raiseError(notWorthRetryingException)
+        }
+
+    for
+      fixture <- mkFixture
+      finalResult <- retryingOnFailuresAndSomeErrors[String](
+        policy,
+        s => IO.pure(s == "will never happen"),
+        e => IO.pure(e.getMessage == "one more time"),
+        fixture.onError,
+        (err, rd) => fixture.onError(err.getMessage, rd)
+      )(action(fixture)).attempt
+      state <- fixture.getState
+    yield
+      assertEquals(finalResult, Left(notWorthRetryingException))
+      assertEquals(state.attempts, 3)
+      assertEquals(state.errors.toList, List("one more time", "one more time"))
+      assertEquals(
+        state.gaveUp,
+        false // false because onError is only called when the error is worth retrying
+      )
+  }
+
+  test("retryingOnFailuresAndSomeErrors - retry until the policy chooses to give up due to errors") {
+    val policy = RetryPolicies.limitRetries[IO](2)
+
+    def action(fixture: Fixture): IO[String] =
+      fixture.incrementAttempts() >>
+        IO.raiseError(oneMoreTimeException)
+    for
+      fixture <- mkFixture
+      finalResult <- retryingOnFailuresAndSomeErrors[String](
+        policy,
+        s => IO.pure(s == "will never happen"),
+        e => IO.pure(e.getMessage == "one more time"),
+        fixture.onError,
+        (err, rd) => fixture.onError(err.getMessage, rd)
+      )(action(fixture)).attempt
+      state <- fixture.getState
+    yield
+      assertEquals(finalResult, Left(oneMoreTimeException))
+      assertEquals(state.attempts, 3)
+      assertEquals(state.errors.toList, List("one more time", "one more time", "one more time"))
+      assertEquals(state.gaveUp, true)
+  }
+
+  test(
     "retryingOnFailuresAndSomeErrors - retry until the policy chooses to give up due to failures"
-  ) { context =>
-    import context.*
+  ) {
+    val policy = RetryPolicies.limitRetries[IO](2)
 
-    val policy = RetryPolicies.limitRetries[StringOr](2)
+    def action(fixture: Fixture): IO[String] =
+      fixture.incrementAttempts().as("boo")
 
-    val finalResult = retryingOnFailuresAndSomeErrors[String](
-      policy,
-      s => Right(s == "yay"),
-      (s: String) => Right(s == "one more time"),
-      onError,
-      onError
-    ) {
-      attempts = attempts + 1
-      Right("boo")
-    }
-
-    assertEquals(finalResult, Right("boo"))
-    assertEquals(attempts, 3)
-    assertEquals(errors.toList, List("boo", "boo", "boo"))
-    assertEquals(gaveUp, true)
-  }
-
-  fixture.test("retryingOnFailuresAndSomeErrors - retry in a stack-safe way") { context =>
-    import context.*
-
-    val policy = RetryPolicies.limitRetries[StringOr](10000)
-
-    val finalResult = retryingOnFailuresAndSomeErrors[String](
-      policy,
-      s => Right(s == "yay"),
-      (s: String) => Right(s == "one more time"),
-      onError,
-      onError
-    ) {
-      attempts = attempts + 1
-      Left("one more time")
-    }
-
-    assertEquals(finalResult, Left("one more time"))
-    assertEquals(attempts, 10001)
-    assertEquals(gaveUp, true)
-  }
-
-  fixture.test("retryingOnFailuresAndSomeErrors - should fail fast if isWorthRetrying's effect fails") {
-    context =>
-      import context.*
-
-      val policy = RetryPolicies.limitRetries[StringOr](10000)
-
-      val finalResult = retryingOnFailuresAndSomeErrors[String](
+    for
+      fixture <- mkFixture
+      finalResult <- retryingOnFailuresAndSomeErrors[String](
         policy,
-        s => Right(s == "yay, but it doesn't matter"),
-        (_: String) => Left("isWorthRetrying failed"): StringOr[Boolean],
-        onError,
-        onError
-      ) {
-        attempts = attempts + 1
-        Left("one more time")
-      }
-
-      assertEquals(finalResult, Left("isWorthRetrying failed"))
-      assertEquals(attempts, 1)
-      assertEquals(gaveUp, false)
+        s => IO.pure(s == "yay"),
+        e => IO.pure(e.getMessage == "one more time"),
+        fixture.onError,
+        (err, rd) => fixture.onError(err.getMessage, rd)
+      )(action(fixture))
+      state <- fixture.getState
+    yield
+      assertEquals(finalResult, "boo")
+      assertEquals(state.attempts, 3)
+      assertEquals(state.errors.toList, List("boo", "boo", "boo"))
+      assertEquals(state.gaveUp, true)
   }
 
-  fixture.test("retryingOnFailuresAndAllErrors - retry until the action succeeds") { context =>
-    import context.*
+  test("retryingOnFailuresAndSomeErrors - retry in a stack-safe way") {
+    val policy = RetryPolicies.limitRetries[IO](10_000)
 
-    val policy = RetryPolicies.constantDelay[StringOr](1.second)
+    def action(fixture: Fixture): IO[String] =
+      fixture.incrementAttempts() >>
+        IO.raiseError(oneMoreTimeException)
 
-    val finalResult = retryingOnFailuresAndAllErrors[String](
-      policy,
-      s => Right(s == "yay"),
-      onError,
-      onError
-    ) {
-      attempts = attempts + 1
-      if attempts < 3 then Left("one more time")
-      else Right("yay")
-    }
-
-    assertEquals(finalResult, Right("yay"))
-    assertEquals(attempts, 3)
-    assertEquals(errors.toList, List("one more time", "one more time"))
-    assertEquals(gaveUp, false)
-  }
-
-  fixture.test("retryingOnFailuresAndAllErrors - retry until the policy chooses to give up due to errors") {
-    context =>
-      import context.*
-
-      val policy = RetryPolicies.limitRetries[StringOr](2)
-
-      val finalResult = retryingOnFailuresAndAllErrors[String](
+    for
+      fixture <- mkFixture
+      finalResult <- retryingOnFailuresAndSomeErrors[String](
         policy,
-        s => Right(s == "will never happen"),
-        onError,
-        onError
-      ) {
-        attempts = attempts + 1
-        Left("one more time")
-      }
-
-      assertEquals(finalResult, Left("one more time"))
-      assertEquals(attempts, 3)
-      assertEquals(
-        errors.toList,
-        List("one more time", "one more time", "one more time")
-      )
-      assertEquals(gaveUp, true)
+        s => IO.pure(s == "yay"),
+        e => IO.pure(e.getMessage == "one more time"),
+        fixture.onError,
+        (err, rd) => fixture.onError(err.getMessage, rd)
+      )(action(fixture)).attempt
+      state <- fixture.getState
+    yield
+      assertEquals(finalResult, Left(oneMoreTimeException))
+      assertEquals(state.attempts, 10_001)
+      assertEquals(state.gaveUp, true)
   }
 
-  fixture.test("retryingOnFailuresAndAllErrors - retry until the policy chooses to give up due to failures") {
-    context =>
-      import context.*
+  test("retryingOnFailuresAndSomeErrors - should fail fast if isWorthRetrying's effect fails") {
+    val policy                 = RetryPolicies.limitRetries[IO](10_000)
+    val errorInIsWorthRetrying = new RuntimeException("an error was raised!")
 
-      val policy = RetryPolicies.limitRetries[StringOr](2)
+    def action(fixture: Fixture): IO[String] =
+      fixture.incrementAttempts() >>
+        IO.raiseError(oneMoreTimeException)
 
-      val finalResult = retryingOnFailuresAndAllErrors[String](
+    for
+      fixture <- mkFixture
+      finalResult <- retryingOnFailuresAndSomeErrors[String](
         policy,
-        s => Right(s == "yay"),
-        onError,
-        onError
-      ) {
-        attempts = attempts + 1
-        Right("boo")
-      }
-
-      assertEquals(finalResult, Right("boo"))
-      assertEquals(attempts, 3)
-      assertEquals(errors.toList, List("boo", "boo", "boo"))
-      assertEquals(gaveUp, true)
+        s => IO.pure(s == "does not matter"),
+        e => IO.raiseError(errorInIsWorthRetrying),
+        fixture.onError,
+        (err, rd) => fixture.onError(err.getMessage, rd)
+      )(action(fixture)).attempt
+      state <- fixture.getState
+    yield
+      assertEquals(finalResult, Left(errorInIsWorthRetrying))
+      assertEquals(state.attempts, 1)
+      assertEquals(state.gaveUp, false)
   }
 
-  fixture.test("retryingOnFailuresAndAllErrors - retry in a stack-safe way") { context =>
-    import context.*
+  test("retryingOnFailuresAndAllErrors - retry until the action succeeds") {
+    val policy = RetryPolicies.constantDelay[IO](1.milli)
 
-    val policy = RetryPolicies.limitRetries[StringOr](10000)
+    def action(fixture: Fixture): IO[String] =
+      fixture.incrementAttempts() >>
+        fixture.getAttempts.flatMap { attempts =>
+          if attempts < 3 then IO.raiseError(oneMoreTimeException)
+          else IO.pure("yay")
+        }
 
-    val finalResult = retryingOnFailuresAndAllErrors[String](
-      policy,
-      s => Right(s == "will never happen"),
-      onError,
-      onError
-    ) {
-      attempts = attempts + 1
-      Left("one more time")
-    }
-
-    assertEquals(finalResult, Left("one more time"))
-    assertEquals(attempts, 10001)
-    assertEquals(gaveUp, true)
-  }
-
-  fixture.test("retryingOnFailuresAndAllErrors - should fail fast if wasSuccessful's effect fails") {
-    context =>
-      import context.*
-
-      val policy = RetryPolicies.limitRetries[StringOr](2)
-
-      val finalResult = retryingOnFailuresAndAllErrors[String](
+    for
+      fixture <- mkFixture
+      finalResult <- retryingOnFailuresAndAllErrors[String](
         policy,
-        _ => Left("an error was raised!"): StringOr[Boolean],
-        onError,
-        onError
-      ) {
-        attempts = attempts + 1
-        Right("one more time")
-      }
+        s => IO.pure(s == "yay"),
+        fixture.onError,
+        (e, rd) => fixture.onError(e.getMessage, rd)
+      )(action(fixture))
+      state <- fixture.getState
+    yield
+      assertEquals(finalResult, "yay")
+      assertEquals(state.attempts, 3)
+      assertEquals(state.errors.toList, List("one more time", "one more time"))
+      assertEquals(state.gaveUp, false)
+  }
 
-      assertEquals(finalResult, Left("an error was raised!"))
-      assertEquals(attempts, 1)
-      assertEquals(gaveUp, false)
+  test("retryingOnFailuresAndAllErrors - retry until the policy chooses to give up due to errors") {
+    val policy = RetryPolicies.limitRetries[IO](2)
+
+    def action(fixture: Fixture): IO[String] =
+      fixture.incrementAttempts() >>
+        IO.raiseError(oneMoreTimeException)
+
+    for
+      fixture <- mkFixture
+      finalResult <- retryingOnFailuresAndAllErrors[String](
+        policy,
+        s => IO.pure(s == "will never happen"),
+        fixture.onError,
+        (e, rd) => fixture.onError(e.getMessage, rd)
+      )(action(fixture)).attempt
+      state <- fixture.getState
+    yield
+      assertEquals(finalResult, Left(oneMoreTimeException))
+      assertEquals(state.attempts, 3)
+      assertEquals(state.errors.toList, List("one more time", "one more time", "one more time"))
+      assertEquals(state.gaveUp, true)
+  }
+
+  test("retryingOnFailuresAndAllErrors - retry until the policy chooses to give up due to failures") {
+    val policy = RetryPolicies.limitRetries[IO](2)
+
+    def action(fixture: Fixture): IO[String] =
+      fixture.incrementAttempts().as("boo")
+
+    for
+      fixture <- mkFixture
+      finalResult <- retryingOnFailuresAndAllErrors[String](
+        policy,
+        s => IO.pure(s == "yay"),
+        fixture.onError,
+        (e, rd) => fixture.onError(e.getMessage, rd)
+      )(action(fixture))
+      state <- fixture.getState
+    yield
+      assertEquals(finalResult, "boo")
+      assertEquals(state.attempts, 3)
+      assertEquals(state.errors.toList, List("boo", "boo", "boo"))
+      assertEquals(state.gaveUp, true)
+  }
+
+  test("retryingOnFailuresAndAllErrors - retry in a stack-safe way") {
+    val policy = RetryPolicies.limitRetries[IO](10_000)
+
+    def action(fixture: Fixture): IO[String] =
+      fixture.incrementAttempts() >>
+        IO.raiseError(oneMoreTimeException)
+
+    for
+      fixture <- mkFixture
+      finalResult <- retryingOnFailuresAndAllErrors[String](
+        policy,
+        s => IO.pure(s == "will never happen"),
+        fixture.onError,
+        (e, rd) => fixture.onError(e.getMessage, rd)
+      )(action(fixture)).attempt
+      state <- fixture.getState
+    yield
+      assertEquals(finalResult, Left(oneMoreTimeException))
+      assertEquals(state.attempts, 10_001)
+      assertEquals(state.gaveUp, true)
+  }
+
+  test("retryingOnFailuresAndAllErrors - should fail fast if wasSuccessful's effect fails") {
+    val policy               = RetryPolicies.limitRetries[IO](2)
+    val errorInWasSuccessful = new RuntimeException("an error was raised!")
+
+    def action(fixture: Fixture): IO[String] =
+      fixture.incrementAttempts().as("boo")
+
+    for
+      fixture <- mkFixture
+      finalResult <- retryingOnFailuresAndAllErrors[String](
+        policy,
+        _ => IO.raiseError(errorInWasSuccessful),
+        fixture.onError,
+        (e, rd) => fixture.onError(e.getMessage, rd)
+      )(action(fixture)).attempt
+      state <- fixture.getState
+    yield
+      assertEquals(finalResult, Left(errorInWasSuccessful))
+      assertEquals(state.attempts, 1)
+      assertEquals(state.gaveUp, false)
   }
 end PackageObjectSuite

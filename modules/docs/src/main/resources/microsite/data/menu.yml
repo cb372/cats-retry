@@ -7,5 +7,3 @@ options:
     url: docs/mtl-combinators.html
   - title: Retry policies
     url: docs/policies.html
-  - title: Sleep
-    url: docs/sleep.html

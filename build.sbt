@@ -67,8 +67,9 @@ val mtlRetry = crossProject(JVMPlatform, JSPlatform)
     name               := "cats-retry-mtl",
     crossScalaVersions := scalaVersions,
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-mtl"         % catsMtlVersion,
-      "org.scalameta" %%% "munit-scalacheck" % munitVersion % Test
+      "org.typelevel" %%% "cats-mtl"          % catsMtlVersion,
+      "org.typelevel" %%% "munit-cats-effect" % munitCatsEffectVersion % Test,
+      "org.scalameta" %%% "munit-scalacheck"  % munitVersion           % Test
     ),
     mimaPreviousArtifacts := Set.empty,
     Test / tpolecatExcludeOptions += ScalacOptions.warnNonUnitStatement
