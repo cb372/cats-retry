@@ -231,15 +231,16 @@ package object retry:
   ): RetryDetails =
     nextStep match
       case NextStep.RetryAfterDelay(delay, _) =>
-        RetryDetails.WillDelayAndRetry(
-          delay,
+        RetryDetails(
           currentStatus.retriesSoFar,
-          currentStatus.cumulativeDelay
+          currentStatus.cumulativeDelay,
+          RetryDetails.NextStep.DelayAndRetry(delay)
         )
       case NextStep.GiveUp =>
-        RetryDetails.GivingUp(
+        RetryDetails(
           currentStatus.retriesSoFar,
-          currentStatus.cumulativeDelay
+          currentStatus.cumulativeDelay,
+          RetryDetails.NextStep.GiveUp
         )
 
   private[retry] sealed trait NextStep
