@@ -1,12 +1,12 @@
 package retry
 
-import munit.FunSuite
+import munit.CatsEffectSuite
 
 import scala.concurrent.duration.*
 import cats.effect.kernel.Ref
 import cats.effect.IO
 
-class PackageObjectSuite extends FunSuite:
+class PackageObjectSuite extends CatsEffectSuite:
 
   private case class State(
       attempts: Int = 0,
@@ -81,8 +81,8 @@ class PackageObjectSuite extends FunSuite:
       assertEquals(finalResult, "3")
       assertEquals(state.attempts, 3)
       assertEquals(state.errors.toList, List("1", "2", "3"))
-      assertEquals(state.delays.toList, List(Duration.Zero, Duration.Zero, Duration.Zero))
-      assertEquals(state.gaveUp, false)
+      assertEquals(state.delays.toList, List(Duration.Zero, Duration.Zero))
+      assertEquals(state.gaveUp, true)
   }
 
   test("retryingOnFailures - retry in a stack-safe way") {
@@ -103,7 +103,7 @@ class PackageObjectSuite extends FunSuite:
     yield
       assertEquals(finalResult, "10001")
       assertEquals(state.attempts, 10_001)
-      assertEquals(state.gaveUp, false)
+      assertEquals(state.gaveUp, true)
   }
 
   test("retryingOnSomeErrors - retry until the action succeeds") {
@@ -148,6 +148,7 @@ class PackageObjectSuite extends FunSuite:
         e => IO.pure(e.getMessage == "one more time"),
         (err, rd) => fixture.onError(err.getMessage, rd)
       )(action(fixture))
+        .recover { case e => e.getMessage }
       state <- fixture.getState
     yield
       assertEquals(result, "nope")
@@ -246,7 +247,7 @@ class PackageObjectSuite extends FunSuite:
     yield
       assertEquals(result, "one more time")
       assertEquals(state.attempts, 3)
-      assertEquals(state.errors.toList, List("one more time", "one more time"))
+      assertEquals(state.errors.toList, List("one more time", "one more time", "one more time"))
       assertEquals(state.gaveUp, true)
   }
 
@@ -320,7 +321,7 @@ class PackageObjectSuite extends FunSuite:
         .recover { case e => e.getMessage }
       state <- fixture.getState
     yield
-      assertEquals(finalResult, "one more time")
+      assertEquals(finalResult, "nope")
       assertEquals(state.attempts, 3)
       assertEquals(state.errors.toList, List("one more time", "one more time"))
       assertEquals(
@@ -374,7 +375,7 @@ class PackageObjectSuite extends FunSuite:
     yield
       assertEquals(finalResult, "boo")
       assertEquals(state.attempts, 3)
-      assertEquals(state.errors.toList, List("one more time", "one more time", "one more time"))
+      assertEquals(state.errors.toList, List("boo", "boo", "boo"))
       assertEquals(state.gaveUp, true)
   }
 
@@ -398,7 +399,7 @@ class PackageObjectSuite extends FunSuite:
         .recover { case e => e.getMessage }
       state <- fixture.getState
     yield
-      assertEquals(finalResult, "boo")
+      assertEquals(finalResult, "one more time")
       assertEquals(state.attempts, 10_001)
       assertEquals(state.gaveUp, true)
   }
@@ -530,24 +531,23 @@ class PackageObjectSuite extends FunSuite:
 
   test("retryingOnFailuresAndAllErrors - should fail fast if wasSuccessful's effect fails") {
 
-    val policy = RetryPolicies.limitRetries[IO](2)
+    val policy       = RetryPolicies.limitRetries[IO](2)
+    val runtimeError = new RuntimeException("an error was raised!")
 
     def action(fixture: Fixture): IO[String] =
-      fixture.incrementAttempts() >>
-        IO.raiseError(new RuntimeException("one more time"))
+      fixture.incrementAttempts().as("boo")
 
     for
       fixture <- mkFixture
       finalResult <- retryingOnFailuresAndAllErrors[String](
         policy,
-        _ => IO.raiseError(new RuntimeException("an error was raised!")),
+        _ => IO.raiseError(runtimeError),
         fixture.onError,
         (e, rd) => fixture.onError(e.getMessage, rd)
-      )(action(fixture))
-        .recover { case e => e.getMessage }
+      )(action(fixture)).attempt
       state <- fixture.getState
     yield
-      assertEquals(finalResult, "an error was raised!")
+      assertEquals(finalResult, Left(runtimeError))
       assertEquals(state.attempts, 1)
       assertEquals(state.gaveUp, false)
   }
