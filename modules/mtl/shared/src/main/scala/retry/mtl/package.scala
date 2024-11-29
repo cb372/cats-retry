@@ -2,9 +2,9 @@ package retry
 
 import cats.effect.Temporal
 import cats.mtl.Handle
-import cats.syntax.apply._
-import cats.syntax.flatMap._
-import cats.syntax.functor._
+import cats.syntax.apply.*
+import cats.syntax.flatMap.*
+import cats.syntax.functor.*
 
 package object mtl {
 
@@ -20,7 +20,7 @@ package object mtl {
         onError: (E, RetryDetails) => M[Unit]
     )(
         action: => M[A]
-    )(implicit
+    )(using
         AH: Handle[M, E],
         T: Temporal[M]
     ): M[A] = {
@@ -58,7 +58,7 @@ package object mtl {
         onError: (E, RetryDetails) => M[Unit]
     )(
         action: => M[A]
-    )(implicit
+    )(using
         AH: Handle[M, E],
         T: Temporal[M]
     ): M[A] = {

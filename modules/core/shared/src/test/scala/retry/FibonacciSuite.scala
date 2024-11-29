@@ -2,7 +2,7 @@ package retry
 
 import munit.FunSuite
 
-class FibonacciSuite extends FunSuite {
+class FibonacciSuite extends FunSuite:
 
   test("calculates the Fibonacci sequence") {
     assertEquals(Fibonacci.fibonacci(0), 0L)
@@ -15,5 +15,3 @@ class FibonacciSuite extends FunSuite {
     assertEquals(Fibonacci.fibonacci(7), 13L)
     assertEquals(Fibonacci.fibonacci(75), 2111485077978050L)
   }
-
-}

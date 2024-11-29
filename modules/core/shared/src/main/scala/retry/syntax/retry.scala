@@ -21,7 +21,7 @@ final class RetryingOps[M[_], A](action: => M[A]) {
       wasSuccessful: A => M[Boolean],
       policy: RetryPolicy[M],
       onFailure: (A, RetryDetails) => M[Unit]
-  )(implicit T: Temporal[M]): M[A] =
+  )(using T: Temporal[M]): M[A] =
     retry.retryingOnFailures(
       policy = policy,
       wasSuccessful = wasSuccessful,
@@ -33,7 +33,7 @@ final class RetryingErrorOps[M[_], A](action: => M[A]) {
   def retryingOnAllErrors(
       policy: RetryPolicy[M],
       onError: (Throwable, RetryDetails) => M[Unit]
-  )(implicit T: Temporal[M]): M[A] =
+  )(using T: Temporal[M]): M[A] =
     retry.retryingOnAllErrors(
       policy = policy,
       onError = onError
@@ -43,7 +43,7 @@ final class RetryingErrorOps[M[_], A](action: => M[A]) {
       isWorthRetrying: Throwable => M[Boolean],
       policy: RetryPolicy[M],
       onError: (Throwable, RetryDetails) => M[Unit]
-  )(implicit T: Temporal[M]): M[A] =
+  )(using T: Temporal[M]): M[A] =
     retry.retryingOnSomeErrors(
       policy = policy,
       isWorthRetrying = isWorthRetrying,
@@ -55,7 +55,7 @@ final class RetryingErrorOps[M[_], A](action: => M[A]) {
       policy: RetryPolicy[M],
       onFailure: (A, RetryDetails) => M[Unit],
       onError: (Throwable, RetryDetails) => M[Unit]
-  )(implicit T: Temporal[M]): M[A] =
+  )(using T: Temporal[M]): M[A] =
     retry.retryingOnFailuresAndAllErrors(
       policy = policy,
       wasSuccessful = wasSuccessful,
@@ -69,7 +69,7 @@ final class RetryingErrorOps[M[_], A](action: => M[A]) {
       policy: RetryPolicy[M],
       onFailure: (A, RetryDetails) => M[Unit],
       onError: (Throwable, RetryDetails) => M[Unit]
-  )(implicit T: Temporal[M]): M[A] =
+  )(using T: Temporal[M]): M[A] =
     retry.retryingOnFailuresAndSomeErrors(
       policy = policy,
       wasSuccessful = wasSuccessful,

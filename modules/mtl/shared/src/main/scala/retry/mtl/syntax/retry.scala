@@ -16,7 +16,7 @@ final class RetryingMtlErrorOps[M[_], A](action: => M[A]) {
   def retryingOnAllMtlErrors[E](
       policy: RetryPolicy[M],
       onError: (E, RetryDetails) => M[Unit]
-  )(implicit T: Temporal[M], AH: Handle[M, E]): M[A] =
+  )(using T: Temporal[M], AH: Handle[M, E]): M[A] =
     retry.mtl.retryingOnAllErrors(
       policy = policy,
       onError = onError
@@ -26,7 +26,7 @@ final class RetryingMtlErrorOps[M[_], A](action: => M[A]) {
       isWorthRetrying: E => M[Boolean],
       policy: RetryPolicy[M],
       onError: (E, RetryDetails) => M[Unit]
-  )(implicit T: Temporal[M], AH: Handle[M, E]): M[A] =
+  )(using T: Temporal[M], AH: Handle[M, E]): M[A] =
     retry.mtl.retryingOnSomeErrors(
       policy = policy,
       isWorthRetrying = isWorthRetrying,

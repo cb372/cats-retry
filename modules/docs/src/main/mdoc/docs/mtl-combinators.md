@@ -78,7 +78,7 @@ type Effect[A] = EitherT[IO, AppError, A]
 
 case class AppError(reason: String)
 
-def failingOperation[F[_]: Handle[*[_], AppError]]: F[Unit] =
+def failingOperation[F[_]: [M[_]] =>> Handle[M, AppError]]: F[Unit] =
   Handle[F, AppError].raise(AppError("Boom!"))
 
 def isWorthRetrying(error: AppError): Effect[Boolean] =
@@ -129,7 +129,7 @@ type Effect[A] = EitherT[IO, AppError, A]
 
 case class AppError(reason: String)
 
-def failingOperation[F[_]: Handle[*[_], AppError]]: F[Unit] =
+def failingOperation[F[_]: [M[_]] =>> Handle[M, AppError]]: F[Unit] =
   Handle[F, AppError].raise(AppError("Boom!"))
 
 def logError[F[_]: Sync](error: AppError, details: RetryDetails): F[Unit] =
