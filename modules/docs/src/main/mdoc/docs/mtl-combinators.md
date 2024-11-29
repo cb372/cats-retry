@@ -13,7 +13,7 @@ with errors produced by `Handle` from
 
 To use `cats-retry-mtl`, add the following dependency to your `build.sbt`:
 
-```scala mdoc:passthrough
+````scala mdoc:passthrough
 println(
   s"""
   |```
@@ -22,13 +22,13 @@ println(
   |```
   |""".stripMargin.trim
 )
-```
+````
 
 ## Interaction with MonadError retry
 
 MTL retry works independently from `retry.retryingOnSomeErrors`. The operations
 `retry.mtl.retryingOnAllErrors` and `retry.mtl.retryingOnSomeErrors` evaluating
-retry exclusively on errors produced by `Handle`.  Thus errors produced by
+retry exclusively on errors produced by `Handle`. Thus errors produced by
 `MonadError` are not being taken into account and retry is not triggered.
 
 If you want to retry in case of any error, you can chain the methods:
@@ -50,7 +50,7 @@ whether a given error is worth retrying.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnSomeErrors[M[_]: Monad: Sleep, A, E: Handle[M, *]](
+def retryingOnSomeErrors[M[_]: Temporal, A, E: Handle[M, *]](
   policy: RetryPolicy[M],
   isWorthRetrying: E => M[Boolean],
   onError: (E, RetryDetails) => M[Unit]
@@ -59,12 +59,13 @@ def retryingOnSomeErrors[M[_]: Monad: Sleep, A, E: Handle[M, *]](
 
 You need to pass in:
 
-* a retry policy
-* a predicate that decides whether a given error is worth retrying
-* an error handler, often used for logging
-* the operation that you want to wrap with retries
+- a retry policy
+- a predicate that decides whether a given error is worth retrying
+- an error handler, often used for logging
+- the operation that you want to wrap with retries
 
 Example:
+
 ```scala mdoc
 import retry.{RetryDetails, RetryPolicies}
 import cats.data.EitherT
@@ -102,7 +103,7 @@ retry on all errors.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnSomeErrors[M[_]: Monad: Sleep, A, E: Handle[M, *]](
+def retryingOnSomeErrors[M[_]: Temporal, A, E: Handle[M, *]](
   policy: RetryPolicy[M],
   onError: (E, RetryDetails) => M[Unit]
 )(action: => M[A]): M[A]
@@ -110,11 +111,12 @@ def retryingOnSomeErrors[M[_]: Monad: Sleep, A, E: Handle[M, *]](
 
 You need to pass in:
 
-* a retry policy
-* an error handler, often used for logging
-* the operation that you want to wrap with retries
+- a retry policy
+- an error handler, often used for logging
+- the operation that you want to wrap with retries
 
 Example:
+
 ```scala mdoc:reset
 import retry.{RetryDetails, RetryPolicies}
 import cats.data.EitherT
@@ -148,7 +150,7 @@ Cats-retry-mtl include some syntactic sugar in order to reduce boilerplate.
 ```scala mdoc:reset
 import retry._
 import cats.data.EitherT
-import cats.effect.{Sync, IO}
+import cats.effect.{Async, IO}
 import cats.syntax.functor._
 import cats.syntax.flatMap._
 import cats.mtl.Handle
@@ -159,7 +161,7 @@ import cats.effect.unsafe.implicits.global
 
 case class AppError(reason: String)
 
-class Service[F[_]: Sleep](client: util.FlakyHttpClient)(implicit F: Sync[F], AH: Handle[F, AppError]) {
+class Service[F[_]](client: util.FlakyHttpClient)(implicit F: Async[F], AH: Handle[F, AppError]) {
 
   // evaluates retry exclusively on errors produced by Handle.
   def findCoolCatGifRetryMtl(policy: RetryPolicy[F]): F[String] =

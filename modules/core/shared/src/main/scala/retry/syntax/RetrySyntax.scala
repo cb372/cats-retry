@@ -1,58 +1,59 @@
 package retry.syntax
 
-import cats.{Monad, MonadError}
-import retry.{RetryDetails, RetryPolicy, Sleep}
+import retry.{RetryDetails, RetryPolicy}
+import cats.effect.Temporal
 
-extension [M[_], A](action: => M[A])
+trait RetrySyntax:
+  implicit final def retrySyntaxBase[M[_], A](
+      action: => M[A]
+  ): RetryingOps[M, A] =
+    new RetryingOps[M, A](action)
+
+  implicit final def retrySyntaxError[M[_], A](
+      action: => M[A]
+  ): RetryingErrorOps[M, A] =
+    new RetryingErrorOps[M, A](action)
+
+final class RetryingOps[M[_], A](action: => M[A]):
+
   def retryingOnFailures[E](
       wasSuccessful: A => M[Boolean],
       policy: RetryPolicy[M],
       onFailure: (A, RetryDetails) => M[Unit]
-  )(using
-      M: Monad[M],
-      S: Sleep[M]
-  ): M[A] =
+  )(using T: Temporal[M]): M[A] =
     retry.retryingOnFailures(
       policy = policy,
       wasSuccessful = wasSuccessful,
       onFailure = onFailure
     )(action)
 
-  def retryingOnAllErrors[E](
+final class RetryingErrorOps[M[_], A](action: => M[A]):
+  def retryingOnAllErrors(
       policy: RetryPolicy[M],
-      onError: (E, RetryDetails) => M[Unit]
-  )(using
-      ME: MonadError[M, E],
-      S: Sleep[M]
-  ): M[A] =
+      onError: (Throwable, RetryDetails) => M[Unit]
+  )(using T: Temporal[M]): M[A] =
     retry.retryingOnAllErrors(
       policy = policy,
       onError = onError
     )(action)
 
-  def retryingOnSomeErrors[E](
-      isWorthRetrying: E => M[Boolean],
+  def retryingOnSomeErrors(
+      isWorthRetrying: Throwable => M[Boolean],
       policy: RetryPolicy[M],
-      onError: (E, RetryDetails) => M[Unit]
-  )(using
-      ME: MonadError[M, E],
-      S: Sleep[M]
-  ): M[A] =
+      onError: (Throwable, RetryDetails) => M[Unit]
+  )(using T: Temporal[M]): M[A] =
     retry.retryingOnSomeErrors(
       policy = policy,
       isWorthRetrying = isWorthRetrying,
       onError = onError
     )(action)
 
-  def retryingOnFailuresAndAllErrors[E](
+  def retryingOnFailuresAndAllErrors(
       wasSuccessful: A => M[Boolean],
       policy: RetryPolicy[M],
       onFailure: (A, RetryDetails) => M[Unit],
-      onError: (E, RetryDetails) => M[Unit]
-  )(using
-      ME: MonadError[M, E],
-      S: Sleep[M]
-  ): M[A] =
+      onError: (Throwable, RetryDetails) => M[Unit]
+  )(using T: Temporal[M]): M[A] =
     retry.retryingOnFailuresAndAllErrors(
       policy = policy,
       wasSuccessful = wasSuccessful,
@@ -60,13 +61,13 @@ extension [M[_], A](action: => M[A])
       onError = onError
     )(action)
 
-  def retryingOnFailuresAndSomeErrors[E](
+  def retryingOnFailuresAndSomeErrors(
       wasSuccessful: A => M[Boolean],
-      isWorthRetrying: E => M[Boolean],
+      isWorthRetrying: Throwable => M[Boolean],
       policy: RetryPolicy[M],
       onFailure: (A, RetryDetails) => M[Unit],
-      onError: (E, RetryDetails) => M[Unit]
-  )(using ME: MonadError[M, E], S: Sleep[M]): M[A] =
+      onError: (Throwable, RetryDetails) => M[Unit]
+  )(using T: Temporal[M]): M[A] =
     retry.retryingOnFailuresAndSomeErrors(
       policy = policy,
       wasSuccessful = wasSuccessful,
@@ -74,4 +75,4 @@ extension [M[_], A](action: => M[A])
       onFailure = onFailure,
       onError = onError
     )(action)
-end extension
+end RetryingErrorOps

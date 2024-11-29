@@ -10,27 +10,27 @@ retries.
 
 ## Cheat sheet
 
-| Combinator | Context bound | Handles |
-| --- | --- | --- |
-| [`retryingOnFailures`](#retryingOnFailures) | Monad | Failures |
-| [`retryingOnSomeErrors`](#retryingonsomeerrors) | MonadError | Errors |
-| [`retryingOnAllErrors`](#retryingonallerrors) | MonadError | Errors |
-| [`retryingOnFailuresAndSomeErrors`](#retryingonfailuresandsomeerrors) | MonadError | Failures and errors |
-| [`retryingOnFailuresAndAllErrors`](#retryingonfailuresandallerrors) | MonadError | Failures and errors |
+| Combinator                                                            | Context bound | Handles             |
+| --------------------------------------------------------------------- | ------------- | ------------------- |
+| [`retryingOnFailures`](#retryingOnFailures)                           | Monad         | Failures            |
+| [`retryingOnSomeErrors`](#retryingonsomeerrors)                       | MonadError    | Errors              |
+| [`retryingOnAllErrors`](#retryingonallerrors)                         | MonadError    | Errors              |
+| [`retryingOnFailuresAndSomeErrors`](#retryingonfailuresandsomeerrors) | MonadError    | Failures and errors |
+| [`retryingOnFailuresAndAllErrors`](#retryingonfailuresandallerrors)   | MonadError    | Failures and errors |
 
 More information on each combinator is provided below.
 
 ## `retryingOnFailures`
 
 To use `retryingOnFailures`, you pass in a predicate that decides whether you are happy
-with the result or you want to retry.  It is useful when you are working in an
-arbitrary `Monad` that is not a `MonadError`.  Your operation doesn't throw
+with the result or you want to retry. It is useful when you are working in an
+arbitrary `Monad` that is not a `MonadError`. Your operation doesn't throw
 errors, but you want to retry until it returns a value that you are happy with.
 
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnFailures[M[_]: Monad: Sleep, A](policy: RetryPolicy[M],
+def retryingOnFailures[M[_]: Temporal, A](policy: RetryPolicy[M],
                                               wasSuccessful: A => M[Boolean],
                                               onFailure: (A, RetryDetails) => M[Unit])
                                               (action: => M[A]): M[A]
@@ -38,10 +38,10 @@ def retryingOnFailures[M[_]: Monad: Sleep, A](policy: RetryPolicy[M],
 
 You need to pass in:
 
-* a retry policy
-* a predicate that decides whether the operation was successful
-* a failure handler, often used for logging
-* the operation that you want to wrap with retries
+- a retry policy
+- a predicate that decides whether the operation was successful
+- a failure handler, often used for logging
+- the operation that you want to wrap with retries
 
 For example, let's keep rolling a die until we get a six, using `IO`.
 
@@ -78,7 +78,7 @@ whether a given error is worth retrying.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnSomeErrors[M[_]: Sleep, A, E](policy: RetryPolicy[M],
+def retryingOnSomeErrors[M[_]: Temporal, A, E](policy: RetryPolicy[M],
                                             isWorthRetrying: E => M[Boolean],
                                             onError: (E, RetryDetails) => M[Unit])
                                            (action: => M[A])
@@ -87,10 +87,10 @@ def retryingOnSomeErrors[M[_]: Sleep, A, E](policy: RetryPolicy[M],
 
 You need to pass in:
 
-* a retry policy
-* a predicate that decides whether a given error is worth retrying
-* an error handler, often used for logging
-* the operation that you want to wrap with retries
+- a retry policy
+- a predicate that decides whether a given error is worth retrying
+- an error handler, often used for logging
+- the operation that you want to wrap with retries
 
 For example, let's make a request for a cat gif using our flaky HTTP client,
 retrying only if we get an `IOException`.
@@ -123,7 +123,7 @@ retry on all errors.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnAllErrors[M[_]: Sleep, A, E](policy: RetryPolicy[M],
+def retryingOnAllErrors[M[_]: Temporal, A, E](policy: RetryPolicy[M],
                                            onError: (E, RetryDetails) => M[Unit])
                                           (action: => M[A])
                                           (implicit ME: MonadError[M, E]): M[A]
@@ -131,9 +131,9 @@ def retryingOnAllErrors[M[_]: Sleep, A, E](policy: RetryPolicy[M],
 
 You need to pass in:
 
-* a retry policy
-* an error handler, often used for logging
-* the operation that you want to wrap with retries
+- a retry policy
+- an error handler, often used for logging
+- the operation that you want to wrap with retries
 
 For example, let's make the same request for a cat gif, this time retrying on
 all errors.
@@ -163,7 +163,7 @@ decide whether a given error or result is worth retrying.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnFailuresAndSomeErrors[M[_]: Sleep, A, E](policy: RetryPolicy[M],
+def retryingOnFailuresAndSomeErrors[M[_]: Temporal, A, E](policy: RetryPolicy[M],
                                                        wasSuccessful: A => M[Boolean],
                                                        isWorthRetrying: E => M[Boolean],
                                                        onFailure: (A, RetryDetails) => M[Unit],
@@ -174,16 +174,17 @@ def retryingOnFailuresAndSomeErrors[M[_]: Sleep, A, E](policy: RetryPolicy[M],
 
 You need to pass in:
 
-* a retry policy
-* a predicate that decides whether the operation was successful
-* a predicate that decides whether a given error is worth retrying
-* a failure handler, often used for logging
-* an error handler, often used for logging
-* the operation that you want to wrap with retries
+- a retry policy
+- a predicate that decides whether the operation was successful
+- a predicate that decides whether a given error is worth retrying
+- a failure handler, often used for logging
+- an error handler, often used for logging
+- the operation that you want to wrap with retries
 
 For example, let's make a request to an API to retrieve details for a record, which we will only retry if:
-* A timeout exception occurs
-* The record's details are incomplete pending future operations
+
+- A timeout exception occurs
+- The record's details are incomplete pending future operations
 
 ```scala mdoc:nest
 import java.util.concurrent.TimeoutException
@@ -218,7 +219,7 @@ whether a given result is worth retrying.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnFailuresAndAllErrors[M[_]: Sleep, A, E](policy: RetryPolicy[M],
+def retryingOnFailuresAndAllErrors[M[_]: Temporal, A, E](policy: RetryPolicy[M],
                                                       wasSuccessful: A => M[Boolean],
                                                       onFailure: (A, RetryDetails) => M[Unit],
                                                       onError: (E, RetryDetails) => M[Unit])
@@ -228,15 +229,16 @@ def retryingOnFailuresAndAllErrors[M[_]: Sleep, A, E](policy: RetryPolicy[M],
 
 You need to pass in:
 
-* a retry policy
-* a predicate that decides whether the operation was successful
-* a failure handler, often used for logging
-* an error handler, often used for logging
-* the operation that you want to wrap with retries
+- a retry policy
+- a predicate that decides whether the operation was successful
+- a failure handler, often used for logging
+- an error handler, often used for logging
+- the operation that you want to wrap with retries
 
 For example, let's make a request to an API to retrieve details for a record, which we will only retry if:
-* Any exception occurs
-* The record's details are incomplete pending future operations
+
+- Any exception occurs
+- The record's details are incomplete pending future operations
 
 ```scala mdoc:nest
 import java.util.concurrent.TimeoutException
