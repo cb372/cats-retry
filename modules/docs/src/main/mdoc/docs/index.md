@@ -30,7 +30,7 @@ some retry logic.
 
 We'll add dependencies on the `core` and `cats-effect` modules:
 
-```scala mdoc:passthrough
+````scala mdoc:passthrough
 println(
   s"""
   |```
@@ -39,7 +39,7 @@ println(
   |```
   |""".stripMargin.trim
 )
-```
+````
 
 (Note: if you're using Scala.js, you'll need a `%%%` instead of `%%`.)
 
@@ -103,7 +103,6 @@ logMessages.foreach(println)
 
 Next steps:
 
-* Learn about the other available [combinators](combinators.html)
-* Learn about the [MTL combinators](mtl-combinators.html)
-* Learn more about [retry policies](policies.html)
-* Learn about the [`Sleep` type class](sleep.html)
+- Learn about the other available [combinators](combinators.html)
+- Learn about the [MTL combinators](mtl-combinators.html)
+- Learn more about [retry policies](policies.html)

@@ -1,6 +1,6 @@
 package retry
 
-import cats.Monad
+import cats.effect.Temporal
 import cats.mtl.Handle
 import cats.syntax.apply.*
 import cats.syntax.flatMap.*
@@ -26,11 +26,10 @@ package object mtl:
     )(
         action: => M[A]
     )(using
-        M: Monad[M],
         AH: Handle[M, E],
-        S: Sleep[M]
+        T: Temporal[M]
     ): M[A] =
-      M.tailRecM((action, RetryStatus.NoRetriesYet)) { (currentAction, status) =>
+      T.tailRecM((action, RetryStatus.NoRetriesYet)) { (currentAction, status) =>
         AH.attempt(currentAction).flatMap { attempt =>
           retryingOnErrorsImpl(
             policy,
@@ -53,9 +52,8 @@ package object mtl:
       currentAction: M[A],
       attempt: Either[E, A]
   )(using
-      M: Monad[M],
       AH: Handle[M, E],
-      S: Sleep[M]
+      T: Temporal[M]
   ): M[Either[(M[A], RetryStatus), A]] =
 
     def applyNextStep(
@@ -65,8 +63,8 @@ package object mtl:
     ): M[Either[(M[A], RetryStatus), A]] =
       nextStep match
         case NextStep.RetryAfterDelay(delay, updatedStatus) =>
-          S.sleep(delay) *>
-            M.pure(Left(nextAction, updatedStatus)) // continue recursion
+          T.sleep(delay) *>
+            T.pure(Left(nextAction, updatedStatus)) // continue recursion
         case NextStep.GiveUp =>
           AH.raise[E, A](error).map(Right(_)) // stop the recursion
 
@@ -97,7 +95,7 @@ package object mtl:
           result          <- applyHandlerDecision(error, handlerDecision, nextStep)
         yield result
       case Right(success) =>
-        M.pure(Right(success)) // stop the recursion
+        T.pure(Right(success)) // stop the recursion
   end retryingOnErrorsImpl
 
 end mtl

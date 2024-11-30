@@ -1,204 +1,222 @@
 package retry.mtl
 
 import cats.data.EitherT
-import cats.data.EitherT.catsDataMonadErrorFForEitherT
-import munit.FunSuite
+import munit.CatsEffectSuite
 import retry.syntax.all.*
 import retry.mtl.syntax.all.*
-import retry.{RetryDetails, RetryPolicies, RetryPolicy, Sleep}
+import retry.{RetryDetails, RetryPolicies, RetryPolicy}
 
-import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.*
+import cats.effect.IO
+import cats.effect.kernel.Ref
 
-class SyntaxSuite extends FunSuite:
-  type ErrorOr[A] = Either[Throwable, A]
-  type F[A]       = EitherT[ErrorOr, String, A]
+class SyntaxSuite extends CatsEffectSuite:
+  case class AppError(msg: String)
+  type Effect[A] = EitherT[IO, AppError, A]
 
-  private class TestContext:
-    var attempts = 0
-    val errors   = ArrayBuffer.empty[Either[Throwable, String]]
-    val delays   = ArrayBuffer.empty[FiniteDuration]
-    var gaveUp   = false
-
-    def onError(error: Throwable, details: RetryDetails): F[Unit] =
-      onErrorInternal(Left(error), details)
-
-    def onMtlError(error: String, details: RetryDetails): F[Unit] =
-      onErrorInternal(Right(error), details)
-
-    private def onErrorInternal(
-        error: Either[Throwable, String],
-        details: RetryDetails
-    ): F[Unit] =
-      errors.append(error)
-      details match
-        case RetryDetails.WillDelayAndRetry(delay, _, _) => delays.append(delay)
-        case RetryDetails.GivingUp(_, _)                 => gaveUp = true
-      EitherT.pure(())
-
-  private val fixture = FunFixture[TestContext](
-    setup = _ => new TestContext,
-    teardown = _ => ()
+  private case class State(
+      attempts: Int = 0,
+      errors: Vector[String] = Vector.empty,
+      appErrors: Vector[AppError] = Vector.empty,
+      delays: Vector[FiniteDuration] = Vector.empty,
+      gaveUp: Boolean = false
   )
 
-  fixture.test("retryingOnSomeMtlErrors - retry until the action succeeds") { context =>
-    import context.*
+  private class Fixture(stateRef: Ref[IO, State]):
+    def incrementAttempts(): IO[Unit] =
+      stateRef.update(state => state.copy(attempts = state.attempts + 1))
 
-    given Sleep[F] = _ => EitherT.pure(())
+    def onError(error: Throwable, details: RetryDetails): Effect[Unit] =
+      EitherT.liftF {
+        stateRef.update { state =>
+          details match
+            case RetryDetails.WillDelayAndRetry(delay, _, _) =>
+              state.copy(
+                errors = state.errors :+ error.getMessage,
+                delays = state.delays :+ delay
+              )
+            case RetryDetails.GivingUp(_, _) =>
+              state.copy(
+                errors = state.errors :+ error.getMessage,
+                gaveUp = true
+              )
+        }
+      }
 
-    val error                  = new RuntimeException("Boom!")
-    val policy: RetryPolicy[F] = RetryPolicies.constantDelay[F](1.second)
+    def onMtlError(
+        error: AppError,
+        details: RetryDetails
+    ): Effect[Unit] = EitherT.liftF {
+      stateRef.update { state =>
+        details match
+          case RetryDetails.WillDelayAndRetry(delay, _, _) =>
+            state.copy(
+              appErrors = state.appErrors :+ error,
+              delays = state.delays :+ delay
+            )
+          case RetryDetails.GivingUp(_, _) =>
+            state.copy(
+              appErrors = state.appErrors :+ error,
+              gaveUp = true
+            )
+      }
+    }
 
-    def action: F[String] =
-      attempts = attempts + 1
+    def getState: IO[State]  = stateRef.get
+    def getAttempts: IO[Int] = getState.map(_.attempts)
+  end Fixture
 
-      attempts match
-        case 1 => EitherT.leftT[ErrorOr, String]("one more time")
-        case 2 => EitherT[ErrorOr, String, String](Left(error))
-        case _ => EitherT.pure[ErrorOr, String]("yay")
+  private val mkFixture: IO[Fixture] = Ref.of[IO, State](State()).map(new Fixture(_))
 
-    val finalResult: F[String] = action
-      .retryingOnSomeErrors(s => EitherT.pure(s == error), policy, onError)
-      .retryingOnSomeMtlErrors[String](
-        s => EitherT.pure(s == "one more time"),
-        policy,
-        onMtlError
-      )
+  test("retryingOnSomeMtlErrors - retry until the action succeeds") {
 
-    assertEquals(finalResult.value, Right(Right("yay")))
-    assertEquals(attempts, 3)
-    assertEquals(errors.toList, List(Right("one more time"), Left(error)))
-    assertEquals(gaveUp, false)
+    val policy: RetryPolicy[Effect] = RetryPolicies.constantDelay[Effect](1.milli)
+
+    def action(fixture: Fixture): Effect[String] =
+      EitherT.liftF(fixture.incrementAttempts() >> fixture.getAttempts).flatMap {
+        case 1 => EitherT.liftF(IO.raiseError(new RuntimeException("one more time")))
+        case 2 => EitherT.leftT(AppError("Boom!"))
+        case _ => EitherT.pure("yay")
+      }
+
+    def isWorthRetrying(e: Throwable): Effect[Boolean]        = EitherT.pure(e.getMessage == "one more time")
+    def isAppErrorWorthRetrying(s: AppError): Effect[Boolean] = EitherT.pure(s == AppError("Boom!"))
+
+    for
+      fixture <- mkFixture
+      finalResult <- action(fixture)
+        .retryingOnSomeErrors(isWorthRetrying, policy, fixture.onError)
+        .retryingOnSomeMtlErrors[AppError](
+          isAppErrorWorthRetrying,
+          policy,
+          fixture.onMtlError
+        )
+        .value
+      state <- fixture.getState
+    yield
+      assertEquals(finalResult, Right("yay"))
+      assertEquals(state.attempts, 3)
+      assertEquals(state.errors.toList, List("one more time"))
+      assertEquals(state.appErrors.toList, List(AppError("Boom!")))
+      assertEquals(state.gaveUp, false)
   }
 
-  fixture.test("retryingOnSomeMtlErrors - retry only if the error is worth retrying") { context =>
-    import context.*
+  test("retryingOnSomeMtlErrors - retry only if the error is worth retrying") {
 
-    given Sleep[F] = _ => EitherT.pure(())
+    val policy: RetryPolicy[Effect] = RetryPolicies.constantDelay[Effect](1.milli)
 
-    val error                  = new RuntimeException("Boom!")
-    val policy: RetryPolicy[F] = RetryPolicies.constantDelay[F](1.second)
+    def action(fixture: Fixture): Effect[String] =
+      EitherT.liftF(fixture.incrementAttempts() >> fixture.getAttempts).flatMap {
+        case 1 => EitherT.liftF(IO.raiseError(new RuntimeException("one more time")))
+        case 2 => EitherT.leftT(AppError("Boom!"))
+        case _ => EitherT.leftT(AppError("nope"))
+      }
 
-    def action: F[String] =
-      attempts = attempts + 1
+    def isWorthRetrying(e: Throwable): Effect[Boolean]        = EitherT.pure(e.getMessage == "one more time")
+    def isAppErrorWorthRetrying(s: AppError): Effect[Boolean] = EitherT.pure(s == AppError("Boom!"))
 
-      attempts match
-        case 1 => EitherT.leftT[ErrorOr, String]("one more time")
-        case 2 => EitherT[ErrorOr, String, String](Left(error))
-        case _ => EitherT.leftT[ErrorOr, String]("nope")
-
-    val finalResult: F[String] = action
-      .retryingOnSomeErrors(s => EitherT.pure(s == error), policy, onError)
-      .retryingOnSomeMtlErrors[String](
-        s => EitherT.pure(s == "one more time"),
-        policy,
-        onMtlError
-      )
-
-    assertEquals(finalResult.value, Right(Left("nope")))
-    assertEquals(attempts, 3)
-    assertEquals(errors.toList, List(Right("one more time"), Left(error)))
-    assertEquals(
-      gaveUp,
-      false // false because onError is only called when the error is worth retrying
-    )
+    for
+      fixture <- mkFixture
+      finalResult <- action(fixture)
+        .retryingOnSomeErrors(isWorthRetrying, policy, fixture.onError)
+        .retryingOnSomeMtlErrors[AppError](
+          isAppErrorWorthRetrying,
+          policy,
+          fixture.onMtlError
+        )
+        .value
+      state <- fixture.getState
+    yield
+      assertEquals(finalResult, Left(AppError("nope")))
+      assertEquals(state.attempts, 3)
+      assertEquals(state.errors.toList, List("one more time"))
+      assertEquals(state.appErrors.toList, List(AppError("Boom!")))
+      assertEquals(state.gaveUp, false)
   }
 
-  fixture.test("retryingOnSomeMtlErrors - retry until the policy chooses to give up") { context =>
-    import context.*
+  test("retryingOnSomeMtlErrors - retry until the policy chooses to give up") {
+    val policy: RetryPolicy[Effect] = RetryPolicies.limitRetries[Effect](2)
 
-    given Sleep[F] = _ => EitherT.pure(())
+    def action(fixture: Fixture): Effect[String] =
+      EitherT.liftF(fixture.incrementAttempts() >> fixture.getAttempts).flatMap {
+        case 1 => EitherT.leftT(AppError("Boom!"))
+        case 2 => EitherT.liftF(IO.raiseError(new RuntimeException("one more time")))
+        case _ => EitherT.leftT(AppError("Boom!"))
+      }
 
-    val error                  = new RuntimeException("Boom!")
-    val policy: RetryPolicy[F] = RetryPolicies.limitRetries[F](2)
+    def isWorthRetrying(e: Throwable): Effect[Boolean]        = EitherT.pure(e.getMessage == "one more time")
+    def isAppErrorWorthRetrying(s: AppError): Effect[Boolean] = EitherT.pure(s == AppError("Boom!"))
 
-    def action: F[String] =
-      attempts = attempts + 1
+    for
+      fixture <- mkFixture
+      finalResult <- action(fixture)
+        .retryingOnSomeErrors(isWorthRetrying, policy, fixture.onError)
+        .retryingOnSomeMtlErrors[AppError](
+          isAppErrorWorthRetrying,
+          policy,
+          fixture.onMtlError
+        )
+        .value
+      state <- fixture.getState
+    yield
+      assertEquals(finalResult, Left(AppError("Boom!")))
+      assertEquals(state.attempts, 4)
+      assertEquals(state.errors.toList, List("one more time"))
+      assertEquals(state.appErrors.toList, List(AppError("Boom!"), AppError("Boom!"), AppError("Boom!")))
+      assertEquals(state.gaveUp, true)
 
-      attempts match
-        case 1 => EitherT.leftT[ErrorOr, String]("one more time")
-        case 2 => EitherT[ErrorOr, String, String](Left(error))
-        case _ => EitherT.leftT[ErrorOr, String]("one more time")
-
-    val finalResult: F[String] = action
-      .retryingOnSomeErrors(s => EitherT.pure(s == error), policy, onError)
-      .retryingOnSomeMtlErrors[String](
-        s => EitherT.pure(s == "one more time"),
-        policy,
-        onMtlError
-      )
-
-    assertEquals(finalResult.value, Right(Left("one more time")))
-    assertEquals(attempts, 4)
-    assertEquals(
-      errors.toList,
-      List(
-        Right("one more time"),
-        Left(error),
-        Right("one more time"),
-        Right("one more time")
-      )
-    )
-    assertEquals(gaveUp, true)
   }
 
-  fixture.test("retryingOnAllMtlErrors - retry until the action succeeds") { context =>
-    import context.*
+  test("retryingOnAllMtlErrors - retry until the action succeeds") {
 
-    given Sleep[F] = _ => EitherT.pure(())
+    val policy: RetryPolicy[Effect] = RetryPolicies.constantDelay[Effect](1.milli)
 
-    val error                  = new RuntimeException("Boom!")
-    val policy: RetryPolicy[F] = RetryPolicies.constantDelay[F](1.second)
+    def action(fixture: Fixture): Effect[String] =
+      EitherT.liftF(fixture.incrementAttempts() >> fixture.getAttempts).flatMap {
+        case 1 => EitherT.liftF(IO.raiseError(new RuntimeException("one more time")))
+        case 2 => EitherT.leftT(AppError("Boom!"))
+        case _ => EitherT.pure("yay")
+      }
 
-    def action: F[String] =
-      attempts = attempts + 1
-
-      attempts match
-        case 1 => EitherT.leftT[ErrorOr, String]("one more time")
-        case 2 => EitherT[ErrorOr, String, String](Left(error))
-        case _ => EitherT.pure[ErrorOr, String]("yay")
-
-    val finalResult: F[String] = action
-      .retryingOnAllErrors(policy, onError)
-      .retryingOnAllMtlErrors[String](policy, onMtlError)
-
-    assertEquals(finalResult.value, Right(Right("yay")))
-    assertEquals(attempts, 3)
-    assertEquals(errors.toList, List(Right("one more time"), Left(error)))
-    assertEquals(gaveUp, false)
+    for
+      fixture <- mkFixture
+      finalResult <- action(fixture)
+        .retryingOnAllErrors(policy, fixture.onError)
+        .retryingOnAllMtlErrors(policy, (e, rd) => fixture.onMtlError(e, rd))
+        .value
+      state <- fixture.getState
+    yield
+      assertEquals(finalResult, Right("yay"))
+      assertEquals(state.attempts, 3)
+      assertEquals(state.errors.toList, List("one more time"))
+      assertEquals(state.appErrors.toList, List(AppError("Boom!")))
+      assertEquals(state.gaveUp, false)
   }
 
-  fixture.test("retryingOnAllMtlErrors - retry until the policy chooses to give up") { context =>
-    import context.*
+  test("retryingOnAllMtlErrors - retry until the policy chooses to give up") {
+    val policy: RetryPolicy[Effect] = RetryPolicies.limitRetries[Effect](2)
 
-    given Sleep[F] = _ => EitherT.pure(())
-
-    val error                  = new RuntimeException("Boom!")
-    val policy: RetryPolicy[F] = RetryPolicies.limitRetries[F](2)
-
-    def action: F[String] =
-      attempts = attempts + 1
-
-      attempts match
-        case 1 => EitherT.leftT[ErrorOr, String]("one more time")
-        case 2 => EitherT[ErrorOr, String, String](Left(error))
-        case _ => EitherT.leftT[ErrorOr, String]("one more time")
-
-    val finalResult: F[String] = action
-      .retryingOnAllErrors(policy, onError)
-      .retryingOnAllMtlErrors[String](policy, onMtlError)
-
-    assertEquals(finalResult.value, Right(Left("one more time")))
-    assertEquals(attempts, 4)
-    assertEquals(
-      errors.toList,
-      List(
-        Right("one more time"),
-        Left(error),
-        Right("one more time"),
-        Right("one more time")
-      )
-    )
-    assertEquals(gaveUp, true)
+    def action(fixture: Fixture): Effect[String] =
+      EitherT.liftF(fixture.incrementAttempts() >> fixture.getAttempts).flatMap {
+        case 1 => EitherT.leftT(AppError("Boom!"))
+        case 2 => EitherT.liftF(IO.raiseError(new RuntimeException("one more time")))
+        case _ => EitherT.leftT(AppError("Boom!"))
+      }
+    for
+      fixture <- mkFixture
+      finalResult <- action(fixture)
+        .retryingOnAllErrors(policy, fixture.onError)
+        .retryingOnAllMtlErrors[AppError](
+          policy,
+          fixture.onMtlError
+        )
+        .value
+      state <- fixture.getState
+    yield
+      assertEquals(finalResult, Left(AppError("Boom!")))
+      assertEquals(state.attempts, 4)
+      assertEquals(state.errors.toList, List("one more time"))
+      assertEquals(state.appErrors.toList, List(AppError("Boom!"), AppError("Boom!"), AppError("Boom!")))
+      assertEquals(state.gaveUp, true)
   }
 end SyntaxSuite
