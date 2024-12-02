@@ -264,7 +264,7 @@ Instead of calling the combinators and passing in your action, you can call them
 as extension methods.
 
 ```scala mdoc:nest:silent
-import retry.syntax.all._
+import retry.syntax.*
 
 // To retry until you get a value you like
 IO(loadedDie.roll()).retryingOnFailures(
