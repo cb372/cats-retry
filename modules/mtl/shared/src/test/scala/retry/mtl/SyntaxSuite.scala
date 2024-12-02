@@ -1,10 +1,9 @@
 package retry.mtl
 
 import cats.data.EitherT
-import cats.data.EitherT.catsDataMonadErrorFForEitherT
 import munit.CatsEffectSuite
-import retry.syntax.*
-import retry.mtl.syntax.*
+import retry.syntax.all.*
+import retry.mtl.syntax.all.*
 import retry.{RetryDetails, RetryPolicies, RetryPolicy}
 
 import scala.concurrent.duration.*

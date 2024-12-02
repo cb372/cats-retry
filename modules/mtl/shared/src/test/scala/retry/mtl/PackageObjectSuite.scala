@@ -15,7 +15,6 @@ class PackageObjectSuite extends CatsEffectSuite:
 
   private case class State(
       attempts: Int = 0,
-      errors: Vector[String] = Vector.empty,
       appErrors: Vector[AppError] = Vector.empty,
       delays: Vector[FiniteDuration] = Vector.empty,
       gaveUp: Boolean = false
@@ -24,23 +23,6 @@ class PackageObjectSuite extends CatsEffectSuite:
   private class Fixture(stateRef: Ref[IO, State]):
     def incrementAttempts(): IO[Unit] =
       stateRef.update(state => state.copy(attempts = state.attempts + 1))
-
-    def onError(error: Throwable, details: RetryDetails): Effect[Unit] =
-      EitherT.liftF {
-        stateRef.update { state =>
-          details match
-            case RetryDetails.WillDelayAndRetry(delay, _, _) =>
-              state.copy(
-                errors = state.errors :+ error.getMessage,
-                delays = state.delays :+ delay
-              )
-            case RetryDetails.GivingUp(_, _) =>
-              state.copy(
-                errors = state.errors :+ error.getMessage,
-                gaveUp = true
-              )
-        }
-      }
 
     def onMtlError(
         error: AppError,
@@ -63,7 +45,6 @@ class PackageObjectSuite extends CatsEffectSuite:
 
     def getState: IO[State]  = stateRef.get
     def getAttempts: IO[Int] = getState.map(_.attempts)
-  end Fixture
 
   private val mkFixture: IO[Fixture] = Ref.of[IO, State](State()).map(new Fixture(_))
 
