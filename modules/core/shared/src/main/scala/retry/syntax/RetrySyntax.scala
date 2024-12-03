@@ -3,18 +3,7 @@ package retry.syntax
 import retry.{RetryDetails, RetryPolicy}
 import cats.effect.Temporal
 
-trait RetrySyntax:
-  implicit final def retrySyntaxBase[M[_], A](
-      action: => M[A]
-  ): RetryingOps[M, A] =
-    new RetryingOps[M, A](action)
-
-  implicit final def retrySyntaxError[M[_], A](
-      action: => M[A]
-  ): RetryingErrorOps[M, A] =
-    new RetryingErrorOps[M, A](action)
-
-final class RetryingOps[M[_], A](action: => M[A]):
+extension [M[_], A](action: => M[A])
 
   def retryingOnFailures[E](
       wasSuccessful: A => M[Boolean],
@@ -27,7 +16,6 @@ final class RetryingOps[M[_], A](action: => M[A]):
       onFailure = onFailure
     )(action)
 
-final class RetryingErrorOps[M[_], A](action: => M[A]):
   def retryingOnAllErrors(
       policy: RetryPolicy[M],
       onError: (Throwable, RetryDetails) => M[Unit]
@@ -75,4 +63,4 @@ final class RetryingErrorOps[M[_], A](action: => M[A]):
       onFailure = onFailure,
       onError = onError
     )(action)
-end RetryingErrorOps
+end extension
