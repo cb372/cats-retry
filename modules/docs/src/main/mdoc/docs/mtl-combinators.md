@@ -154,8 +154,8 @@ import cats.effect.{Async, IO}
 import cats.syntax.functor._
 import cats.syntax.flatMap._
 import cats.mtl.Handle
-import retry.mtl.syntax.all._
-import retry.syntax.all._
+import retry.mtl.syntax.*
+import retry.syntax.*
 import scala.concurrent.duration._
 import cats.effect.unsafe.implicits.global
 

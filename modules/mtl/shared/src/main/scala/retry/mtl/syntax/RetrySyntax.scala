@@ -4,13 +4,7 @@ import cats.effect.Temporal
 import cats.mtl.Handle
 import retry.{ResultHandler, RetryPolicy}
 
-trait RetrySyntax:
-  implicit final def retrySyntaxMtlError[M[_], A](
-      action: => M[A]
-  ): RetryingMtlErrorOps[M, A] =
-    new RetryingMtlErrorOps[M, A](action)
-
-final class RetryingMtlErrorOps[M[_], A](action: => M[A]):
+extension [M[_], A](action: M[A])
 
   def retryingOnMtlErrors[E](
       policy: RetryPolicy[M],
