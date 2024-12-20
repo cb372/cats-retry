@@ -6,7 +6,7 @@ enum HandlerDecision[+FA]:
   /** We are finished, either because the action returned a successful value, or because it raised an error so
     * heinous we don't want to retry.
     */
-  case Done
+  case Stop
 
   /** Try the same action again, as long as the retry policy says it's OK to continue.
     */

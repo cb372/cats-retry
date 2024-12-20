@@ -136,7 +136,7 @@ package object retry:
         nextStep: NextStep
     ): M[Either[(M[A], RetryStatus), A]] =
       handlerDecision match
-        case HandlerDecision.Done =>
+        case HandlerDecision.Stop =>
           // Success, stop the recursion and return the action's result
           T.pure(Right(actionResult))
         case HandlerDecision.Continue =>
@@ -184,7 +184,7 @@ package object retry:
         nextStep: NextStep
     ): M[Either[(M[A], RetryStatus), A]] =
       handlerDecision match
-        case HandlerDecision.Done =>
+        case HandlerDecision.Stop =>
           // Error is not worth retrying. Stop the recursion and raise the error.
           T.raiseError[A](error).map(Right(_))
         case HandlerDecision.Continue =>

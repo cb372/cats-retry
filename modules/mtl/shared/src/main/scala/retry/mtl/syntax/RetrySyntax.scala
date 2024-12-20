@@ -5,7 +5,6 @@ import cats.mtl.Handle
 import retry.{ResultHandler, RetryPolicy}
 
 extension [M[_], A](action: M[A])
-
   def retryingOnMtlErrors[E](
       policy: RetryPolicy[M],
       errorHandler: ResultHandler[M, E, A]
