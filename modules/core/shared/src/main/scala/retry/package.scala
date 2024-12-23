@@ -30,17 +30,30 @@ package object retry:
   type ErrorOrValueHandler[F[_], A] = ResultHandler[F, Either[Throwable, A], A]
 
   object ResultHandler:
-    /** Construct a ResultHandler that always chooses to retry the same action, no matter what the error.
+    /** Construct an ErrorHandler that always chooses to retry the same action, no matter what the error.
       *
       * @param log
       *   A chance to do logging, increment metrics, etc
       */
-    def retryOnAllErrors[F[_]: Functor, Res, A](
-        log: (Res, RetryDetails) => F[Unit]
-    ): ResultHandler[F, Res, A] =
-      (res: Res, retryDetails: RetryDetails) => log(res, retryDetails).as(HandlerDecision.Continue)
+    def retryOnAllErrors[F[_]: Functor, A](
+        log: (Throwable, RetryDetails) => F[Unit]
+    ): ErrorHandler[F, A] =
+      (error: Throwable, retryDetails: RetryDetails) => log(error, retryDetails).as(HandlerDecision.Continue)
 
-    /** Pass this to [[retryOnAllErrors]] if you don't need to do any logging */
+    /** Construct a ValueHandler that chooses to retry the same action until it returns a successful result.
+      *
+      * @param log
+      *   A chance to do logging, increment metrics, etc
+      */
+    def retryUntilSuccessful[F[_]: Functor, A](
+        isSuccessful: A => Boolean,
+        log: (A, RetryDetails) => F[Unit]
+    ): ValueHandler[F, A] =
+      (value: A, retryDetails: RetryDetails) =>
+        log(value, retryDetails)
+          .as(if isSuccessful(value) then HandlerDecision.Stop else HandlerDecision.Continue)
+
+    /** Pass this to [[retryOnAllErrors]] or [[retryUntilSuccessful]] if you don't need to do any logging */
     def noop[F[_]: Applicative, A]: (A, RetryDetails) => F[Unit] =
       (_, _) => Applicative[F].unit
 
