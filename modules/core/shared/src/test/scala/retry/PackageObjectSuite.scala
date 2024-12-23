@@ -1,8 +1,7 @@
 package retry
 
-import munit.CatsEffectSuite
-
 import cats.effect.{IO, Ref}
+import munit.CatsEffectSuite
 import retry.RetryDetails.NextStep.{GiveUp, DelayAndRetry}
 import retry.HandlerDecision.{Stop, Continue, Adapt}
 
