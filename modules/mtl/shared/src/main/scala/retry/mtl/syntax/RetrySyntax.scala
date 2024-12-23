@@ -4,21 +4,21 @@ import cats.effect.Temporal
 import cats.mtl.Handle
 import retry.{RetryDetails, RetryPolicy}
 
-extension [M[_], A](action: M[A])
+extension [F[_], A](action: F[A])
   def retryingOnAllMtlErrors[E](
-      policy: RetryPolicy[M],
-      onError: (E, RetryDetails) => M[Unit]
-  )(using T: Temporal[M], AH: Handle[M, E]): M[A] =
+      policy: RetryPolicy[F],
+      onError: (E, RetryDetails) => F[Unit]
+  )(using T: Temporal[F], AH: Handle[F, E]): F[A] =
     retry.mtl.retryingOnAllErrors(
       policy = policy,
       onError = onError
     )(action)
 
   def retryingOnSomeMtlErrors[E](
-      isWorthRetrying: E => M[Boolean],
-      policy: RetryPolicy[M],
-      onError: (E, RetryDetails) => M[Unit]
-  )(using T: Temporal[M], AH: Handle[M, E]): M[A] =
+      isWorthRetrying: E => F[Boolean],
+      policy: RetryPolicy[F],
+      onError: (E, RetryDetails) => F[Unit]
+  )(using T: Temporal[F], AH: Handle[F, E]): F[A] =
     retry.mtl.retryingOnSomeErrors(
       policy = policy,
       isWorthRetrying = isWorthRetrying,

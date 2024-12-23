@@ -26,38 +26,38 @@ package object retry:
   def retryingOnFailuresAndAllErrors[A] =
     new RetryingOnFailuresAndAllErrorsPartiallyApplied[A]
 
-  def noop[M[_]: Monad, A]: (A, RetryDetails) => M[Unit] =
-    (_, _) => Monad[M].pure(())
+  def noop[F[_]: Monad, A]: (A, RetryDetails) => F[Unit] =
+    (_, _) => Monad[F].pure(())
 
   /*
    * Partially applied classes
    */
 
   private[retry] class RetryingOnFailuresPartiallyApplied[A]:
-    def apply[M[_]](
-        policy: RetryPolicy[M],
-        wasSuccessful: A => M[Boolean],
-        onFailure: (A, RetryDetails) => M[Unit]
+    def apply[F[_]](
+        policy: RetryPolicy[F],
+        wasSuccessful: A => F[Boolean],
+        onFailure: (A, RetryDetails) => F[Unit]
     )(
-        action: => M[A]
+        action: => F[A]
     )(using
-        T: Temporal[M]
-    ): M[A] = T.tailRecM(RetryStatus.NoRetriesYet) { status =>
+        T: Temporal[F]
+    ): F[A] = T.tailRecM(RetryStatus.NoRetriesYet) { status =>
       action.flatMap { a =>
         retryingOnFailuresImpl(policy, wasSuccessful, onFailure, status, a)
       }
     }
 
   private[retry] class RetryingOnSomeErrorsPartiallyApplied[A]:
-    def apply[M[_]](
-        policy: RetryPolicy[M],
-        isWorthRetrying: Throwable => M[Boolean],
-        onError: (Throwable, RetryDetails) => M[Unit]
+    def apply[F[_]](
+        policy: RetryPolicy[F],
+        isWorthRetrying: Throwable => F[Boolean],
+        onError: (Throwable, RetryDetails) => F[Unit]
     )(
-        action: => M[A]
+        action: => F[A]
     )(using
-        T: Temporal[M]
-    ): M[A] = T.tailRecM(RetryStatus.NoRetriesYet) { status =>
+        T: Temporal[F]
+    ): F[A] = T.tailRecM(RetryStatus.NoRetriesYet) { status =>
       T.attempt(action).flatMap { attempt =>
         retryingOnSomeErrorsImpl(
           policy,
@@ -70,30 +70,30 @@ package object retry:
     }
 
   private[retry] class RetryingOnAllErrorsPartiallyApplied[A]:
-    def apply[M[_]](
-        policy: RetryPolicy[M],
-        onError: (Throwable, RetryDetails) => M[Unit]
+    def apply[F[_]](
+        policy: RetryPolicy[F],
+        onError: (Throwable, RetryDetails) => F[Unit]
     )(
-        action: => M[A]
+        action: => F[A]
     )(using
-        T: Temporal[M]
-    ): M[A] =
-      retryingOnSomeErrors[A].apply[M](policy, _ => T.pure(true), onError)(
+        T: Temporal[F]
+    ): F[A] =
+      retryingOnSomeErrors[A].apply[F](policy, _ => T.pure(true), onError)(
         action
       )
 
   private[retry] class RetryingOnFailuresAndSomeErrorsPartiallyApplied[A]:
-    def apply[M[_]](
-        policy: RetryPolicy[M],
-        wasSuccessful: A => M[Boolean],
-        isWorthRetrying: Throwable => M[Boolean],
-        onFailure: (A, RetryDetails) => M[Unit],
-        onError: (Throwable, RetryDetails) => M[Unit]
+    def apply[F[_]](
+        policy: RetryPolicy[F],
+        wasSuccessful: A => F[Boolean],
+        isWorthRetrying: Throwable => F[Boolean],
+        onFailure: (A, RetryDetails) => F[Unit],
+        onError: (Throwable, RetryDetails) => F[Unit]
     )(
-        action: => M[A]
+        action: => F[A]
     )(using
-        T: Temporal[M]
-    ): M[A] =
+        T: Temporal[F]
+    ): F[A] =
       T.tailRecM(RetryStatus.NoRetriesYet) { status =>
         T.attempt(action).flatMap {
           case Right(a) =>
@@ -110,18 +110,18 @@ package object retry:
       }
 
   private[retry] class RetryingOnFailuresAndAllErrorsPartiallyApplied[A]:
-    def apply[M[_]](
-        policy: RetryPolicy[M],
-        wasSuccessful: A => M[Boolean],
-        onFailure: (A, RetryDetails) => M[Unit],
-        onError: (Throwable, RetryDetails) => M[Unit]
+    def apply[F[_]](
+        policy: RetryPolicy[F],
+        wasSuccessful: A => F[Boolean],
+        onFailure: (A, RetryDetails) => F[Unit],
+        onError: (Throwable, RetryDetails) => F[Unit]
     )(
-        action: => M[A]
+        action: => F[A]
     )(using
-        T: Temporal[M]
-    ): M[A] =
+        T: Temporal[F]
+    ): F[A] =
       retryingOnFailuresAndSomeErrors[A]
-        .apply[M](
+        .apply[F](
           policy,
           wasSuccessful,
           _ => T.pure(true),
@@ -135,16 +135,16 @@ package object retry:
    * Implementation
    */
 
-  private def retryingOnFailuresImpl[M[_], A](
-      policy: RetryPolicy[M],
-      wasSuccessful: A => M[Boolean],
-      onFailure: (A, RetryDetails) => M[Unit],
+  private def retryingOnFailuresImpl[F[_], A](
+      policy: RetryPolicy[F],
+      wasSuccessful: A => F[Boolean],
+      onFailure: (A, RetryDetails) => F[Unit],
       status: RetryStatus,
       a: A
   )(using
-      T: Temporal[M]
-  ): M[Either[RetryStatus, A]] =
-    def onFalse: M[Either[RetryStatus, A]] = for
+      T: Temporal[F]
+  ): F[Either[RetryStatus, A]] =
+    def onFalse: F[Either[RetryStatus, A]] = for
       nextStep <- applyPolicy(policy, status)
       _        <- onFailure(a, buildRetryDetails(status, nextStep))
       result <- nextStep match
@@ -160,15 +160,15 @@ package object retry:
       onFalse
     )
 
-  private def retryingOnSomeErrorsImpl[M[_], A](
-      policy: RetryPolicy[M],
-      isWorthRetrying: Throwable => M[Boolean],
-      onError: (Throwable, RetryDetails) => M[Unit],
+  private def retryingOnSomeErrorsImpl[F[_], A](
+      policy: RetryPolicy[F],
+      isWorthRetrying: Throwable => F[Boolean],
+      onError: (Throwable, RetryDetails) => F[Unit],
       status: RetryStatus,
       attempt: Either[Throwable, A]
   )(using
-      T: Temporal[M]
-  ): M[Either[RetryStatus, A]] = attempt match
+      T: Temporal[F]
+  ): F[Either[RetryStatus, A]] = attempt match
     case Left(error) =>
       isWorthRetrying(error).ifM(
         for
@@ -186,10 +186,10 @@ package object retry:
     case Right(success) =>
       T.pure(Right(success)) // stop the recursion
 
-  private[retry] def applyPolicy[M[_]: Monad](
-      policy: RetryPolicy[M],
+  private[retry] def applyPolicy[F[_]: Monad](
+      policy: RetryPolicy[F],
       retryStatus: RetryStatus
-  ): M[NextStep] =
+  ): F[NextStep] =
     policy.decideNextRetry(retryStatus).map {
       case PolicyDecision.DelayAndRetry(delay) =>
         NextStep.RetryAfterDelay(delay, retryStatus.addRetry(delay))
