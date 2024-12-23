@@ -50,16 +50,17 @@ class PackageObjectSuite extends CatsEffectSuite:
           .as(if result.toInt > 3 then Stop else Continue)
 
     // AND an action that returns the attempt count as a string
-    def action(fixture: Fixture[String]): IO[String] =
+    def mkAction(fixture: Fixture[String]): IO[String] =
       fixture.incrementAttempts() >> fixture.getAttempts.map(_.toString)
 
     // WHEN the action is executed with retry
     for
       fixture <- mkFixture[String]
+      action = mkAction(fixture)
       finalResult <- retryingOnFailures(
         policy,
         mkHandler(fixture)
-      )(action(fixture))
+      )(action)
       state <- fixture.getState
     yield
       // THEN the successful result is returned
@@ -86,16 +87,17 @@ class PackageObjectSuite extends CatsEffectSuite:
           .as(if result.toInt > 3 then Stop else Continue)
 
     // AND an action that returns the attempt count as a string
-    def action(fixture: Fixture[String]): IO[String] =
+    def mkAction(fixture: Fixture[String]): IO[String] =
       fixture.incrementAttempts() >> fixture.getAttempts.map(_.toString)
 
     // WHEN the action is executed with retry
     for
       fixture <- mkFixture[String]
+      action = mkAction(fixture)
       finalResult <- retryingOnFailures(
         policy,
         mkHandler(fixture)
-      )(action(fixture))
+      )(action)
       state <- fixture.getState
     yield
       // THEN the last unsuccessful result is returned
@@ -115,7 +117,7 @@ class PackageObjectSuite extends CatsEffectSuite:
     val policy = RetryPolicies.constantDelay[IO](1.milli)
 
     // AND an initial action that returns the negative of the attempt count as a string
-    def action(fixture: Fixture[String]): IO[String] =
+    def mkAction(fixture: Fixture[String]): IO[String] =
       fixture.incrementAttempts() >> fixture.getAttempts.map(n => (n * -1).toString)
 
     // AND a result handler that adapts after 2 attempts and treats the 4th result as a success
@@ -140,10 +142,11 @@ class PackageObjectSuite extends CatsEffectSuite:
     // WHEN the action is executed with retry
     for
       fixture <- mkFixture[String]
+      action = mkAction(fixture)
       finalResult <- retryingOnFailures(
         policy,
         mkHandler(fixture)
-      )(action(fixture))
+      )(action)
       state <- fixture.getState
     yield
       // THEN the successful result is returned
@@ -170,16 +173,17 @@ class PackageObjectSuite extends CatsEffectSuite:
           .as(if result.toInt > 20_000 then Stop else Continue)
 
     // AND an action that returns the attempt count as a string
-    def action(fixture: Fixture[String]): IO[String] =
+    def mkAction(fixture: Fixture[String]): IO[String] =
       fixture.incrementAttempts() >> fixture.getAttempts.map(_.toString)
 
     // WHEN the action is executed with retry
     for
       fixture <- mkFixture[String]
+      action = mkAction(fixture)
       finalResult <- retryingOnFailures(
         policy,
         mkHandler(fixture)
-      )(action(fixture))
+      )(action)
       state <- fixture.getState
     yield
       // THEN the last unsuccessful result is returned
@@ -200,7 +204,7 @@ class PackageObjectSuite extends CatsEffectSuite:
           .as(Continue)
 
     // AND an action that raises an error twice and then succeeds
-    def action(fixture: Fixture[Throwable]): IO[String] =
+    def mkAction(fixture: Fixture[Throwable]): IO[String] =
       fixture.incrementAttempts() >>
         fixture.getAttempts.flatMap { attempts =>
           if attempts < 3 then IO.raiseError(oneMoreTimeException)
@@ -210,10 +214,11 @@ class PackageObjectSuite extends CatsEffectSuite:
     // WHEN the action is executed with retry
     for
       fixture <- mkFixture[Throwable]
+      action = mkAction(fixture)
       finalResult <- retryingOnErrors(
         policy,
         mkHandler(fixture)
-      )(action(fixture))
+      )(action)
       state <- fixture.getState
     yield
       // THEN the successful result is returned
@@ -240,17 +245,18 @@ class PackageObjectSuite extends CatsEffectSuite:
           .as(Continue)
 
     // AND an action that always raises an error
-    def action(fixture: Fixture[Throwable]): IO[String] =
+    def mkAction(fixture: Fixture[Throwable]): IO[String] =
       fixture.incrementAttempts() >>
         IO.raiseError(oneMoreTimeException)
 
     // WHEN the action is executed with retry
     for
       fixture <- mkFixture[Throwable]
+      action = mkAction(fixture)
       finalResult <- retryingOnErrors(
         policy,
         mkHandler(fixture)
-      )(action(fixture)).attempt
+      )(action).attempt
       state <- fixture.getState
     yield
       // THEN the final error is raised
@@ -281,7 +287,7 @@ class PackageObjectSuite extends CatsEffectSuite:
           }
 
     // AND an action that raises a retryable error followed by a non-retryable error
-    def action(fixture: Fixture[Throwable]): IO[String] =
+    def mkAction(fixture: Fixture[Throwable]): IO[String] =
       fixture.incrementAttempts() >>
         fixture.getAttempts.flatMap {
           case 1 => IO.raiseError(oneMoreTimeException)
@@ -291,10 +297,11 @@ class PackageObjectSuite extends CatsEffectSuite:
     // WHEN the action is executed with retry
     for
       fixture <- mkFixture[Throwable]
+      action = mkAction(fixture)
       finalResult <- retryingOnErrors(
         policy,
         mkHandler(fixture)
-      )(action(fixture)).attempt
+      )(action).attempt
       state <- fixture.getState
     yield
       // THEN the non-retryable error is raised
@@ -314,7 +321,7 @@ class PackageObjectSuite extends CatsEffectSuite:
     val policy = RetryPolicies.constantDelay[IO](1.milli)
 
     // AND an initial action that always raises an error
-    def action(fixture: Fixture[Throwable]): IO[String] =
+    def mkAction(fixture: Fixture[Throwable]): IO[String] =
       fixture.incrementAttempts() >>
         IO.raiseError(oneMoreTimeException)
 
@@ -335,10 +342,11 @@ class PackageObjectSuite extends CatsEffectSuite:
     // WHEN the action is executed with retry
     for
       fixture <- mkFixture[Throwable]
+      action = mkAction(fixture)
       finalResult <- retryingOnErrors(
         policy,
         mkHandler(fixture)
-      )(action(fixture))
+      )(action)
       state <- fixture.getState
     yield
       // THEN the successful result is returned
@@ -365,17 +373,18 @@ class PackageObjectSuite extends CatsEffectSuite:
           .as(Continue)
 
     // AND an action that always raises an error
-    def action(fixture: Fixture[Throwable]): IO[String] =
+    def mkAction(fixture: Fixture[Throwable]): IO[String] =
       fixture.incrementAttempts() >>
         IO.raiseError(oneMoreTimeException)
 
     // WHEN the action is executed with retry
     for
       fixture <- mkFixture[Throwable]
+      action = mkAction(fixture)
       finalResult <- retryingOnErrors(
         policy,
         mkHandler(fixture)
-      )(action(fixture)).attempt
+      )(action).attempt
       state <- fixture.getState
     yield
       // THEN the final error is raised
@@ -396,7 +405,7 @@ class PackageObjectSuite extends CatsEffectSuite:
           .as(if result == Right("yay") then Stop else Continue)
 
     // AND an action that raises an error twice, then returns an unsuccessful value, then a successful value
-    def action(fixture: Fixture[Either[Throwable, String]]): IO[String] =
+    def mkAction(fixture: Fixture[Either[Throwable, String]]): IO[String] =
       fixture.incrementAttempts() >> fixture.getAttempts.flatMap {
         case 1 => IO.raiseError(oneMoreTimeException)
         case 2 => IO.raiseError(oneMoreTimeException)
@@ -407,10 +416,11 @@ class PackageObjectSuite extends CatsEffectSuite:
     // WHEN the action is executed with retry
     for
       fixture <- mkFixture[Either[Throwable, String]]
+      action = mkAction(fixture)
       finalResult <- retryingOnFailuresAndErrors(
         policy,
         mkHandler(fixture)
-      )(action(fixture))
+      )(action)
       state <- fixture.getState
     yield
       // THEN the successful result is returned
@@ -440,7 +450,7 @@ class PackageObjectSuite extends CatsEffectSuite:
           .as(if result == Right("yay") then Stop else Continue)
 
     // AND an action that raises an error twice, then returns an unsuccessful value, then a successful value
-    def action(fixture: Fixture[Either[Throwable, String]]): IO[String] =
+    def mkAction(fixture: Fixture[Either[Throwable, String]]): IO[String] =
       fixture.incrementAttempts() >> fixture.getAttempts.flatMap {
         case 1 => IO.raiseError(oneMoreTimeException)
         case 2 => IO.raiseError(oneMoreTimeException)
@@ -451,10 +461,11 @@ class PackageObjectSuite extends CatsEffectSuite:
     // WHEN the action is executed with retry
     for
       fixture <- mkFixture[Either[Throwable, String]]
+      action = mkAction(fixture)
       finalResult <- retryingOnFailuresAndErrors(
         policy,
         mkHandler(fixture)
-      )(action(fixture))
+      )(action)
       state <- fixture.getState
     yield
       // THEN the unsuccessful result is returned
@@ -484,7 +495,7 @@ class PackageObjectSuite extends CatsEffectSuite:
           .as(if result == Right("yay") then Stop else Continue)
 
     // AND an action that raises an error twice, then returns a successful value
-    def action(fixture: Fixture[Either[Throwable, String]]): IO[String] =
+    def mkAction(fixture: Fixture[Either[Throwable, String]]): IO[String] =
       fixture.incrementAttempts() >> fixture.getAttempts.flatMap {
         case 1 => IO.raiseError(oneMoreTimeException)
         case 2 => IO.raiseError(oneMoreTimeException)
@@ -494,10 +505,11 @@ class PackageObjectSuite extends CatsEffectSuite:
     // WHEN the action is executed with retry
     for
       fixture <- mkFixture[Either[Throwable, String]]
+      action = mkAction(fixture)
       finalResult <- retryingOnFailuresAndErrors(
         policy,
         mkHandler(fixture)
-      )(action(fixture)).attempt
+      )(action).attempt
       state <- fixture.getState
     yield
       // THEN the final error is raised
@@ -529,7 +541,7 @@ class PackageObjectSuite extends CatsEffectSuite:
           }
 
     // AND an action that raises a retryable error followed by a non-retryable error
-    def action(fixture: Fixture[Either[Throwable, String]]): IO[String] =
+    def mkAction(fixture: Fixture[Either[Throwable, String]]): IO[String] =
       fixture.incrementAttempts() >>
         fixture.getAttempts.flatMap {
           case 1 => IO.raiseError(oneMoreTimeException)
@@ -539,10 +551,11 @@ class PackageObjectSuite extends CatsEffectSuite:
     // WHEN the action is executed with retry
     for
       fixture <- mkFixture[Either[Throwable, String]]
+      action = mkAction(fixture)
       finalResult <- retryingOnFailuresAndErrors(
         policy,
         mkHandler(fixture)
-      )(action(fixture)).attempt
+      )(action).attempt
       state <- fixture.getState
     yield
       // THEN the non-retryable error is raised
@@ -562,7 +575,7 @@ class PackageObjectSuite extends CatsEffectSuite:
     val policy = RetryPolicies.constantDelay[IO](1.milli)
 
     // AND an initial action that always returns an unsuccessful value
-    def action(fixture: Fixture[Either[Throwable, String]]): IO[String] =
+    def mkAction(fixture: Fixture[Either[Throwable, String]]): IO[String] =
       fixture.incrementAttempts() >> IO.pure("boo")
 
     // AND a result handler that adapts on failure, to an action that succeeds
@@ -581,10 +594,11 @@ class PackageObjectSuite extends CatsEffectSuite:
     // WHEN the action is executed with retry
     for
       fixture <- mkFixture[Either[Throwable, String]]
+      action = mkAction(fixture)
       finalResult <- retryingOnFailuresAndErrors(
         policy,
         mkHandler(fixture)
-      )(action(fixture))
+      )(action)
       state <- fixture.getState
     yield
       // THEN the successful result is returned
@@ -604,7 +618,7 @@ class PackageObjectSuite extends CatsEffectSuite:
     val policy = RetryPolicies.constantDelay[IO](1.milli)
 
     // AND an initial action that always returns an unsuccessful value
-    def action(fixture: Fixture[Either[Throwable, String]]): IO[String] =
+    def mkAction(fixture: Fixture[Either[Throwable, String]]): IO[String] =
       fixture.incrementAttempts() >> IO.raiseError(oneMoreTimeException)
 
     // AND a result handler that adapts on failure, to an action that succeeds
@@ -622,10 +636,11 @@ class PackageObjectSuite extends CatsEffectSuite:
     // WHEN the action is executed with retry
     for
       fixture <- mkFixture[Either[Throwable, String]]
+      action = mkAction(fixture)
       finalResult <- retryingOnFailuresAndErrors(
         policy,
         mkHandler(fixture)
-      )(action(fixture))
+      )(action)
       state <- fixture.getState
     yield
       // THEN the successful result is returned
