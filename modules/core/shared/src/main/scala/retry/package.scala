@@ -24,6 +24,11 @@ package object retry:
     */
   type ResultHandler[F[_], -Res, A] = (Res, RetryDetails) => F[HandlerDecision[F[A]]]
 
+  // Type aliases for different flavours of handler
+  type ValueHandler[F[_], A]        = ResultHandler[F, A, A]
+  type ErrorHandler[F[_], A]        = ResultHandler[F, Throwable, A]
+  type ErrorOrValueHandler[F[_], A] = ResultHandler[F, Either[Throwable, A], A]
+
   object ResultHandler:
     /** Construct a ResultHandler that always chooses to retry the same action, no matter what the error.
       *
@@ -46,21 +51,21 @@ package object retry:
   private[retry] class RetryingOnFailuresPartiallyApplied[A]:
     def apply[F[_]](
         policy: RetryPolicy[F],
-        resultHandler: ResultHandler[F, A, A]
+        valueHandler: ValueHandler[F, A]
     )(
         action: => F[A]
     )(using
         T: Temporal[F]
     ): F[A] = T.tailRecM((action, RetryStatus.NoRetriesYet)) { (currentAction, status) =>
       currentAction.flatMap { actionResult =>
-        retryingOnFailuresImpl(policy, resultHandler, status, currentAction, actionResult)
+        retryingOnFailuresImpl(policy, valueHandler, status, currentAction, actionResult)
       }
     }
 
   private[retry] class RetryingOnErrorsPartiallyApplied[A]:
     def apply[F[_]](
         policy: RetryPolicy[F],
-        errorHandler: ResultHandler[F, Throwable, A]
+        errorHandler: ErrorHandler[F, A]
     )(
         action: => F[A]
     )(using
@@ -80,16 +85,16 @@ package object retry:
   private[retry] class RetryingOnFailuresAndErrorsPartiallyApplied[A]:
     def apply[F[_]](
         policy: RetryPolicy[F],
-        resultOrErrorHandler: ResultHandler[F, Either[Throwable, A], A]
+        errorOrValueHandler: ErrorOrValueHandler[F, A]
     )(
         action: => F[A]
     )(using
         T: Temporal[F]
     ): F[A] =
       val valueHandler: ResultHandler[F, A, A] =
-        (a: A, rd: RetryDetails) => resultOrErrorHandler(Right(a), rd)
+        (a: A, rd: RetryDetails) => errorOrValueHandler(Right(a), rd)
       val errorHandler: ResultHandler[F, Throwable, A] =
-        (e: Throwable, rd: RetryDetails) => resultOrErrorHandler(Left(e), rd)
+        (e: Throwable, rd: RetryDetails) => errorOrValueHandler(Left(e), rd)
 
       T.tailRecM((action, RetryStatus.NoRetriesYet)) { (currentAction, status) =>
         T.attempt(currentAction).flatMap {
@@ -112,7 +117,7 @@ package object retry:
 
   private def retryingOnFailuresImpl[F[_], A](
       policy: RetryPolicy[F],
-      resultHandler: ResultHandler[F, A, A],
+      valueHandler: ValueHandler[F, A],
       status: RetryStatus,
       currentAction: F[A],
       actionResult: A
@@ -151,14 +156,14 @@ package object retry:
     for
       nextStep <- applyPolicy(policy, status)
       retryDetails = buildRetryDetails(status, nextStep)
-      handlerDecision <- resultHandler(actionResult, retryDetails)
+      handlerDecision <- valueHandler(actionResult, retryDetails)
       result          <- applyHandlerDecision(handlerDecision, nextStep)
     yield result
   end retryingOnFailuresImpl
 
   private def retryingOnErrorsImpl[F[_], A](
       policy: RetryPolicy[F],
-      errorHandler: ResultHandler[F, Throwable, A],
+      errorHandler: ErrorHandler[F, A],
       status: RetryStatus,
       currentAction: F[A],
       attempt: Either[Throwable, A]
