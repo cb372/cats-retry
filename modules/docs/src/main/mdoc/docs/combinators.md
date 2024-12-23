@@ -78,11 +78,11 @@ whether a given error is worth retrying.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnSomeErrors[M[_]: Temporal, A, E](policy: RetryPolicy[M],
-                                            isWorthRetrying: E => M[Boolean],
-                                            onError: (E, RetryDetails) => M[Unit])
-                                           (action: => M[A])
-                                           (implicit ME: MonadError[M, E]): M[A]
+def retryingOnSomeErrors[F[_] : Temporal, A, E](policy: RetryPolicy[F],
+                                                isWorthRetrying: E => F[Boolean],
+                                                onError: (E, RetryDetails) => F[Unit])
+                                               (action: => F[A])
+                                               (implicit ME: MonadError[F, E]): F[A]
 ```
 
 You need to pass in:
@@ -123,10 +123,10 @@ retry on all errors.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnAllErrors[M[_]: Temporal, A, E](policy: RetryPolicy[M],
-                                           onError: (E, RetryDetails) => M[Unit])
-                                          (action: => M[A])
-                                          (implicit ME: MonadError[M, E]): M[A]
+def retryingOnAllErrors[F[_] : Temporal, A, E](policy: RetryPolicy[F],
+                                               onError: (E, RetryDetails) => F[Unit])
+                                              (action: => F[A])
+                                              (implicit ME: MonadError[F, E]): F[A]
 ```
 
 You need to pass in:
@@ -163,13 +163,13 @@ decide whether a given error or result is worth retrying.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnFailuresAndSomeErrors[M[_]: Temporal, A, E](policy: RetryPolicy[M],
-                                                       wasSuccessful: A => M[Boolean],
-                                                       isWorthRetrying: E => M[Boolean],
-                                                       onFailure: (A, RetryDetails) => M[Unit],
-                                                       onError: (E, RetryDetails) => M[Unit])
-                                                      (action: => M[A])
-                                                      (implicit ME: MonadError[M, E]): M[A]
+def retryingOnFailuresAndSomeErrors[F[_] : Temporal, A, E](policy: RetryPolicy[F],
+                                                           wasSuccessful: A => F[Boolean],
+                                                           isWorthRetrying: E => F[Boolean],
+                                                           onFailure: (A, RetryDetails) => F[Unit],
+                                                           onError: (E, RetryDetails) => F[Unit])
+                                                          (action: => F[A])
+                                                          (implicit ME: MonadError[F, E]): F[A]
 ```
 
 You need to pass in:
@@ -219,12 +219,12 @@ whether a given result is worth retrying.
 The API (modulo some type-inference trickery) looks like this:
 
 ```scala
-def retryingOnFailuresAndAllErrors[M[_]: Temporal, A, E](policy: RetryPolicy[M],
-                                                      wasSuccessful: A => M[Boolean],
-                                                      onFailure: (A, RetryDetails) => M[Unit],
-                                                      onError: (E, RetryDetails) => M[Unit])
-                                                     (action: => M[A])
-                                                     (implicit ME: MonadError[M, E]): M[A]
+def retryingOnFailuresAndAllErrors[F[_] : Temporal, A, E](policy: RetryPolicy[F],
+                                                          wasSuccessful: A => F[Boolean],
+                                                          onFailure: (A, RetryDetails) => F[Unit],
+                                                          onError: (E, RetryDetails) => F[Unit])
+                                                         (action: => F[A])
+                                                         (implicit ME: MonadError[F, E]): F[A]
 ```
 
 You need to pass in:

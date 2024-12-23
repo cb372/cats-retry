@@ -3,30 +3,30 @@ package retry.syntax
 import cats.effect.Temporal
 import retry.{ResultHandler, RetryPolicy}
 
-extension [M[_], A](action: => M[A])
+extension [F[_], A](action: => F[A])
 
   def retryingOnFailures(
-      policy: RetryPolicy[M],
-      resultHandler: ResultHandler[M, A, A]
-  )(using T: Temporal[M]): M[A] =
+      policy: RetryPolicy[F],
+      resultHandler: ResultHandler[F, A, A]
+  )(using T: Temporal[F]): F[A] =
     retry.retryingOnFailures(
       policy = policy,
       resultHandler = resultHandler
     )(action)
 
   def retryingOnErrors(
-      policy: RetryPolicy[M],
-      errorHandler: ResultHandler[M, Throwable, A]
-  )(using T: Temporal[M]): M[A] =
+      policy: RetryPolicy[F],
+      errorHandler: ResultHandler[F, Throwable, A]
+  )(using T: Temporal[F]): F[A] =
     retry.retryingOnErrors(
       policy = policy,
       errorHandler = errorHandler
     )(action)
 
   def retryingOnFailuresAndErrors(
-      policy: RetryPolicy[M],
-      resultOrErrorHandler: ResultHandler[M, Either[Throwable, A], A]
-  )(using T: Temporal[M]): M[A] =
+      policy: RetryPolicy[F],
+      resultOrErrorHandler: ResultHandler[F, Either[Throwable, A], A]
+  )(using T: Temporal[F]): F[A] =
     retry.retryingOnFailuresAndErrors(
       policy = policy,
       resultOrErrorHandler = resultOrErrorHandler

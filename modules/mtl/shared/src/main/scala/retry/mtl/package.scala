@@ -20,15 +20,15 @@ package object mtl:
 
   private[retry] class RetryingOnErrorsPartiallyApplied[A]:
 
-    def apply[M[_], E](
-        policy: RetryPolicy[M],
-        errorHandler: ResultHandler[M, E, A]
+    def apply[F[_], E](
+        policy: RetryPolicy[F],
+        errorHandler: ResultHandler[F, E, A]
     )(
-        action: => M[A]
+        action: => F[A]
     )(using
-        AH: Handle[M, E],
-        T: Temporal[M]
-    ): M[A] =
+        AH: Handle[F, E],
+        T: Temporal[F]
+    ): F[A] =
       T.tailRecM((action, RetryStatus.NoRetriesYet)) { (currentAction, status) =>
         AH.attempt(currentAction).flatMap { attempt =>
           retryingOnErrorsImpl(
@@ -45,22 +45,22 @@ package object mtl:
    * Implementation
    */
 
-  private def retryingOnErrorsImpl[M[_], A, E](
-      policy: RetryPolicy[M],
-      errorHandler: ResultHandler[M, E, A],
+  private def retryingOnErrorsImpl[F[_], A, E](
+      policy: RetryPolicy[F],
+      errorHandler: ResultHandler[F, E, A],
       status: RetryStatus,
-      currentAction: M[A],
+      currentAction: F[A],
       attempt: Either[E, A]
   )(using
-      AH: Handle[M, E],
-      T: Temporal[M]
-  ): M[Either[(M[A], RetryStatus), A]] =
+      AH: Handle[F, E],
+      T: Temporal[F]
+  ): F[Either[(F[A], RetryStatus), A]] =
 
     def applyNextStep(
         error: E,
         nextStep: NextStep,
-        nextAction: M[A]
-    ): M[Either[(M[A], RetryStatus), A]] =
+        nextAction: F[A]
+    ): F[Either[(F[A], RetryStatus), A]] =
       nextStep match
         case NextStep.RetryAfterDelay(delay, updatedStatus) =>
           T.sleep(delay) *>
@@ -70,11 +70,11 @@ package object mtl:
 
     def applyHandlerDecision(
         error: E,
-        handlerDecision: HandlerDecision[M[A]],
+        handlerDecision: HandlerDecision[F[A]],
         nextStep: NextStep
-    ): M[Either[(M[A], RetryStatus), A]] =
+    ): F[Either[(F[A], RetryStatus), A]] =
       handlerDecision match
-        case HandlerDecision.Done =>
+        case HandlerDecision.Stop =>
           // Error is not worth retrying. Stop the recursion and raise the error.
           AH.raise[E, A](error).map(Right(_))
         case HandlerDecision.Continue =>
