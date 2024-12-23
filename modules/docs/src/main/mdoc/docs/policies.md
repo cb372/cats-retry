@@ -9,7 +9,7 @@ A retry policy is a function that takes in a `RetryStatus` and returns a
 `PolicyDecision` in a monoidal context:
 
 ```scala
-case class RetryPolicy[M[_]](decideNextRetry: RetryStatus => M[PolicyDecision])
+case class RetryPolicy[F[_]](decideNextRetry: RetryStatus => F[PolicyDecision])
 ```
 
 The policy decision can be one of two things:
@@ -89,8 +89,8 @@ You can use `meet` to compose policies where you want an upper bound on the dela
 As an example the `capDelay` combinator is implemented using `meet`:
 
 ```scala mdoc:silent
-def capDelay[M[_]: Applicative](cap: FiniteDuration, policy: RetryPolicy[M]): RetryPolicy[M] =
-  policy meet constantDelay[M](cap)
+def capDelay[F[_] : Applicative](cap: FiniteDuration, policy: RetryPolicy[F]): RetryPolicy[F] =
+  policy meet constantDelay[F](cap)
 
 val neverAbove5Minutes = capDelay(5.minutes, exponentialBackoff[IO](10.milliseconds))
 ```

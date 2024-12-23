@@ -14,22 +14,22 @@ package object mtl:
 
   private[retry] class RetryingOnSomeErrorsPartiallyApplied[A]:
 
-    def apply[M[_], E](
-        policy: RetryPolicy[M],
-        isWorthRetrying: E => M[Boolean],
-        onError: (E, RetryDetails) => M[Unit]
+    def apply[F[_], E](
+        policy: RetryPolicy[F],
+        isWorthRetrying: E => F[Boolean],
+        onError: (E, RetryDetails) => F[Unit]
     )(
-        action: => M[A]
+        action: => F[A]
     )(using
-        AH: Handle[M, E],
-        T: Temporal[M]
-    ): M[A] =
+        AH: Handle[F, E],
+        T: Temporal[F]
+    ): F[A] =
       T.tailRecM(RetryStatus.NoRetriesYet) { status =>
         AH.attempt(action).flatMap {
           case Left(error) =>
-            def stopRecursion: M[Either[RetryStatus, A]] =
+            def stopRecursion: F[Either[RetryStatus, A]] =
               AH.raise[E, A](error).map(Right(_))
-            def runRetry: M[Either[RetryStatus, A]] =
+            def runRetry: F[Either[RetryStatus, A]] =
               for
                 nextStep <- applyPolicy(policy, status)
                 _        <- onError(error, buildRetryDetails(status, nextStep))
@@ -49,18 +49,18 @@ package object mtl:
   end RetryingOnSomeErrorsPartiallyApplied
 
   private[retry] class RetryingOnAllErrorsPartiallyApplied[A]:
-    def apply[M[_], E](
-        policy: RetryPolicy[M],
-        onError: (E, RetryDetails) => M[Unit]
+    def apply[F[_], E](
+        policy: RetryPolicy[F],
+        onError: (E, RetryDetails) => F[Unit]
     )(
-        action: => M[A]
+        action: => F[A]
     )(using
-        AH: Handle[M, E],
-        T: Temporal[M]
-    ): M[A] =
+        AH: Handle[F, E],
+        T: Temporal[F]
+    ): F[A] =
       mtl
         .retryingOnSomeErrors[A]
-        .apply[M, E](policy, _ => T.pure(true), onError)(
+        .apply[F, E](policy, _ => T.pure(true), onError)(
           action
         )
 end mtl
