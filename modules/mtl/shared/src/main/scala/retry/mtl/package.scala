@@ -9,34 +9,26 @@ import retry.*
  * API
  */
 
-def retryingOnErrors[A] = new RetryingOnErrorsPartiallyApplied[A]
-
-/*
- * Partially applied classes
- */
-
-private[retry] class RetryingOnErrorsPartiallyApplied[A]:
-
-  def apply[F[_], E](
-      policy: RetryPolicy[F],
-      errorHandler: ResultHandler[F, E, A]
-  )(
-      action: => F[A]
-  )(using
-      AH: Handle[F, E],
-      T: Temporal[F]
-  ): F[A] =
-    T.tailRecM((action, RetryStatus.NoRetriesYet)) { (currentAction, status) =>
-      AH.attempt(currentAction).flatMap { attempt =>
-        retryingOnErrorsImpl(
-          policy,
-          errorHandler,
-          status,
-          currentAction,
-          attempt
-        )
-      }
+def retryingOnErrors[F[_], A, E](
+    action: F[A]
+)(
+    policy: RetryPolicy[F],
+    errorHandler: ResultHandler[F, E, A]
+)(using
+    AH: Handle[F, E],
+    T: Temporal[F]
+): F[A] =
+  T.tailRecM((action, RetryStatus.NoRetriesYet)) { (currentAction, status) =>
+    AH.attempt(currentAction).flatMap { attempt =>
+      retryingOnErrorsImpl(
+        policy,
+        errorHandler,
+        status,
+        currentAction,
+        attempt
+      )
     }
+  }
 
 /*
  * Implementation

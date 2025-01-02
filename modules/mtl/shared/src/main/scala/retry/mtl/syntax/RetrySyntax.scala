@@ -9,7 +9,7 @@ extension [F[_], A](action: F[A])
       policy: RetryPolicy[F],
       errorHandler: ResultHandler[F, E, A]
   )(using T: Temporal[F], AH: Handle[F, E]): F[A] =
-    retry.mtl.retryingOnErrors(
+    retry.mtl.retryingOnErrors(action)(
       policy = policy,
       errorHandler = errorHandler
-    )(action)
+    )
