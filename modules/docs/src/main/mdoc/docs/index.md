@@ -20,9 +20,7 @@ import cats.effect.IO
 
 val httpClient = util.FlakyHttpClient()
 
-val flakyRequest: IO[String] = IO {
-  httpClient.getCatGif()
-}
+val flakyRequest: IO[String] = httpClient.getCatGif
 ```
 
 To improve the chance of successfully downloading the file, let's wrap this with

@@ -73,12 +73,12 @@ necessary logging
 
 For example, let's keep rolling a die until we get a six, using `IO`.
 
-```scala mdoc
+```scala mdoc:silent
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
-import retry._
+import retry.*
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 val policy = RetryPolicies.constantDelay[IO](10.milliseconds)
 
@@ -87,28 +87,30 @@ val valueHandler: ValueHandler[IO, Int] = (value: Int, details: RetryDetails) =>
     case 6 =>
       IO.pure(HandlerDecision.Stop)   // successful result, stop retrying
     case failedValue =>
-      IO.println(s"Rolled a $failedValue, retrying ...")
+      IO(println(s"Rolled a $failedValue, retrying ..."))
         .as(HandlerDecision.Continue) // keep trying, assuming the retry policy allows it
 
 val loadedDie = util.LoadedDie(2, 5, 4, 1, 3, 2, 6)
 
-val io = retryingOnFailures(policy, valueHandler){
-  IO(loadedDie.roll())
-}
+val io = retryingOnFailures(policy, valueHandler)(loadedDie.roll)
+```
 
+```scala mdoc
 io.unsafeRunSync()
 ```
 
 There is also a helper for lifting a predicate into a `ValueHandler`:
 
-```scala mdoc:nest
+```scala mdoc:nest:silent
 val io = retryingOnFailures(
   policy = policy,
   valueHandler = ResultHandler.retryUntilSuccessful(_ == 6, log = ResultHandler.noop)
-){
-  IO(loadedDie.roll())
-}
+)(
+  loadedDie.roll
+)
+```
 
+```scala mdoc
 io.unsafeRunSync()
 ```
 
@@ -138,11 +140,11 @@ necessary logging
 For example, let's make a request for a cat gif using our flaky HTTP client,
 retrying only if we get an `IOException`.
 
-```scala mdoc:nest
+```scala mdoc:nest:silent
 import java.io.IOException
 
 val httpClient = util.FlakyHttpClient()
-val flakyRequest: IO[String] = IO(httpClient.getCatGif())
+val flakyRequest: IO[String] = httpClient.getCatGif
 
 val errorHandler: ErrorHandler[IO, String] = (e: Throwable, retryDetails: RetryDetails) =>
   e match
@@ -154,19 +156,27 @@ val errorHandler: ErrorHandler[IO, String] = (e: Throwable, retryDetails: RetryD
 val io = retryingOnErrors(
   policy = RetryPolicies.limitRetries[IO](5),
   errorHandler = errorHandler
-)(flakyRequest)
+)(
+  flakyRequest
+)
+```
 
+```scala mdoc
 io.unsafeRunSync()
 ```
 
 There is also a helper for the common case where you want to retry on all errors:
 
-```scala mdoc:nest
+```scala mdoc:nest:silent
 val io = retryingOnErrors(
   policy = RetryPolicies.limitRetries[IO](5),
   errorHandler = ResultHandler.retryOnAllErrors(log = ResultHandler.noop)
-)(flakyRequest)
+)(
+  flakyRequest
+)
+```
 
+```scala mdoc
 io.unsafeRunSync()
 ```
 
@@ -199,11 +209,11 @@ For example, let's make a request to an API to retrieve details for a record, wh
 - A timeout exception occurs
 - The record's details are incomplete pending future operations
 
-```scala mdoc:nest
+```scala mdoc:nest:silent
 import java.util.concurrent.TimeoutException
 
 val httpClient = util.FlakyHttpClient()
-val flakyRequest: IO[String] = IO(httpClient.getRecordDetails("foo"))
+val flakyRequest: IO[String] = httpClient.getRecordDetails("foo")
 
 val errorOrValueHandler: ErrorOrValueHandler[IO, String] =
   (result: Either[Throwable, String], retryDetails: RetryDetails) =>
@@ -220,8 +230,12 @@ val errorOrValueHandler: ErrorOrValueHandler[IO, String] =
 val io = retryingOnFailuresAndErrors(
   policy = RetryPolicies.limitRetries[IO](5),
   errorOrValueHandler = errorOrValueHandler
-)(flakyRequest)
+)(
+  flakyRequest
+)
+```
 
+```scala mdoc
 io.unsafeRunSync()
 ```
 
@@ -236,7 +250,7 @@ as extension methods.
 import retry.syntax.*
 
 // To retry until you get a value you like
-IO(loadedDie.roll()).retryingOnFailures(
+loadedDie.roll.retryingOnFailures(
   policy = RetryPolicies.limitRetries[IO](2),
   valueHandler = valueHandler
 )
@@ -244,13 +258,13 @@ IO(loadedDie.roll()).retryingOnFailures(
 val httpClient = util.FlakyHttpClient()
 
 // To retry on some or all errors
-IO(httpClient.getCatGif()).retryingOnErrors(
+httpClient.getCatGif.retryingOnErrors(
   policy = RetryPolicies.limitRetries[IO](2),
   errorHandler = errorHandler
 )
 
 // To retry only on failures and some or all errors
-IO(httpClient.getRecordDetails("foo")).retryingOnFailuresAndErrors(
+httpClient.getRecordDetails("foo").retryingOnFailuresAndErrors(
   policy = RetryPolicies.limitRetries[IO](2),
   errorOrValueHandler = errorOrValueHandler
 )

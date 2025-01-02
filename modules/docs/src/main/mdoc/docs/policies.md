@@ -62,12 +62,12 @@ For an example of composing policies like this, we can use `join` to create a po
 exponentially:
 
 ```scala mdoc:silent
-import cats._
+import cats.*
 import cats.effect.IO
-import cats.implicits._
-import scala.concurrent.duration._
+import cats.syntax.all.*
+import scala.concurrent.duration.*
 import retry.RetryPolicy
-import retry.RetryPolicies._
+import retry.RetryPolicies.*
 
 val policy = limitRetries[IO](5) join exponentialBackoff[IO](10.milliseconds)
 ```
@@ -111,7 +111,7 @@ limitRetries[IO](5) |+| constantDelay[IO](100.milliseconds)
 There is also an operator `followedBy` to sequentially compose policies, i.e. if the first one wants to give up, use the second one.
 As an example, we can retry with a 100ms delay 5 times and then retry every minute:
 
-```scala mdoc
+```scala mdoc:silent
 val retry5times100millis = constantDelay[IO](100.millis) |+| limitRetries[IO](5)
 
 retry5times100millis.followedBy(constantDelay[IO](1.minute))
@@ -132,14 +132,13 @@ The `mapDelay` and `flatMapDelay` operators work just like `map` and `flatMap`, 
 
 As a simple example, it allows us to add a specific delay of 10ms on top of an existing policy:
 
-```scala mdoc
+```scala mdoc:silent
 fibonacciBackoff[IO](200.millis).mapDelay(_ + 10.millis)
 ```
 
 Furthermore, `flatMapDelay` also allows us to depend on certain effects to evaluate how to modify the delay:
 
-```scala mdoc
-
+```scala mdoc:silent
 def determineDelay: IO[FiniteDuration] = ???
 
 fibonacciBackoff[IO](200.millis).flatMapDelay { currentDelay =>
@@ -153,7 +152,7 @@ fibonacciBackoff[IO](200.millis).flatMapDelay { currentDelay =>
 If you've defined a `RetryPolicy[F]`, but you need a `RetryPolicy` for another effect type `G[_]`, you can use `mapK` to convert from one to the other.
 For example, you might have defined a custom `RetryPolicy[cats.effect.IO]` and for another part of the app you might need a `RetryPolicy[Kleisli[IO]]`:
 
-```scala mdoc
+```scala mdoc:silent
 import cats.effect.LiftIO
 import cats.data.Kleisli
 
@@ -169,7 +168,7 @@ customPolicy.mapK[Kleisli[IO, String, *]](LiftIO.liftK[Kleisli[IO, String, *]])
 The easiest way to define a custom retry policy is to use `RetryPolicy.lift`,
 specifying the monad you need to work in:
 
-```scala mdoc
+```scala mdoc:silent
 import retry.{RetryPolicy, PolicyDecision}
 import java.time.{LocalDate, DayOfWeek}
 
