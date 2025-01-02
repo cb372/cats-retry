@@ -7,7 +7,7 @@ import retry.HandlerDecision.{Stop, Continue, Adapt}
 
 import scala.concurrent.duration.*
 
-class PackageObjectSuite extends CatsEffectSuite:
+class CombinatorsSuite extends CatsEffectSuite:
 
   private case class State[Res](
       attempts: Int = 0,
@@ -654,4 +654,4 @@ class PackageObjectSuite extends CatsEffectSuite:
       assertEquals(state.nextSteps, Vector.fill(2)(DelayAndRetry(1.milli)))
   }
 
-end PackageObjectSuite
+end CombinatorsSuite
