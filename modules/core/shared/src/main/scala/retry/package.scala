@@ -12,79 +12,65 @@ import scala.concurrent.duration.FiniteDuration
  * API
  */
 
-def retryingOnFailures[A] = new RetryingOnFailuresPartiallyApplied[A]
+def retryingOnFailures[F[_], A](
+    action: F[A]
+)(
+    policy: RetryPolicy[F],
+    valueHandler: ValueHandler[F, A]
+)(using
+    T: Temporal[F]
+): F[A] = T.tailRecM((action, RetryStatus.NoRetriesYet)) { (currentAction, status) =>
+  currentAction.flatMap { actionResult =>
+    retryingOnFailuresImpl(policy, valueHandler, status, currentAction, actionResult)
+  }
+}
 
-def retryingOnErrors[A] = new RetryingOnErrorsPartiallyApplied[A]
+def retryingOnErrors[F[_], A](
+    action: F[A]
+)(
+    policy: RetryPolicy[F],
+    errorHandler: ErrorHandler[F, A]
+)(using
+    T: Temporal[F]
+): F[A] = T.tailRecM((action, RetryStatus.NoRetriesYet)) { (currentAction, status) =>
+  T.attempt(currentAction).flatMap { attempt =>
+    retryingOnErrorsImpl(
+      policy,
+      errorHandler,
+      status,
+      currentAction,
+      attempt
+    )
+  }
+}
 
-def retryingOnFailuresAndErrors[A] =
-  new RetryingOnFailuresAndErrorsPartiallyApplied[A]
+def retryingOnFailuresAndErrors[F[_], A](
+    action: F[A]
+)(
+    policy: RetryPolicy[F],
+    errorOrValueHandler: ErrorOrValueHandler[F, A]
+)(using
+    T: Temporal[F]
+): F[A] =
+  val valueHandler: ResultHandler[F, A, A] =
+    (a: A, rd: RetryDetails) => errorOrValueHandler(Right(a), rd)
+  val errorHandler: ResultHandler[F, Throwable, A] =
+    (e: Throwable, rd: RetryDetails) => errorOrValueHandler(Left(e), rd)
 
-/*
- * Partially applied classes
- */
-
-private[retry] class RetryingOnFailuresPartiallyApplied[A]:
-  def apply[F[_]](
-      policy: RetryPolicy[F],
-      valueHandler: ValueHandler[F, A]
-  )(
-      action: => F[A]
-  )(using
-      T: Temporal[F]
-  ): F[A] = T.tailRecM((action, RetryStatus.NoRetriesYet)) { (currentAction, status) =>
-    currentAction.flatMap { actionResult =>
-      retryingOnFailuresImpl(policy, valueHandler, status, currentAction, actionResult)
+  T.tailRecM((action, RetryStatus.NoRetriesYet)) { (currentAction, status) =>
+    T.attempt(currentAction).flatMap {
+      case Right(actionResult) =>
+        retryingOnFailuresImpl(policy, valueHandler, status, currentAction, actionResult)
+      case attempt =>
+        retryingOnErrorsImpl(
+          policy,
+          errorHandler,
+          status,
+          currentAction,
+          attempt
+        )
     }
   }
-
-private[retry] class RetryingOnErrorsPartiallyApplied[A]:
-  def apply[F[_]](
-      policy: RetryPolicy[F],
-      errorHandler: ErrorHandler[F, A]
-  )(
-      action: => F[A]
-  )(using
-      T: Temporal[F]
-  ): F[A] = T.tailRecM((action, RetryStatus.NoRetriesYet)) { (currentAction, status) =>
-    T.attempt(currentAction).flatMap { attempt =>
-      retryingOnErrorsImpl(
-        policy,
-        errorHandler,
-        status,
-        currentAction,
-        attempt
-      )
-    }
-  }
-
-private[retry] class RetryingOnFailuresAndErrorsPartiallyApplied[A]:
-  def apply[F[_]](
-      policy: RetryPolicy[F],
-      errorOrValueHandler: ErrorOrValueHandler[F, A]
-  )(
-      action: => F[A]
-  )(using
-      T: Temporal[F]
-  ): F[A] =
-    val valueHandler: ResultHandler[F, A, A] =
-      (a: A, rd: RetryDetails) => errorOrValueHandler(Right(a), rd)
-    val errorHandler: ResultHandler[F, Throwable, A] =
-      (e: Throwable, rd: RetryDetails) => errorOrValueHandler(Left(e), rd)
-
-    T.tailRecM((action, RetryStatus.NoRetriesYet)) { (currentAction, status) =>
-      T.attempt(currentAction).flatMap {
-        case Right(actionResult) =>
-          retryingOnFailuresImpl(policy, valueHandler, status, currentAction, actionResult)
-        case attempt =>
-          retryingOnErrorsImpl(
-            policy,
-            errorHandler,
-            status,
-            currentAction,
-            attempt
-          )
-      }
-    }
 
 /*
  * Implementation

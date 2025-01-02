@@ -56,10 +56,10 @@ class CombinatorsSuite extends CatsEffectSuite:
     for
       fixture <- mkFixture[String]
       action = mkAction(fixture)
-      finalResult <- retryingOnFailures(
+      finalResult <- retryingOnFailures(action)(
         policy,
         mkHandler(fixture)
-      )(action)
+      )
       state <- fixture.getState
     yield
       // THEN the successful result is returned
@@ -93,10 +93,10 @@ class CombinatorsSuite extends CatsEffectSuite:
     for
       fixture <- mkFixture[String]
       action = mkAction(fixture)
-      finalResult <- retryingOnFailures(
+      finalResult <- retryingOnFailures(action)(
         policy,
         mkHandler(fixture)
-      )(action)
+      )
       state <- fixture.getState
     yield
       // THEN the last unsuccessful result is returned
@@ -142,10 +142,10 @@ class CombinatorsSuite extends CatsEffectSuite:
     for
       fixture <- mkFixture[String]
       action = mkAction(fixture)
-      finalResult <- retryingOnFailures(
+      finalResult <- retryingOnFailures(action)(
         policy,
         mkHandler(fixture)
-      )(action)
+      )
       state <- fixture.getState
     yield
       // THEN the successful result is returned
@@ -179,10 +179,10 @@ class CombinatorsSuite extends CatsEffectSuite:
     for
       fixture <- mkFixture[String]
       action = mkAction(fixture)
-      finalResult <- retryingOnFailures(
+      finalResult <- retryingOnFailures(action)(
         policy,
         mkHandler(fixture)
-      )(action)
+      )
       state <- fixture.getState
     yield
       // THEN the last unsuccessful result is returned
@@ -214,10 +214,10 @@ class CombinatorsSuite extends CatsEffectSuite:
     for
       fixture <- mkFixture[Throwable]
       action = mkAction(fixture)
-      finalResult <- retryingOnErrors(
+      finalResult <- retryingOnErrors(action)(
         policy,
         mkHandler(fixture)
-      )(action)
+      )
       state <- fixture.getState
     yield
       // THEN the successful result is returned
@@ -252,10 +252,10 @@ class CombinatorsSuite extends CatsEffectSuite:
     for
       fixture <- mkFixture[Throwable]
       action = mkAction(fixture)
-      finalResult <- retryingOnErrors(
+      finalResult <- retryingOnErrors(action)(
         policy,
         mkHandler(fixture)
-      )(action).attempt
+      ).attempt
       state <- fixture.getState
     yield
       // THEN the final error is raised
@@ -297,10 +297,10 @@ class CombinatorsSuite extends CatsEffectSuite:
     for
       fixture <- mkFixture[Throwable]
       action = mkAction(fixture)
-      finalResult <- retryingOnErrors(
+      finalResult <- retryingOnErrors(action)(
         policy,
         mkHandler(fixture)
-      )(action).attempt
+      ).attempt
       state <- fixture.getState
     yield
       // THEN the non-retryable error is raised
@@ -342,10 +342,10 @@ class CombinatorsSuite extends CatsEffectSuite:
     for
       fixture <- mkFixture[Throwable]
       action = mkAction(fixture)
-      finalResult <- retryingOnErrors(
+      finalResult <- retryingOnErrors(action)(
         policy,
         mkHandler(fixture)
-      )(action)
+      )
       state <- fixture.getState
     yield
       // THEN the successful result is returned
@@ -380,10 +380,10 @@ class CombinatorsSuite extends CatsEffectSuite:
     for
       fixture <- mkFixture[Throwable]
       action = mkAction(fixture)
-      finalResult <- retryingOnErrors(
+      finalResult <- retryingOnErrors(action)(
         policy,
         mkHandler(fixture)
-      )(action).attempt
+      ).attempt
       state <- fixture.getState
     yield
       // THEN the final error is raised
@@ -416,10 +416,10 @@ class CombinatorsSuite extends CatsEffectSuite:
     for
       fixture <- mkFixture[Either[Throwable, String]]
       action = mkAction(fixture)
-      finalResult <- retryingOnFailuresAndErrors(
+      finalResult <- retryingOnFailuresAndErrors(action)(
         policy,
         mkHandler(fixture)
-      )(action)
+      )
       state <- fixture.getState
     yield
       // THEN the successful result is returned
@@ -461,10 +461,10 @@ class CombinatorsSuite extends CatsEffectSuite:
     for
       fixture <- mkFixture[Either[Throwable, String]]
       action = mkAction(fixture)
-      finalResult <- retryingOnFailuresAndErrors(
+      finalResult <- retryingOnFailuresAndErrors(action)(
         policy,
         mkHandler(fixture)
-      )(action)
+      )
       state <- fixture.getState
     yield
       // THEN the unsuccessful result is returned
@@ -505,10 +505,10 @@ class CombinatorsSuite extends CatsEffectSuite:
     for
       fixture <- mkFixture[Either[Throwable, String]]
       action = mkAction(fixture)
-      finalResult <- retryingOnFailuresAndErrors(
+      finalResult <- retryingOnFailuresAndErrors(action)(
         policy,
         mkHandler(fixture)
-      )(action).attempt
+      ).attempt
       state <- fixture.getState
     yield
       // THEN the final error is raised
@@ -551,10 +551,10 @@ class CombinatorsSuite extends CatsEffectSuite:
     for
       fixture <- mkFixture[Either[Throwable, String]]
       action = mkAction(fixture)
-      finalResult <- retryingOnFailuresAndErrors(
+      finalResult <- retryingOnFailuresAndErrors(action)(
         policy,
         mkHandler(fixture)
-      )(action).attempt
+      ).attempt
       state <- fixture.getState
     yield
       // THEN the non-retryable error is raised
@@ -594,10 +594,10 @@ class CombinatorsSuite extends CatsEffectSuite:
     for
       fixture <- mkFixture[Either[Throwable, String]]
       action = mkAction(fixture)
-      finalResult <- retryingOnFailuresAndErrors(
+      finalResult <- retryingOnFailuresAndErrors(action)(
         policy,
         mkHandler(fixture)
-      )(action)
+      )
       state <- fixture.getState
     yield
       // THEN the successful result is returned
@@ -636,10 +636,10 @@ class CombinatorsSuite extends CatsEffectSuite:
     for
       fixture <- mkFixture[Either[Throwable, String]]
       action = mkAction(fixture)
-      finalResult <- retryingOnFailuresAndErrors(
+      finalResult <- retryingOnFailuresAndErrors(action)(
         policy,
         mkHandler(fixture)
-      )(action)
+      )
       state <- fixture.getState
     yield
       // THEN the successful result is returned
