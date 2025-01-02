@@ -13,22 +13,21 @@ textual description of a cat gif.
 Unfortunately we have to do this over a flaky network connection, so there's a
 high probability it will fail.
 
-We'll be working with the cats-effect `IO` monad, but any monad will do.
+We'll be working with the cats-effect `IO` monad, but any effect monad with an
+instance of `Temporal` will do.
 
 ```scala mdoc:silent
 import cats.effect.IO
 
 val httpClient = util.FlakyHttpClient()
 
-val flakyRequest: IO[String] = IO {
-  httpClient.getCatGif()
-}
+val flakyRequest: IO[String] = httpClient.getCatGif
 ```
 
 To improve the chance of successfully downloading the file, let's wrap this with
 some retry logic.
 
-We'll add dependencies on the `core` and `cats-effect` modules:
+We'll add a dependency on the `core` module:
 
 ````scala mdoc:passthrough
 println(
@@ -53,49 +52,43 @@ import retry._
 val retryFiveTimes = RetryPolicies.limitRetries[IO](5)
 ```
 
-We'll also provide an error handler that does some logging before every retry.
+We can also provide an error handler to do some logging each time the operation
+raises an error.
+
 Note how this also happens within whatever monad you're working in, in this case
 the `IO` monad.
 
 ```scala mdoc:silent
 import scala.concurrent.duration.FiniteDuration
-import retry.RetryDetails._
+import retry.RetryDetails.NextStep._
 
 val logMessages = collection.mutable.ArrayBuffer.empty[String]
 
-def logError(err: Throwable, details: RetryDetails): IO[Unit] = details match {
-
-  case WillDelayAndRetry(nextDelay: FiniteDuration,
-                         retriesSoFar: Int,
-                         cumulativeDelay: FiniteDuration) =>
-    IO {
-      logMessages.append(
-        s"Failed to download. So far we have retried $retriesSoFar times.")
-    }
-
-  case GivingUp(totalRetries: Int, totalDelay: FiniteDuration) =>
-    IO {
-      logMessages.append(s"Giving up after $totalRetries retries")
-    }
-
-}
+def logError(err: Throwable, details: RetryDetails): IO[Unit] =
+  details.nextStepIfUnsuccessful match
+    case DelayAndRetry(nextDelay: FiniteDuration) =>
+      IO(logMessages.append(s"Failed to download. So far we have retried ${details.retriesSoFar} times."))
+    case GiveUp =>
+      IO(logMessages.append(s"Giving up after ${details.retriesSoFar} retries"))
 ```
 
 Now we have a retry policy and an error handler, we can wrap our `IO` in retries.
 
 ```scala mdoc:silent
-import cats.effect.unsafe.implicits.global
+import retry.ResultHandler.retryOnAllErrors
 
 val flakyRequestWithRetry: IO[String] =
-  retryingOnAllErrors[String](
-    policy = RetryPolicies.limitRetries[IO](5),
-    onError = logError
+  retryingOnErrors(
+    policy = retryFiveTimes,
+    errorHandler = retryOnAllErrors(logError)
   )(flakyRequest)
 ```
 
 Let's see it in action.
 
 ```scala mdoc
+import cats.effect.unsafe.implicits.global
+
 flakyRequestWithRetry.unsafeRunSync()
 
 logMessages.foreach(println)

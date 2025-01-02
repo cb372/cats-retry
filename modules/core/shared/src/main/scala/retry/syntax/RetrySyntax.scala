@@ -1,66 +1,33 @@
 package retry.syntax
 
-import retry.{RetryDetails, RetryPolicy}
 import cats.effect.Temporal
+import retry.*
 
 extension [F[_], A](action: => F[A])
 
-  def retryingOnFailures[E](
-      wasSuccessful: A => F[Boolean],
+  def retryingOnFailures(
       policy: RetryPolicy[F],
-      onFailure: (A, RetryDetails) => F[Unit]
+      valueHandler: ValueHandler[F, A]
   )(using T: Temporal[F]): F[A] =
     retry.retryingOnFailures(
       policy = policy,
-      wasSuccessful = wasSuccessful,
-      onFailure = onFailure
+      valueHandler = valueHandler
     )(action)
 
-  def retryingOnAllErrors(
+  def retryingOnErrors(
       policy: RetryPolicy[F],
-      onError: (Throwable, RetryDetails) => F[Unit]
+      errorHandler: ErrorHandler[F, A]
   )(using T: Temporal[F]): F[A] =
-    retry.retryingOnAllErrors(
+    retry.retryingOnErrors(
       policy = policy,
-      onError = onError
+      errorHandler = errorHandler
     )(action)
 
-  def retryingOnSomeErrors(
-      isWorthRetrying: Throwable => F[Boolean],
+  def retryingOnFailuresAndErrors(
       policy: RetryPolicy[F],
-      onError: (Throwable, RetryDetails) => F[Unit]
+      errorOrValueHandler: ErrorOrValueHandler[F, A]
   )(using T: Temporal[F]): F[A] =
-    retry.retryingOnSomeErrors(
+    retry.retryingOnFailuresAndErrors(
       policy = policy,
-      isWorthRetrying = isWorthRetrying,
-      onError = onError
+      errorOrValueHandler = errorOrValueHandler
     )(action)
-
-  def retryingOnFailuresAndAllErrors(
-      wasSuccessful: A => F[Boolean],
-      policy: RetryPolicy[F],
-      onFailure: (A, RetryDetails) => F[Unit],
-      onError: (Throwable, RetryDetails) => F[Unit]
-  )(using T: Temporal[F]): F[A] =
-    retry.retryingOnFailuresAndAllErrors(
-      policy = policy,
-      wasSuccessful = wasSuccessful,
-      onFailure = onFailure,
-      onError = onError
-    )(action)
-
-  def retryingOnFailuresAndSomeErrors(
-      wasSuccessful: A => F[Boolean],
-      isWorthRetrying: Throwable => F[Boolean],
-      policy: RetryPolicy[F],
-      onFailure: (A, RetryDetails) => F[Unit],
-      onError: (Throwable, RetryDetails) => F[Unit]
-  )(using T: Temporal[F]): F[A] =
-    retry.retryingOnFailuresAndSomeErrors(
-      policy = policy,
-      wasSuccessful = wasSuccessful,
-      isWorthRetrying = isWorthRetrying,
-      onFailure = onFailure,
-      onError = onError
-    )(action)
-end extension

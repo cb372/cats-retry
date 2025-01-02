@@ -82,6 +82,9 @@ val docs = project
   .dependsOn(coreJVM, mtlJVM)
   .enablePlugins(MicrositesPlugin, BuildInfoPlugin)
   .settings(
+    libraryDependencies ++= Seq(
+      "software.amazon.awssdk" % "dynamodb" % "2.29.43"
+    ),
     tpolecatExcludeOptions ++= ScalacOptions.warnUnusedOptions,
     tpolecatExcludeOptions += ScalacOptions.warnNonUnitStatement,
     crossScalaVersions        := Nil,

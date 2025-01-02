@@ -8,59 +8,94 @@ import cats.syntax.functor.*
 
 package object mtl:
 
-  def retryingOnSomeErrors[A] = new RetryingOnSomeErrorsPartiallyApplied[A]
+  /*
+   * API
+   */
 
-  def retryingOnAllErrors[A] = new RetryingOnAllErrorsPartiallyApplied[A]
+  def retryingOnErrors[A] = new RetryingOnErrorsPartiallyApplied[A]
 
-  private[retry] class RetryingOnSomeErrorsPartiallyApplied[A]:
+  /*
+   * Partially applied classes
+   */
+
+  private[retry] class RetryingOnErrorsPartiallyApplied[A]:
 
     def apply[F[_], E](
         policy: RetryPolicy[F],
-        isWorthRetrying: E => F[Boolean],
-        onError: (E, RetryDetails) => F[Unit]
+        errorHandler: ResultHandler[F, E, A]
     )(
         action: => F[A]
     )(using
         AH: Handle[F, E],
         T: Temporal[F]
     ): F[A] =
-      T.tailRecM(RetryStatus.NoRetriesYet) { status =>
-        AH.attempt(action).flatMap {
-          case Left(error) =>
-            def stopRecursion: F[Either[RetryStatus, A]] =
-              AH.raise[E, A](error).map(Right(_))
-            def runRetry: F[Either[RetryStatus, A]] =
-              for
-                nextStep <- applyPolicy(policy, status)
-                _        <- onError(error, buildRetryDetails(status, nextStep))
-                result <- nextStep match
-                  case NextStep.RetryAfterDelay(delay, updatedStatus) =>
-                    T.sleep(delay) *>
-                      T.pure(Left(updatedStatus)) // continue recursion
-                  case NextStep.GiveUp =>
-                    AH.raise[E, A](error).map(Right(_)) // stop the recursion
-              yield result
-
-            isWorthRetrying(error).ifM(runRetry, stopRecursion)
-          case Right(success) =>
-            T.pure(Right(success)) // stop the recursion
+      T.tailRecM((action, RetryStatus.NoRetriesYet)) { (currentAction, status) =>
+        AH.attempt(currentAction).flatMap { attempt =>
+          retryingOnErrorsImpl(
+            policy,
+            errorHandler,
+            status,
+            currentAction,
+            attempt
+          )
         }
       }
-  end RetryingOnSomeErrorsPartiallyApplied
 
-  private[retry] class RetryingOnAllErrorsPartiallyApplied[A]:
-    def apply[F[_], E](
-        policy: RetryPolicy[F],
-        onError: (E, RetryDetails) => F[Unit]
-    )(
-        action: => F[A]
-    )(using
-        AH: Handle[F, E],
-        T: Temporal[F]
-    ): F[A] =
-      mtl
-        .retryingOnSomeErrors[A]
-        .apply[F, E](policy, _ => T.pure(true), onError)(
-          action
-        )
+  /*
+   * Implementation
+   */
+
+  private def retryingOnErrorsImpl[F[_], A, E](
+      policy: RetryPolicy[F],
+      errorHandler: ResultHandler[F, E, A],
+      status: RetryStatus,
+      currentAction: F[A],
+      attempt: Either[E, A]
+  )(using
+      AH: Handle[F, E],
+      T: Temporal[F]
+  ): F[Either[(F[A], RetryStatus), A]] =
+
+    def applyNextStep(
+        error: E,
+        nextStep: NextStep,
+        nextAction: F[A]
+    ): F[Either[(F[A], RetryStatus), A]] =
+      nextStep match
+        case NextStep.RetryAfterDelay(delay, updatedStatus) =>
+          T.sleep(delay) *>
+            T.pure(Left(nextAction, updatedStatus)) // continue recursion
+        case NextStep.GiveUp =>
+          AH.raise[E, A](error).map(Right(_)) // stop the recursion
+
+    def applyHandlerDecision(
+        error: E,
+        handlerDecision: HandlerDecision[F[A]],
+        nextStep: NextStep
+    ): F[Either[(F[A], RetryStatus), A]] =
+      handlerDecision match
+        case HandlerDecision.Stop =>
+          // Error is not worth retrying. Stop the recursion and raise the error.
+          AH.raise[E, A](error).map(Right(_))
+        case HandlerDecision.Continue =>
+          // Depending on what the retry policy decided,
+          // either delay and then retry the same action, or give up
+          applyNextStep(error, nextStep, currentAction)
+        case HandlerDecision.Adapt(newAction) =>
+          // Depending on what the retry policy decided,
+          // either delay and then try a new action, or give up
+          applyNextStep(error, nextStep, newAction)
+
+    attempt match
+      case Left(error) =>
+        for
+          nextStep <- applyPolicy(policy, status)
+          retryDetails = buildRetryDetails(status, nextStep)
+          handlerDecision <- errorHandler(error, retryDetails)
+          result          <- applyHandlerDecision(error, handlerDecision, nextStep)
+        yield result
+      case Right(success) =>
+        T.pure(Right(success)) // stop the recursion
+  end retryingOnErrorsImpl
+
 end mtl

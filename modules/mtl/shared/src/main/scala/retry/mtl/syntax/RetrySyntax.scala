@@ -2,25 +2,14 @@ package retry.mtl.syntax
 
 import cats.effect.Temporal
 import cats.mtl.Handle
-import retry.{RetryDetails, RetryPolicy}
+import retry.{ResultHandler, RetryPolicy}
 
 extension [F[_], A](action: F[A])
-  def retryingOnAllMtlErrors[E](
+  def retryingOnMtlErrors[E](
       policy: RetryPolicy[F],
-      onError: (E, RetryDetails) => F[Unit]
+      errorHandler: ResultHandler[F, E, A]
   )(using T: Temporal[F], AH: Handle[F, E]): F[A] =
-    retry.mtl.retryingOnAllErrors(
+    retry.mtl.retryingOnErrors(
       policy = policy,
-      onError = onError
-    )(action)
-
-  def retryingOnSomeMtlErrors[E](
-      isWorthRetrying: E => F[Boolean],
-      policy: RetryPolicy[F],
-      onError: (E, RetryDetails) => F[Unit]
-  )(using T: Temporal[F], AH: Handle[F, E]): F[A] =
-    retry.mtl.retryingOnSomeErrors(
-      policy = policy,
-      isWorthRetrying = isWorthRetrying,
-      onError = onError
+      errorHandler = errorHandler
     )(action)

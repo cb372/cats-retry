@@ -7,3 +7,5 @@ options:
     url: docs/mtl-combinators.html
   - title: Retry policies
     url: docs/policies.html
+  - title: Adaptation
+    url: docs/adaptation.html
