@@ -13,7 +13,8 @@ textual description of a cat gif.
 Unfortunately we have to do this over a flaky network connection, so there's a
 high probability it will fail.
 
-We'll be working with the cats-effect `IO` monad, but any monad will do.
+We'll be working with the cats-effect `IO` monad, but any effect monad with an
+instance of `Temporal` will do.
 
 ```scala mdoc:silent
 import cats.effect.IO
