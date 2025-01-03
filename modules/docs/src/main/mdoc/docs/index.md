@@ -43,7 +43,7 @@ println(
 (Note: if you're using Scala.js, you'll need a `%%%` instead of `%%`.)
 
 First we'll need a retry policy. We'll keep it simple: retry up to 5 times, with
-no delay between attempts. (See the [retry policies page](policies.html) for
+no delay between attempts. (See the [retry policies page](./policies) for
 information on more powerful policies).
 
 ```scala mdoc:silent
@@ -96,6 +96,6 @@ logMessages.foreach(println)
 
 Next steps:
 
-- Learn about the other available [combinators](combinators.html)
-- Learn about the [MTL combinators](mtl-combinators.html)
-- Learn more about [retry policies](policies.html)
+- Learn about the other available [combinators](./combinators)
+- Learn about the [MTL combinators](./mtl-combinators)
+- Learn more about [retry policies](./policies)

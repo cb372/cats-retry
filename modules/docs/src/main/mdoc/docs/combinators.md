@@ -243,6 +243,32 @@ The return value is one of:
     - the action repeatedly raised errors and we ran out of retries
     - the error handler raised an error
 
+### `ErrorOrValueHandler`
+
+Note that the behaviour of the `ErrorOrValueHandler` is quite subtle.
+
+The interpretation of its decision (a `HandlerDecision`) depends on whether the
+action returned a value or raised an error
+
+If the action returned a value, the handler will be given a `Right(someValue)`
+to inspect.
+* If the handler decides the result of the action was successful, it should
+  return `Stop`, meaning there is no need to keep retrying. cats-retry will stop
+  retrying, and return the successful result.
+* On the other hand, if the handler decides that action was *not* successful, it
+  should return `Continue`, meaning the action has not succeeded yet so we should
+  keep retrying. cats-retry will then consult the retry policy. If the policy
+  agrees to keep retrying, cats-retry will do so. Otherwise it will return the
+  failed value.
+
+If the action raised an error, the handler will be given a `Left(someThrowable)`
+to inspect.
+* If the handler decides the error is worth retrying, it should return
+  `Continue`. cats-retry will then consult the retry policy. If the policy agrees
+  to keep retrying, cats-retry will do so. Otherwise it will re-raise the error.
+* If the handler decides the error is *not* worth retrying, it should return
+  `Stop`. cats-retry will re-raise the error.
+
 ### Semantics
 
 [![](https://mermaid.ink/img/pako:eNqVU8tugzAQ_BXLp0RKfoBDpahJ20OlVkHpoZCDhZdgydjIj7Qo5N9rbIIgCZHKxcx4ZtfL4BPOJAUc4ZzLn6wgyqD3bSqQe2Lj0Czxy36OlssntPmFzBoI-x1oN5otGKuERkfCLTToq13eiKAc1OlZCm25QUXA5-AeSnyJ2MiqQbHNMtB6loSKSAecWx5q7-cTdtfFMNE2_5ScZfWHeCGMWwV9_8rzU-1XlFSmQX7pvcmuosSNSDLDpNgH61jiv8tVy6C7In2XV3aEnRuz4_oxc4eBjke8518DJ_VKUGdTdYM8nBhoS5gGjUApqRq0aRfXriUDd2nTxZhc4uxmnarxONWh5H-nuDaG38HTE4rbxL3kft437nHefvtR2l4wynpwtBE1yvmhaDpM_zq8cXiBS1AlYdRd1VMrSrEpoIQUR-6VQk7cyClOxdlJiTUyrkWGI6MsLLCS9lDgKCdcO2T9lGtGDoqUPVsR8S3lBZ__AAneb50?type=png)](https://mermaid.live/edit#pako:eNqVU8tugzAQ_BXLp0RKfoBDpahJ20OlVkHpoZCDhZdgydjIj7Qo5N9rbIIgCZHKxcx4ZtfL4BPOJAUc4ZzLn6wgyqD3bSqQe2Lj0Czxy36OlssntPmFzBoI-x1oN5otGKuERkfCLTToq13eiKAc1OlZCm25QUXA5-AeSnyJ2MiqQbHNMtB6loSKSAecWx5q7-cTdtfFMNE2_5ScZfWHeCGMWwV9_8rzU-1XlFSmQX7pvcmuosSNSDLDpNgH61jiv8tVy6C7In2XV3aEnRuz4_oxc4eBjke8518DJ_VKUGdTdYM8nBhoS5gGjUApqRq0aRfXriUDd2nTxZhc4uxmnarxONWh5H-nuDaG38HTE4rbxL3kft437nHefvtR2l4wynpwtBE1yvmhaDpM_zq8cXiBS1AlYdRd1VMrSrEpoIQUR-6VQk7cyClOxdlJiTUyrkWGI6MsLLCS9lDgKCdcO2T9lGtGDoqUPVsR8S3lBZ__AAneb50)
