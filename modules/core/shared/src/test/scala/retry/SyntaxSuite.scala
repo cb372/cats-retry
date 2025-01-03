@@ -43,10 +43,7 @@ class SyntaxSuite extends CatsEffectSuite:
 
     // AND a result handler that does no adaptation and treats the 4th result as a success
     def mkHandler(fixture: Fixture[String]): ValueHandler[IO, String] =
-      (result: String, retryDetails: RetryDetails) =>
-        fixture
-          .updateState(result, retryDetails)
-          .as(if result.toInt > 3 then Stop else Continue)
+      ResultHandler.retryUntilSuccessful(_.toInt > 3, log = fixture.updateState)
 
     // AND an action that returns the attempt count as a string
     def mkAction(fixture: Fixture[String]): IO[String] =
@@ -80,10 +77,7 @@ class SyntaxSuite extends CatsEffectSuite:
 
     // AND a result handler that retries on all errors
     def mkHandler(fixture: Fixture[Throwable]): ErrorHandler[IO, String] =
-      (error: Throwable, retryDetails: RetryDetails) =>
-        fixture
-          .updateState(error, retryDetails)
-          .as(Continue)
+      ResultHandler.retryOnAllErrors(log = fixture.updateState)
 
     // AND an action that raises an error twice and then succeeds
     def mkAction(fixture: Fixture[Throwable]): IO[String] =

@@ -24,6 +24,19 @@ object ResultHandler:
   ): ErrorHandler[F, A] =
     (error: Throwable, retryDetails: RetryDetails) => log(error, retryDetails).as(HandlerDecision.Continue)
 
+  /** Construct an ErrorHandler that chooses to retry the same action as long as the error is worth retrying.
+    *
+    * @param log
+    *   A chance to do logging, increment metrics, etc
+    */
+  def retryOnSomeErrors[F[_]: Functor, A](
+      isWorthRetrying: Throwable => Boolean,
+      log: (Throwable, RetryDetails) => F[Unit]
+  ): ErrorHandler[F, A] =
+    (error: Throwable, retryDetails: RetryDetails) =>
+      log(error, retryDetails)
+        .as(if isWorthRetrying(error) then HandlerDecision.Continue else HandlerDecision.Stop)
+
   /** Construct a ValueHandler that chooses to retry the same action until it returns a successful result.
     *
     * @param log
@@ -40,3 +53,4 @@ object ResultHandler:
   /** Pass this to [[retryOnAllErrors]] or [[retryUntilSuccessful]] if you don't need to do any logging */
   def noop[F[_]: Applicative, A]: (A, RetryDetails) => F[Unit] =
     (_, _) => Applicative[F].unit
+end ResultHandler

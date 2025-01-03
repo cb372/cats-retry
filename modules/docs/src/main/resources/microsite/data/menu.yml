@@ -1,11 +1,13 @@
 options:
   - title: Getting started
-    url: docs/index.html
+    url: docs/
   - title: Combinators
-    url: docs/combinators.html
+    url: docs/combinators
   - title: MTL Combinators
-    url: docs/mtl-combinators.html
+    url: docs/mtl-combinators
   - title: Retry policies
-    url: docs/policies.html
+    url: docs/policies
   - title: Adaptation
-    url: docs/adaptation.html
+    url: docs/adaptation
+  - title: v3 -> v4 Migration
+    url: docs/migration

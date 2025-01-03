@@ -43,10 +43,7 @@ class CombinatorsSuite extends CatsEffectSuite:
 
     // AND a result handler that does no adaptation and treats the 4th result as a success
     def mkHandler(fixture: Fixture[String]): ValueHandler[IO, String] =
-      (result: String, retryDetails: RetryDetails) =>
-        fixture
-          .updateState(result, retryDetails)
-          .as(if result.toInt > 3 then Stop else Continue)
+      ResultHandler.retryUntilSuccessful(_.toInt > 3, log = fixture.updateState)
 
     // AND an action that returns the attempt count as a string
     def mkAction(fixture: Fixture[String]): IO[String] =
@@ -80,10 +77,7 @@ class CombinatorsSuite extends CatsEffectSuite:
 
     // AND a result handler that does no adaptation and treats the 4th result as a success
     def mkHandler(fixture: Fixture[String]): ValueHandler[IO, String] =
-      (result: String, retryDetails: RetryDetails) =>
-        fixture
-          .updateState(result, retryDetails)
-          .as(if result.toInt > 3 then Stop else Continue)
+      ResultHandler.retryUntilSuccessful(_.toInt > 3, log = fixture.updateState)
 
     // AND an action that returns the attempt count as a string
     def mkAction(fixture: Fixture[String]): IO[String] =
@@ -166,10 +160,7 @@ class CombinatorsSuite extends CatsEffectSuite:
 
     // AND a result handler that will retry > 10k times
     def mkHandler(fixture: Fixture[String]): ValueHandler[IO, String] =
-      (result: String, retryDetails: RetryDetails) =>
-        fixture
-          .updateState(result, retryDetails)
-          .as(if result.toInt > 20_000 then Stop else Continue)
+      ResultHandler.retryUntilSuccessful(_.toInt > 20_000, log = fixture.updateState)
 
     // AND an action that returns the attempt count as a string
     def mkAction(fixture: Fixture[String]): IO[String] =
@@ -197,10 +188,7 @@ class CombinatorsSuite extends CatsEffectSuite:
 
     // AND a result handler that retries on all errors
     def mkHandler(fixture: Fixture[Throwable]): ErrorHandler[IO, String] =
-      (error: Throwable, retryDetails: RetryDetails) =>
-        fixture
-          .updateState(error, retryDetails)
-          .as(Continue)
+      ResultHandler.retryOnAllErrors(log = fixture.updateState)
 
     // AND an action that raises an error twice and then succeeds
     def mkAction(fixture: Fixture[Throwable]): IO[String] =
@@ -238,10 +226,7 @@ class CombinatorsSuite extends CatsEffectSuite:
 
     // AND a result handler that retries on all errors
     def mkHandler(fixture: Fixture[Throwable]): ErrorHandler[IO, String] =
-      (error: Throwable, retryDetails: RetryDetails) =>
-        fixture
-          .updateState(error, retryDetails)
-          .as(Continue)
+      ResultHandler.retryOnAllErrors(log = fixture.updateState)
 
     // AND an action that always raises an error
     def mkAction(fixture: Fixture[Throwable]): IO[String] =
@@ -276,14 +261,7 @@ class CombinatorsSuite extends CatsEffectSuite:
 
     // AND a result handler that retries on some errors but gives up on others
     def mkHandler(fixture: Fixture[Throwable]): ErrorHandler[IO, String] =
-      (error: Throwable, retryDetails: RetryDetails) =>
-        fixture
-          .updateState(error, retryDetails)
-          .as {
-            error match
-              case `oneMoreTimeException` => Continue
-              case _                      => Stop
-          }
+      ResultHandler.retryOnSomeErrors(_ == oneMoreTimeException, log = fixture.updateState)
 
     // AND an action that raises a retryable error followed by a non-retryable error
     def mkAction(fixture: Fixture[Throwable]): IO[String] =
@@ -366,10 +344,7 @@ class CombinatorsSuite extends CatsEffectSuite:
 
     // AND a result handler that will always retry
     def mkHandler(fixture: Fixture[Throwable]): ErrorHandler[IO, String] =
-      (error: Throwable, retryDetails: RetryDetails) =>
-        fixture
-          .updateState(error, retryDetails)
-          .as(Continue)
+      ResultHandler.retryOnAllErrors(log = fixture.updateState)
 
     // AND an action that always raises an error
     def mkAction(fixture: Fixture[Throwable]): IO[String] =

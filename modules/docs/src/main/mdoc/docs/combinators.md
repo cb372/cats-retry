@@ -82,6 +82,12 @@ The return value is one of:
   `Left(...)` to indicate failure
 - an error raised in `F`, if either the action or the value handler raised an error
 
+### Semantics
+
+[![](https://mermaid.ink/img/pako:eNp1UstuwjAQ_BXLJ5DgB3KohAptDz1URFya5LCyN8SSY0d-0EZJ_r2ODRREm4N3Z_Y163igTHOkGa2l_mINGEfe96Ui4ctdQIsimmpJ1usnsvtG5h2m-BnMgXEPwqIlaIw2I9nNZlFEMnHV8q6muNQCc0KrKvVA542y5ATS40jeQHGJZnjWynrpSJPwlBqdo_8Nf0zKne5GknvG0NqgLQ4jNuHayzT2ovO2MghwQs2SPrQUrL8q6iL8Q9CGQ-dGEk1x6Dj8bpqSYyTeaGqZ2OTHDq_ihIeg9wWE9AaveuuAkd9rvSnbooR-o3jINv1IIkxJ0X34h_NBV7RF04Lg4RUMM1NS12CLJc2Cy7GGsGxJSzWFVPBO571iNHPG44oa7Y8NzWqQNiAfd90KOBpor2wH6lPrC55-AD8B1nA?type=png)](https://mermaid.live/edit#pako:eNp1UstuwjAQ_BXLJ5DgB3KohAptDz1URFya5LCyN8SSY0d-0EZJ_r2ODRREm4N3Z_Y163igTHOkGa2l_mINGEfe96Ui4ctdQIsimmpJ1usnsvtG5h2m-BnMgXEPwqIlaIw2I9nNZlFEMnHV8q6muNQCc0KrKvVA542y5ATS40jeQHGJZnjWynrpSJPwlBqdo_8Nf0zKne5GknvG0NqgLQ4jNuHayzT2ovO2MghwQs2SPrQUrL8q6iL8Q9CGQ-dGEk1x6Dj8bpqSYyTeaGqZ2OTHDq_ihIeg9wWE9AaveuuAkd9rvSnbooR-o3jINv1IIkxJ0X34h_NBV7RF04Lg4RUMM1NS12CLJc2Cy7GGsGxJSzWFVPBO571iNHPG44oa7Y8NzWqQNiAfd90KOBpor2wH6lPrC55-AD8B1nA)
+
+### Example
+
 For example, let's keep rolling a die until we get a six, using `IO`.
 
 ```scala mdoc:silent
@@ -155,6 +161,12 @@ The return value is either:
     - the action raised an error that the error handler judged to be unrecoverable
     - the action repeatedly raised errors and we ran out of retries
     - the error handler raised an error
+
+### Semantics
+
+[![](https://mermaid.ink/img/pako:eNptUU1vwjAM_StRTiDBH-hhEhpoO-wwUXFZy8FKXBopTap8sFWU_740BgYaudjP7_nFTk5cWIm84I2236IFF9jHtjYsnTIkNKty2M_ZcvnCNj8oYkDiL2Aixi2G6IxnR9ARR1ZGIdD7WUV15gk3UZNiP3-wqK5WIIKyZk-WoDx6hs5ZN7J3MFKjO71a46MOrCV8Jp8L-6RvM4U0x1Sk2vXu-54y2P6i_U-mK4My01qfVisx3GboM3wywkpCH0aWQ7XrJfytRuLM5BclS6pSnh3e1BF3jyPdsWvUMKyMTK_rhpFlSKKc3n8VX_AOXQdKpj8-TaKahxY7rHmRUokNpFVqXptzkkIMthyM4EVwERfc2XhoedGA9gnFvMlawcFBd6v2YL6sveLzL-oSyzM?type=png)](https://mermaid.live/edit#pako:eNptUU1vwjAM_StRTiDBH-hhEhpoO-wwUXFZy8FKXBopTap8sFWU_740BgYaudjP7_nFTk5cWIm84I2236IFF9jHtjYsnTIkNKty2M_ZcvnCNj8oYkDiL2Aixi2G6IxnR9ARR1ZGIdD7WUV15gk3UZNiP3-wqK5WIIKyZk-WoDx6hs5ZN7J3MFKjO71a46MOrCV8Jp8L-6RvM4U0x1Sk2vXu-54y2P6i_U-mK4My01qfVisx3GboM3wywkpCH0aWQ7XrJfytRuLM5BclS6pSnh3e1BF3jyPdsWvUMKyMTK_rhpFlSKKc3n8VX_AOXQdKpj8-TaKahxY7rHmRUokNpFVqXptzkkIMthyM4EVwERfc2XhoedGA9gnFvMlawcFBd6v2YL6sveLzL-oSyzM)
+
+### Example
 
 For example, let's make a request for a cat gif using our flaky HTTP client,
 retrying only if we get an `IOException`.
@@ -230,6 +242,38 @@ The return value is one of:
     - the action raised an error that the error handler judged to be unrecoverable
     - the action repeatedly raised errors and we ran out of retries
     - the error handler raised an error
+
+### `ErrorOrValueHandler`
+
+Note that the behaviour of the `ErrorOrValueHandler` is quite subtle.
+
+The interpretation of its decision (a `HandlerDecision`) depends on whether the
+action returned a value or raised an error
+
+If the action returned a value, the handler will be given a `Right(someValue)`
+to inspect.
+* If the handler decides the result of the action was successful, it should
+  return `Stop`, meaning there is no need to keep retrying. cats-retry will stop
+  retrying, and return the successful result.
+* On the other hand, if the handler decides that action was *not* successful, it
+  should return `Continue`, meaning the action has not succeeded yet so we should
+  keep retrying. cats-retry will then consult the retry policy. If the policy
+  agrees to keep retrying, cats-retry will do so. Otherwise it will return the
+  failed value.
+
+If the action raised an error, the handler will be given a `Left(someThrowable)`
+to inspect.
+* If the handler decides the error is worth retrying, it should return
+  `Continue`. cats-retry will then consult the retry policy. If the policy agrees
+  to keep retrying, cats-retry will do so. Otherwise it will re-raise the error.
+* If the handler decides the error is *not* worth retrying, it should return
+  `Stop`. cats-retry will re-raise the error.
+
+### Semantics
+
+[![](https://mermaid.ink/img/pako:eNqVU8tugzAQ_BXLp0RKfoBDpahJ20OlVkHpoZCDhZdgydjIj7Qo5N9rbIIgCZHKxcx4ZtfL4BPOJAUc4ZzLn6wgyqD3bSqQe2Lj0Czxy36OlssntPmFzBoI-x1oN5otGKuERkfCLTToq13eiKAc1OlZCm25QUXA5-AeSnyJ2MiqQbHNMtB6loSKSAecWx5q7-cTdtfFMNE2_5ScZfWHeCGMWwV9_8rzU-1XlFSmQX7pvcmuosSNSDLDpNgH61jiv8tVy6C7In2XV3aEnRuz4_oxc4eBjke8518DJ_VKUGdTdYM8nBhoS5gGjUApqRq0aRfXriUDd2nTxZhc4uxmnarxONWh5H-nuDaG38HTE4rbxL3kft437nHefvtR2l4wynpwtBE1yvmhaDpM_zq8cXiBS1AlYdRd1VMrSrEpoIQUR-6VQk7cyClOxdlJiTUyrkWGI6MsLLCS9lDgKCdcO2T9lGtGDoqUPVsR8S3lBZ__AAneb50?type=png)](https://mermaid.live/edit#pako:eNqVU8tugzAQ_BXLp0RKfoBDpahJ20OlVkHpoZCDhZdgydjIj7Qo5N9rbIIgCZHKxcx4ZtfL4BPOJAUc4ZzLn6wgyqD3bSqQe2Lj0Czxy36OlssntPmFzBoI-x1oN5otGKuERkfCLTToq13eiKAc1OlZCm25QUXA5-AeSnyJ2MiqQbHNMtB6loSKSAecWx5q7-cTdtfFMNE2_5ScZfWHeCGMWwV9_8rzU-1XlFSmQX7pvcmuosSNSDLDpNgH61jiv8tVy6C7In2XV3aEnRuz4_oxc4eBjke8518DJ_VKUGdTdYM8nBhoS5gGjUApqRq0aRfXriUDd2nTxZhc4uxmnarxONWh5H-nuDaG38HTE4rbxL3kft437nHefvtR2l4wynpwtBE1yvmhaDpM_zq8cXiBS1AlYdRd1VMrSrEpoIQUR-6VQk7cyClOxdlJiTUyrkWGI6MsLLCS9lDgKCdcO2T9lGtGDoqUPVsR8S3lBZ__AAneb50)
+
+### Example
 
 For example, let's make a request to an API to retrieve details for a record, which we will only retry if:
 
