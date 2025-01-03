@@ -78,10 +78,10 @@ Now we have a retry policy and an error handler, we can wrap our `IO` in retries
 import retry.ResultHandler.retryOnAllErrors
 
 val flakyRequestWithRetry: IO[String] =
-  retryingOnErrors(
+  retryingOnErrors(flakyRequest)(
     policy = retryFiveTimes,
     errorHandler = retryOnAllErrors(logError)
-  )(flakyRequest)
+  )
 ```
 
 Let's see it in action.

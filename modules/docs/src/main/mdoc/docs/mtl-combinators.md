@@ -47,21 +47,24 @@ on some or all errors.
 To use `retryingOnErrors`, you need to pass in a predicate that decides
 whether a given error is worth retrying.
 
-The API (modulo some type-inference trickery) looks like this:
+The API looks like this:
 
 ```scala
 def retryingOnErrors[F[_]: Temporal, A, E: Handle[F, *]](
-  policy: RetryPolicy[F],
-  errorHandler: ResultHandler[F, E, A]
-)(action: => F[A]): F[A]
+    action: F[A]
+)(
+    policy: RetryPolicy[F],
+    errorHandler: ResultHandler[F, E, A]
+): F[A]
 ```
 
-You need to pass in:
+The inputs are:
 
-- a retry policy
+- the operation that you want to wrap with retries
+- a retry policy, which determines the maximum number of retries and how long to
+  delay after each attempt
 - an error that decides whether a given error is worth retrying, and does any
 necessary logging
-- the operation that you want to wrap with retries
 
 Example:
 
@@ -84,25 +87,34 @@ def failingOperation[F[_]: [M[_]] =>> Handle[M, AppError]]: F[Unit] =
 def logError[F[_]: Sync](error: AppError, details: RetryDetails): F[Unit] =
   Sync[F].delay(println(s"Raised error $error. Details $details"))
 
-val handler: ResultHandler[Effect, AppError, Unit] =
-  (error: AppError, details: RetryDetails) =>
+val effect = retry.mtl.retryingOnErrors(failingOperation[Effect])(
+  policy = RetryPolicies.limitRetries[Effect](2),
+  errorHandler = (error: AppError, details: RetryDetails) =>
     logError[Effect](error, details).as(
       if error.reason.contains("Boom!") then HandlerDecision.Continue else
 HandlerDecision.Stop
     )
-
-val policy = RetryPolicies.limitRetries[Effect](2)
+)
 ```
 
 ```scala mdoc
-retry.mtl.retryingOnErrors(policy, handler)(failingOperation[Effect])
+effect
   .value
   .unsafeRunTimed(1.second)
 ```
 
 ## Syntactic sugar
 
-Cats-retry-mtl include some syntactic sugar in order to reduce boilerplate.
+The cats-retry-mtl API is also available as an extension method.
+
+You need to opt into this using an import:
+
+```scala mdoc:silent
+import retry.mtl.syntax.*
+```
+
+Here's an example showing how extension methods from both the core module and
+the MTL module can be used in combination:
 
 ```scala mdoc:reset:silent
 import retry.*
