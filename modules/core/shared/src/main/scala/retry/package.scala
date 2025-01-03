@@ -19,7 +19,7 @@ def retryingOnFailures[F[_], A](
     valueHandler: ValueHandler[F, A]
 )(using
     T: Temporal[F]
-): F[A] = T.tailRecM((action, RetryStatus.NoRetriesYet)) { (currentAction, status) =>
+): F[Either[A, A]] = T.tailRecM((action, RetryStatus.NoRetriesYet)) { (currentAction, status) =>
   currentAction.flatMap { actionResult =>
     retryingOnFailuresImpl(policy, valueHandler, status, currentAction, actionResult)
   }
@@ -51,7 +51,7 @@ def retryingOnFailuresAndErrors[F[_], A](
     errorOrValueHandler: ErrorOrValueHandler[F, A]
 )(using
     T: Temporal[F]
-): F[A] =
+): F[Either[A, A]] =
   val valueHandler: ResultHandler[F, A, A] =
     (a: A, rd: RetryDetails) => errorOrValueHandler(Right(a), rd)
   val errorHandler: ResultHandler[F, Throwable, A] =
@@ -68,7 +68,7 @@ def retryingOnFailuresAndErrors[F[_], A](
           status,
           currentAction,
           attempt
-        )
+        ).map(_.map(Right(_)))
     }
   }
 
@@ -84,35 +84,36 @@ private def retryingOnFailuresImpl[F[_], A](
     actionResult: A
 )(using
     T: Temporal[F]
-): F[Either[(F[A], RetryStatus), A]] =
+): F[Either[(F[A], RetryStatus), Either[A, A]]] =
 
   def applyNextStep(
       nextStep: NextStep,
-      nextAction: F[A]
-  ): F[Either[(F[A], RetryStatus), A]] =
+      nextAction: F[A],
+      valueToReturn: Either[A, A]
+  ): F[Either[(F[A], RetryStatus), Either[A, A]]] =
     nextStep match
       case NextStep.RetryAfterDelay(delay, updatedStatus) =>
         T.sleep(delay) *>
           T.pure(Left(nextAction, updatedStatus)) // continue recursion
       case NextStep.GiveUp =>
-        T.pure(Right(actionResult)) // stop the recursion
+        T.pure(Right(valueToReturn)) // stop the recursion
 
   def applyHandlerDecision(
       handlerDecision: HandlerDecision[F[A]],
       nextStep: NextStep
-  ): F[Either[(F[A], RetryStatus), A]] =
+  ): F[Either[(F[A], RetryStatus), Either[A, A]]] =
     handlerDecision match
       case HandlerDecision.Stop =>
-        // Success, stop the recursion and return the action's result
-        T.pure(Right(actionResult))
+        // Success. Stop the recursion and return the action's result.
+        T.pure(Right(Right(actionResult)))
       case HandlerDecision.Continue =>
-        // Depending on what the retry policy decided,
-        // either delay and then retry the same action, or give up
-        applyNextStep(nextStep, currentAction)
+        // Failure. Depending on what the retry policy decided,
+        // either delay and then retry the same action, or give up.
+        applyNextStep(nextStep, currentAction, Left(actionResult))
       case HandlerDecision.Adapt(newAction) =>
-        // Depending on what the retry policy decided,
-        // either delay and then try a new action, or give up
-        applyNextStep(nextStep, newAction)
+        // Failure. Depending on what the retry policy decided,
+        // either delay and then try a new action, or give up.
+        applyNextStep(nextStep, newAction, Left(actionResult))
 
   for
     nextStep <- applyPolicy(policy, status)

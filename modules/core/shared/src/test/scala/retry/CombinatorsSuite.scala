@@ -62,8 +62,8 @@ class CombinatorsSuite extends CatsEffectSuite:
       )
       state <- fixture.getState
     yield
-      // THEN the successful result is returned
-      assertEquals(finalResult, "4")
+      // THEN the successful result is returned, wrapped in a Right
+      assertEquals(finalResult, Right("4"))
       // AND it took 4 attempts
       assertEquals(state.attempts, 4)
       // AND the action's result was passed to the handler each time
@@ -99,8 +99,8 @@ class CombinatorsSuite extends CatsEffectSuite:
       )
       state <- fixture.getState
     yield
-      // THEN the last unsuccessful result is returned
-      assertEquals(finalResult, "3")
+      // THEN the last unsuccessful result is returned, wrapped in a Left
+      assertEquals(finalResult, Left("3"))
       // AND it took 3 attempts
       assertEquals(state.attempts, 3)
       // AND the action's result was passed to the handler each time
@@ -148,8 +148,8 @@ class CombinatorsSuite extends CatsEffectSuite:
       )
       state <- fixture.getState
     yield
-      // THEN the successful result is returned
-      assertEquals(finalResult, "4")
+      // THEN the successful result is returned, wrapped in a Right
+      assertEquals(finalResult, Right("4"))
       // AND it took 4 attempts
       assertEquals(state.attempts, 4)
       // AND the action's result was passed to the handler each time
@@ -185,8 +185,8 @@ class CombinatorsSuite extends CatsEffectSuite:
       )
       state <- fixture.getState
     yield
-      // THEN the last unsuccessful result is returned
-      assertEquals(finalResult, "10001")
+      // THEN the last unsuccessful result is returned, wrapped in a Left
+      assertEquals(finalResult, Left("10001"))
       // AND it took 10,001 attempts
       assertEquals(state.attempts, 10001)
   }
@@ -422,8 +422,8 @@ class CombinatorsSuite extends CatsEffectSuite:
       )
       state <- fixture.getState
     yield
-      // THEN the successful result is returned
-      assertEquals(finalResult, "yay")
+      // THEN the successful result is returned, wrapped in a Right
+      assertEquals(finalResult, Right("yay"))
       // AND it took 4 attempts
       assertEquals(state.attempts, 4)
       // AND the action's result was passed to the handler each time
@@ -467,8 +467,8 @@ class CombinatorsSuite extends CatsEffectSuite:
       )
       state <- fixture.getState
     yield
-      // THEN the unsuccessful result is returned
-      assertEquals(finalResult, "boo")
+      // THEN the unsuccessful result is returned, wrapped in a Left
+      assertEquals(finalResult, Left("boo"))
       // AND it took 3 attempts
       assertEquals(state.attempts, 3)
       // AND the action's result was passed to the handler each time
@@ -600,8 +600,8 @@ class CombinatorsSuite extends CatsEffectSuite:
       )
       state <- fixture.getState
     yield
-      // THEN the successful result is returned
-      assertEquals(finalResult, "yay")
+      // THEN the successful result is returned, wrapped in a Right
+      assertEquals(finalResult, Right("yay"))
       // AND it took 2 attempts
       assertEquals(state.attempts, 2)
       // AND the action's result was passed to the handler each time
@@ -642,8 +642,8 @@ class CombinatorsSuite extends CatsEffectSuite:
       )
       state <- fixture.getState
     yield
-      // THEN the successful result is returned
-      assertEquals(finalResult, "yay")
+      // THEN the successful result is returned, wrapped in a Right
+      assertEquals(finalResult, Right("yay"))
       // AND it took 2 attempts
       assertEquals(state.attempts, 2)
       // AND the action's result was passed to the handler each time

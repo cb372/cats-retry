@@ -64,7 +64,7 @@ def retryingOnFailures[F[_]: Temporal, A](
 )(
     policy: RetryPolicy[F],
     valueHandler: ValueHandler[F, A]
-): F[A]
+): F[Either[A, A]]
 ```
 
 The inputs are:
@@ -75,9 +75,12 @@ The inputs are:
 - a handler that decides whether the operation was successful, and does any
   necessary logging
 
-The return value is either:
-- the value returned by the final attempt, which might be either a success or a failure, or
-- an error raised in `F`, if either the action or the value handler raised an error.
+The return value is one of:
+- the successful value returned by the final attempt, wrapped in a `Right(...)`
+  to indicate success
+- the failed value returned by the final attempt before giving up, wrapped in a
+  `Left(...)` to indicate failure
+- an error raised in `F`, if either the action or the value handler raised an error
 
 For example, let's keep rolling a die until we get a six, using `IO`.
 
@@ -207,7 +210,7 @@ def retryingOnFailuresAndErrors[F[_]: Temporal, A](
 )(
     policy: RetryPolicy[F],
     errorOrValueHandler: ErrorOrValueHandler[F, A]
-): F[A]
+): F[Either[A, A]]
 ```
 
 The inputs are:
@@ -218,8 +221,11 @@ The inputs are:
 - a handler that inspects the action's return value or error and decides whether
   to retry, and does any necessary logging
 
-The return value is either:
-- the value returned by the final attempt, which might be a success or a failure, or
+The return value is one of:
+- the successful value returned by the final attempt, wrapped in a `Right(...)`
+  to indicate success
+- the failed value returned by the final attempt before giving up, wrapped in a
+  `Left(...)` to indicate failure
 - an error raised in `F`, if
     - the action raised an error that the error handler judged to be unrecoverable
     - the action repeatedly raised errors and we ran out of retries

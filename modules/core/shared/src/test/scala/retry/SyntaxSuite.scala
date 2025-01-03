@@ -62,8 +62,8 @@ class SyntaxSuite extends CatsEffectSuite:
       )
       state <- fixture.getState
     yield
-      // THEN the successful result is returned
-      assertEquals(finalResult, "4")
+      // THEN the successful result is returned, wrapped in a Right
+      assertEquals(finalResult, Right("4"))
       // AND it took 4 attempts
       assertEquals(state.attempts, 4)
       // AND the action's result was passed to the handler each time
@@ -145,8 +145,8 @@ class SyntaxSuite extends CatsEffectSuite:
       )
       state <- fixture.getState
     yield
-      // THEN the successful result is returned
-      assertEquals(finalResult, "yay")
+      // THEN the successful result is returned, wrapped in a Right
+      assertEquals(finalResult, Right("yay"))
       // AND it took 4 attempts
       assertEquals(state.attempts, 4)
       // AND the action's result was passed to the handler each time

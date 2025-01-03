@@ -140,8 +140,7 @@ val action = ddbClient.batchWriteItem(initialRequest)
 Now we have all the pieces we need to call `retryingOnFailures`:
 
 ```scala mdoc:silent
-val io: IO[BatchWriteItemResponse] =
-  retryingOnFailures(action)(policy, handler)
+val io = retryingOnFailures(action)(policy, handler)
 ```
 
 To recap, executing this `IO` will:
