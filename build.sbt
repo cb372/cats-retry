@@ -26,6 +26,18 @@ inThisBuild(
         name = "Luka Jacobowitz",
         email = "luka.jacobowitz@gmail.com",
         url = url("https://github.com/LukaJCB")
+      ),
+      Developer(
+        id = "AlejandroBudy",
+        name = "Alejandro Torres",
+        email = "alejandro.torres@xebia.com",
+        url = url("https://github.com/AlejandroBudy")
+      ),
+      Developer(
+        id = "ccantarero91",
+        name = "Cristian Cantarero Dávila",
+        email = "cristian.cantarero@xebia.com",
+        url = url("https://github.com/ccantarero91")
       )
     ),
     mimaPreviousArtifacts := Set.empty,
