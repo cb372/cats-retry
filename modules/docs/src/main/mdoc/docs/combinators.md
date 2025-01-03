@@ -56,20 +56,28 @@ whether you want to retry or bail out. See the
 To use `retryingOnFailures`, you pass in a value handler that decides whether
 you are happy with the result or you want to retry.
 
-The API (modulo some type-inference trickery) looks like this:
+The API looks like this:
 
 ```scala
-def retryingOnFailures[F[_]: Temporal, A](policy: RetryPolicy[F],
-                                          valueHandler: ValueHandler[F, A])
-                                         (action: F[A]): F[A]
+def retryingOnFailures[F[_]: Temporal, A](
+    action: F[A]
+)(
+    policy: RetryPolicy[F],
+    valueHandler: ValueHandler[F, A]
+): F[A]
 ```
 
-You need to pass in:
+The inputs are:
 
-- a retry policy
-- a handler that decides whether the operation was successful, and does any
-necessary logging
 - the operation that you want to wrap with retries
+- a retry policy, which determines the maximum number of retries and how long to
+  delay after each attempt
+- a handler that decides whether the operation was successful, and does any
+  necessary logging
+
+The return value is either:
+- the value returned by the final attempt, which might be either a success or a failure, or
+- an error raised in `F`, if either the action or the value handler raised an error.
 
 For example, let's keep rolling a die until we get a six, using `IO`.
 
@@ -80,19 +88,18 @@ import retry.*
 
 import scala.concurrent.duration.*
 
-val policy = RetryPolicies.constantDelay[IO](10.milliseconds)
-
-val valueHandler: ValueHandler[IO, Int] = (value: Int, details: RetryDetails) =>
-  value match
-    case 6 =>
-      IO.pure(HandlerDecision.Stop)   // successful result, stop retrying
-    case failedValue =>
-      IO(println(s"Rolled a $failedValue, retrying ..."))
-        .as(HandlerDecision.Continue) // keep trying, assuming the retry policy allows it
-
 val loadedDie = util.LoadedDie(2, 5, 4, 1, 3, 2, 6)
 
-val io = retryingOnFailures(policy, valueHandler)(loadedDie.roll)
+val io = retryingOnFailures(loadedDie.roll)(
+  policy = RetryPolicies.constantDelay(10.milliseconds),
+  valueHandler = (value: Int, details: RetryDetails) =>
+    value match
+      case 6 =>
+        IO.pure(HandlerDecision.Stop)   // successful result, stop retrying
+      case failedValue =>
+        IO(println(s"Rolled a $failedValue, retrying ..."))
+          .as(HandlerDecision.Continue) // keep trying, as long as the retry policy allows it
+)
 ```
 
 ```scala mdoc
@@ -102,11 +109,9 @@ io.unsafeRunSync()
 There is also a helper for lifting a predicate into a `ValueHandler`:
 
 ```scala mdoc:nest:silent
-val io = retryingOnFailures(
-  policy = policy,
+val io = retryingOnFailures(loadedDie.roll)(
+  policy = RetryPolicies.constantDelay(10.milliseconds),
   valueHandler = ResultHandler.retryUntilSuccessful(_ == 6, log = ResultHandler.noop)
-)(
-  loadedDie.roll
 )
 ```
 
@@ -119,23 +124,34 @@ io.unsafeRunSync()
 This is useful when you want to retry on some or all errors raised in your
 effect monad's error channel.
 
-To use `retryingOnErrors`, you need to pass in a handler that decides whether a
-given error is worth retrying.
+To use `retryingOnErrors`, you pass in a handler that decides whether a given
+error is worth retrying.
 
-The API (modulo some type-inference trickery) looks like this:
+The API looks like this:
 
 ```scala
-def retryingOnErrors[F[_]: Temporal, A](policy: RetryPolicy[F],
-                                        errorHandler: ErrorHandler[F, A])
-                                       (action: F[A]): F[A]
+def retryingOnErrors[F[_]: Temporal, A](
+    action: F[A]
+)(
+    policy: RetryPolicy[F],
+    errorHandler: ErrorHandler[F, A]
+): F[A]
 ```
 
-You need to pass in:
+The inputs are:
 
-- a retry policy
-- a handler that decides whether a given error is worth retrying, and does any
-necessary logging
 - the operation that you want to wrap with retries
+- a retry policy, which determines the maximum number of retries and how long to
+  delay after each attempt
+- a handler that decides whether a given error is worth retrying, and does any
+  necessary logging
+
+The return value is either:
+- the value returned by the action, or
+- an error raised in `F`, if
+    - the action raised an error that the error handler judged to be unrecoverable
+    - the action repeatedly raised errors and we ran out of retries
+    - the error handler raised an error
 
 For example, let's make a request for a cat gif using our flaky HTTP client,
 retrying only if we get an `IOException`.
@@ -146,18 +162,14 @@ import java.io.IOException
 val httpClient = util.FlakyHttpClient()
 val flakyRequest: IO[String] = httpClient.getCatGif
 
-val errorHandler: ErrorHandler[IO, String] = (e: Throwable, retryDetails: RetryDetails) =>
-  e match
-    case _: IOException =>
-      IO.pure(HandlerDecision.Continue) // worth retrying
-    case _ =>
-      IO.pure(HandlerDecision.Stop)     // not worth retrying
-
-val io = retryingOnErrors(
-  policy = RetryPolicies.limitRetries[IO](5),
-  errorHandler = errorHandler
-)(
-  flakyRequest
+val io = retryingOnErrors(flakyRequest)(
+  policy = RetryPolicies.limitRetries(5),
+  errorHandler = (e: Throwable, retryDetails: RetryDetails) =>
+    e match
+      case _: IOException =>
+        IO.pure(HandlerDecision.Continue) // worth retrying
+      case _ =>
+        IO.pure(HandlerDecision.Stop)     // not worth retrying
 )
 ```
 
@@ -168,11 +180,9 @@ io.unsafeRunSync()
 There is also a helper for the common case where you want to retry on all errors:
 
 ```scala mdoc:nest:silent
-val io = retryingOnErrors(
-  policy = RetryPolicies.limitRetries[IO](5),
+val io = retryingOnErrors(flakyRequest)(
+  policy = RetryPolicies.limitRetries(5),
   errorHandler = ResultHandler.retryOnAllErrors(log = ResultHandler.noop)
-)(
-  flakyRequest
 )
 ```
 
@@ -189,20 +199,31 @@ To use `retryingOnFailuresAndErrors`, you need to pass in a handler that
 decides whether a given result is a success, a failure, an error that's worth
 retrying, or an unrecoverable error.
 
-The API (modulo some type-inference trickery) looks like this:
+The API looks like this:
 
 ```scala
-def retryingOnFailuresAndErrors[F[_]: Temporal, A](policy: RetryPolicy[F],
-                                                   errorOrValueHandler: ErrorOrValueHandler[F, A])
-                                                  (action: F[A]): F[A]
+def retryingOnFailuresAndErrors[F[_]: Temporal, A](
+    action: F[A]
+)(
+    policy: RetryPolicy[F],
+    errorOrValueHandler: ErrorOrValueHandler[F, A]
+): F[A]
 ```
 
-You need to pass in:
+The inputs are:
 
-- a retry policy
-- a handler that inspects the value or error and decides whether to retry, and
-does any necessary logging
 - the operation that you want to wrap with retries
+- a retry policy, which determines the maximum number of retries and how long to
+  delay after each attempt
+- a handler that inspects the action's return value or error and decides whether
+  to retry, and does any necessary logging
+
+The return value is either:
+- the value returned by the final attempt, which might be a success or a failure, or
+- an error raised in `F`, if
+    - the action raised an error that the error handler judged to be unrecoverable
+    - the action repeatedly raised errors and we ran out of retries
+    - the error handler raised an error
 
 For example, let's make a request to an API to retrieve details for a record, which we will only retry if:
 
@@ -227,11 +248,9 @@ val errorOrValueHandler: ErrorOrValueHandler[IO, String] =
       case Right(_) =>
         IO.pure(HandlerDecision.Stop)     // success
 
-val io = retryingOnFailuresAndErrors(
-  policy = RetryPolicies.limitRetries[IO](5),
+val io = retryingOnFailuresAndErrors(flakyRequest)(
+  policy = RetryPolicies.limitRetries(5),
   errorOrValueHandler = errorOrValueHandler
-)(
-  flakyRequest
 )
 ```
 
@@ -241,31 +260,34 @@ io.unsafeRunSync()
 
 ## Syntactic sugar
 
-Cats-retry includes some syntactic sugar in order to reduce boilerplate.
+The cats-retry API is also available as extension methods.
 
-Instead of calling the combinators and passing in your action, you can call them
-as extension methods.
+You need to opt into this using an import:
+
+```scala mdoc:silent
+import retry.syntax.*
+```
+
+Examples:
 
 ```scala mdoc:nest:silent
-import retry.syntax.*
-
 // To retry until you get a value you like
 loadedDie.roll.retryingOnFailures(
-  policy = RetryPolicies.limitRetries[IO](2),
-  valueHandler = valueHandler
+  policy = RetryPolicies.limitRetries(2),
+  valueHandler = ResultHandler.retryUntilSuccessful(_ == 6, log = ResultHandler.noop)
 )
 
 val httpClient = util.FlakyHttpClient()
 
 // To retry on some or all errors
 httpClient.getCatGif.retryingOnErrors(
-  policy = RetryPolicies.limitRetries[IO](2),
-  errorHandler = errorHandler
+  policy = RetryPolicies.limitRetries(2),
+  errorHandler = ResultHandler.retryOnAllErrors(log = ResultHandler.noop)
 )
 
-// To retry only on failures and some or all errors
+// To retry on failures and some or all errors
 httpClient.getRecordDetails("foo").retryingOnFailuresAndErrors(
-  policy = RetryPolicies.limitRetries[IO](2),
+  policy = RetryPolicies.limitRetries(2),
   errorOrValueHandler = errorOrValueHandler
 )
 ```

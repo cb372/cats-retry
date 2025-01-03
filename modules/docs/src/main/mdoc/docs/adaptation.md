@@ -141,7 +141,7 @@ Now we have all the pieces we need to call `retryingOnFailures`:
 
 ```scala mdoc:silent
 val io: IO[BatchWriteItemResponse] =
-  retryingOnFailures(policy, handler)(action)
+  retryingOnFailures(action)(policy, handler)
 ```
 
 To recap, executing this `IO` will:

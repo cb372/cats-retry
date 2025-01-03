@@ -77,10 +77,10 @@ class CombinatorsSuite extends CatsEffectSuite:
     for
       fixture <- mkFixture
       action = mkAction(fixture)
-      finalResult <- retryingOnErrors(
+      finalResult <- retryingOnErrors(action)(
         policy,
         mkHandler(fixture)
-      )(action).value
+      ).value
       state <- fixture.getState
     yield
       // THEN the successful result is returned
@@ -114,10 +114,10 @@ class CombinatorsSuite extends CatsEffectSuite:
     for
       fixture <- mkFixture
       action = mkAction(fixture)
-      finalResult <- retryingOnErrors(
+      finalResult <- retryingOnErrors(action)(
         policy,
         mkHandler(fixture)
-      )(action).value
+      ).value
       state <- fixture.getState
     yield
       // THEN the final error is raised
@@ -158,10 +158,10 @@ class CombinatorsSuite extends CatsEffectSuite:
     for
       fixture <- mkFixture
       action = mkAction(fixture)
-      finalResult <- retryingOnErrors(
+      finalResult <- retryingOnErrors(action)(
         policy,
         mkHandler(fixture)
-      )(action).value
+      ).value
       state <- fixture.getState
     yield
       // THEN the non-retryable error is raised
@@ -202,10 +202,10 @@ class CombinatorsSuite extends CatsEffectSuite:
     for
       fixture <- mkFixture
       action = mkAction(fixture)
-      finalResult <- retryingOnErrors(
+      finalResult <- retryingOnErrors(action)(
         policy,
         mkHandler(fixture)
-      )(action).value
+      ).value
       state <- fixture.getState
     yield
       // THEN the successful result is returned

@@ -9,25 +9,25 @@ extension [F[_], A](action: => F[A])
       policy: RetryPolicy[F],
       valueHandler: ValueHandler[F, A]
   )(using T: Temporal[F]): F[A] =
-    retry.retryingOnFailures(
+    retry.retryingOnFailures(action)(
       policy = policy,
       valueHandler = valueHandler
-    )(action)
+    )
 
   def retryingOnErrors(
       policy: RetryPolicy[F],
       errorHandler: ErrorHandler[F, A]
   )(using T: Temporal[F]): F[A] =
-    retry.retryingOnErrors(
+    retry.retryingOnErrors(action)(
       policy = policy,
       errorHandler = errorHandler
-    )(action)
+    )
 
   def retryingOnFailuresAndErrors(
       policy: RetryPolicy[F],
       errorOrValueHandler: ErrorOrValueHandler[F, A]
   )(using T: Temporal[F]): F[A] =
-    retry.retryingOnFailuresAndErrors(
+    retry.retryingOnFailuresAndErrors(action)(
       policy = policy,
       errorOrValueHandler = errorOrValueHandler
-    )(action)
+    )
