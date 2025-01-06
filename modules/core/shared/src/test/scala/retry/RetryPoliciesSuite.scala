@@ -29,44 +29,14 @@ class RetryPoliciesSuite extends ScalaCheckSuite:
   val genFiniteDuration: Gen[FiniteDuration] =
     Gen.posNum[Long].map(FiniteDuration(_, TimeUnit.NANOSECONDS))
 
-  case class LabelledRetryPolicy(policy: RetryPolicy[Id, Any], description: String):
-    override def toString: String = description
-
-  given Arbitrary[LabelledRetryPolicy] = Arbitrary {
+  given Arbitrary[RetryPolicy[Id, Any]] = Arbitrary {
     Gen.oneOf(
-      Gen.const(LabelledRetryPolicy(alwaysGiveUp[Id], "alwaysGiveUp")),
-      genFiniteDuration.map(delay =>
-        LabelledRetryPolicy(
-          constantDelay[Id](delay),
-          s"constantDelay($delay)"
-        )
-      ),
-      genFiniteDuration.map(baseDelay =>
-        LabelledRetryPolicy(
-          exponentialBackoff[Id](baseDelay),
-          s"exponentialBackoff($baseDelay)"
-        )
-      ),
-      Gen
-        .posNum[Int]
-        .map(maxRetries =>
-          LabelledRetryPolicy(
-            limitRetries(maxRetries),
-            s"limitRetries($maxRetries)"
-          )
-        ),
-      genFiniteDuration.map(baseDelay =>
-        LabelledRetryPolicy(
-          fibonacciBackoff[Id](baseDelay),
-          s"fibonacciBackoff($baseDelay)"
-        )
-      ),
-      genFiniteDuration.map(baseDelay =>
-        LabelledRetryPolicy(
-          fullJitter[Id](baseDelay),
-          s"fullJitter($baseDelay)"
-        )
-      )
+      Gen.const(alwaysGiveUp[Id]),
+      genFiniteDuration.map(delay => constantDelay[Id](delay)),
+      genFiniteDuration.map(baseDelay => exponentialBackoff[Id](baseDelay)),
+      Gen.posNum[Int].map(maxRetries => limitRetries[Id](maxRetries)),
+      genFiniteDuration.map(baseDelay => fibonacciBackoff[Id](baseDelay)),
+      genFiniteDuration.map(baseDelay => fullJitter[Id](baseDelay))
     )
   }
 
@@ -151,8 +121,8 @@ class RetryPoliciesSuite extends ScalaCheckSuite:
   property(
     "all built-in policies - never try to create a FiniteDuration of more than Long.MaxValue nanoseconds"
   ) {
-    forAll((labelledPolicy: LabelledRetryPolicy, status: RetryStatus) =>
-      labelledPolicy.policy.decideNextRetry((), status) match
+    forAll((policy: RetryPolicy[Id, Any], status: RetryStatus) =>
+      policy.decideNextRetry((), status) match
         case PolicyDecision.DelayAndRetry(nextDelay) =>
           nextDelay.toNanos <= Long.MaxValue
         case PolicyDecision.GiveUp => true
