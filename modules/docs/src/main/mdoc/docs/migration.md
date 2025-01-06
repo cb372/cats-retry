@@ -9,6 +9,7 @@ The major changes in v4 are as follows:
 * **Scala 3**. The library is now published for Scala 3 only.
 * **Cats Effect**. The library is now more strongly coupled to Cats Effect.
 * **Adaption**. cats-retry now supports adaptation in the face of errors or failures.
+* **Dynamic retry policies**. Retry policies are now more powerful.
 * **API redesign**. The API has been completely rewritten to provide more power
 and flexibility with fewer combinators.
 
@@ -40,6 +41,17 @@ If you use the `alleycats` module, please stick with cats-retry v3.
 The biggest new feature in v4 is support for adaptation.
 
 Please see the [adaptation docs](./adaptation) for an explanation and a worked example.
+
+## Dynamic retry policies
+
+Retry policies now have access to the result of the action, so they can
+dynamically change their behaviour depending on the particular failure or error
+that occurred.
+
+This means that `RetryPolicy` now has an extra type parameter. All the built-in
+policies set this type param to `Any`.
+
+Please see the [retry policies docs](./policies) for more details.
 
 ## API redesign
 
@@ -83,7 +95,8 @@ def retryingOnFailures[F[_]: Temporal, A](
 
 The action is now passed as the first argument, not the last.
 
-The policy can be used without any changes.
+The policy can be used without any changes, assuming you have not implemented a
+custom retry policy.
 
 `wasSuccessful` and `onFailure` have been replaced by `valueHandler`. This is a
 function that takes the action's result and the retry details, does any
@@ -137,7 +150,8 @@ been removed.
 
 The action is now passed as the first argument, not the last.
 
-The policy can be used without any changes.
+The policy can be used without any changes, assuming you have not implemented a
+custom retry policy.
 
 `isWorthRetrying` and `onError` have been replaced by `errorHandler`. This is a
 function that takes the raised error and the retry details, does any necessary
@@ -186,7 +200,8 @@ been removed.
 
 The action is now passed as the first argument, not the last.
 
-The policy can be used without any changes.
+The policy can be used without any changes, assuming you have not implemented a
+custom retry policy.
 
 `onError` has been replaced by `errorHandler`. This is a function that takes the
 raised error and the retry details, does any necessary logging, and decides what
@@ -236,7 +251,8 @@ been removed.
 
 The action is now passed as the first argument, not the last.
 
-The policy can be used without any changes.
+The policy can be used without any changes, assuming you have not implemented a
+custom retry policy.
 
 `wasSuccessful`, `isWorthRetrying`, `onFailure` and `onError` have been replaced
 by a single `errorOrValueHandler`. This is a function that takes the action's
@@ -283,7 +299,8 @@ been removed.
 
 The action is now passed as the first argument, not the last.
 
-The policy can be used without any changes.
+The policy can be used without any changes, assuming you have not implemented a
+custom retry policy.
 
 `wasSuccessful`, `onFailure` and `onError` have been replaced by a single
 `errorOrValueHandler`. This is a function that takes the action's result or the

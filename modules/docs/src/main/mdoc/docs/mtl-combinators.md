@@ -132,11 +132,11 @@ case class AppError(reason: String)
 class Service[F[_]](client: util.FlakyHttpClient)(implicit F: Async[F], L: LiftIO[F], AH: Handle[F, AppError]) {
 
   // evaluates retry exclusively on errors produced by Handle
-  def findCoolCatGifRetryMtl(policy: RetryPolicy[F]): F[String] =
+  def findCoolCatGifRetryMtl(policy: RetryPolicy[F, Any]): F[String] =
     findCoolCatGif.retryingOnMtlErrors[AppError](policy, logAndRetryOnAllMtlErrors)
 
   // evaluates retry on errors produced by MonadError and Handle
-  def findCoolCatGifRetryAll(policy: RetryPolicy[F]): F[String] =
+  def findCoolCatGifRetryAll(policy: RetryPolicy[F, Any]): F[String] =
     findCoolCatGif
       .retryingOnErrors(policy, logAndRetryOnAllErrors)
       .retryingOnMtlErrors[AppError](policy, logAndRetryOnAllMtlErrors)
