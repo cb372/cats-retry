@@ -3,12 +3,12 @@ package retry
 import java.util.concurrent.TimeUnit
 
 import cats.Applicative
+import cats.effect.std.Random
 import cats.syntax.functor.*
 import cats.syntax.show.*
 import retry.PolicyDecision.*
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
-import scala.util.Random
 
 object RetryPolicies:
   private val LongMax: BigInt = BigInt(Long.MaxValue)
@@ -89,13 +89,15 @@ object RetryPolicies:
   /** "Full jitter" backoff algorithm. See
     * https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
     */
-  def fullJitter[F[_]: Applicative](baseDelay: FiniteDuration): RetryPolicy[F, Any] =
-    RetryPolicy.liftWithShow(
+  def fullJitter[F[_]: Applicative: Random](baseDelay: FiniteDuration): RetryPolicy[F, Any] =
+    RetryPolicy.withShow(
       { (_, status) =>
-        val e          = Math.pow(2.0, status.retriesSoFar.toDouble).toLong
-        val maxDelay   = safeMultiply(baseDelay, e)
-        val delayNanos = (maxDelay.toNanos * Random.nextDouble()).toLong
-        DelayAndRetry(new FiniteDuration(delayNanos, TimeUnit.NANOSECONDS))
+        val e        = Math.pow(2.0, status.retriesSoFar.toDouble).toLong
+        val maxDelay = safeMultiply(baseDelay, e)
+        Random[F].nextDouble.map { rnd =>
+          val delayNanos = (maxDelay.toNanos * rnd).toLong
+          DelayAndRetry(new FiniteDuration(delayNanos, TimeUnit.NANOSECONDS))
+        }
       },
       show"fullJitter(baseDelay=$baseDelay)"
     )

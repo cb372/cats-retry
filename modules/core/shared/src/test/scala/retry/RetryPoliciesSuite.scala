@@ -2,17 +2,21 @@ package retry
 
 import java.util.concurrent.TimeUnit
 
-import retry.RetryPolicies.*
 import cats.Id
+import cats.effect.IO
+import cats.effect.std.Random
+import cats.syntax.all.*
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop.forAll
-import munit.ScalaCheckSuite
+import org.scalacheck.effect.PropF
+import munit.{CatsEffectSuite, ScalaCheckSuite}
 import retry.PolicyDecision.{DelayAndRetry, GiveUp}
+import retry.RetryPolicies.*
 
 import scala.concurrent.duration.*
 import munit.Location
 
-class RetryPoliciesSuite extends ScalaCheckSuite:
+class RetryPoliciesSuite extends CatsEffectSuite with ScalaCheckSuite:
 
   given Arbitrary[RetryStatus] = Arbitrary {
     for
@@ -29,14 +33,14 @@ class RetryPoliciesSuite extends ScalaCheckSuite:
   val genFiniteDuration: Gen[FiniteDuration] =
     Gen.posNum[Long].map(FiniteDuration(_, TimeUnit.NANOSECONDS))
 
-  given Arbitrary[RetryPolicy[Id, Any]] = Arbitrary {
+  given (using Random[IO]): Arbitrary[RetryPolicy[IO, Any]] = Arbitrary {
     Gen.oneOf(
-      Gen.const(alwaysGiveUp[Id]),
-      genFiniteDuration.map(delay => constantDelay[Id](delay)),
-      genFiniteDuration.map(baseDelay => exponentialBackoff[Id](baseDelay)),
-      Gen.posNum[Int].map(maxRetries => limitRetries[Id](maxRetries)),
-      genFiniteDuration.map(baseDelay => fibonacciBackoff[Id](baseDelay)),
-      genFiniteDuration.map(baseDelay => fullJitter[Id](baseDelay))
+      Gen.const(alwaysGiveUp[IO]),
+      genFiniteDuration.map(delay => constantDelay[IO](delay)),
+      genFiniteDuration.map(baseDelay => exponentialBackoff[IO](baseDelay)),
+      Gen.posNum[Int].map(maxRetries => limitRetries[IO](maxRetries)),
+      genFiniteDuration.map(baseDelay => fibonacciBackoff[IO](baseDelay)),
+      genFiniteDuration.map(baseDelay => fullJitter[IO](baseDelay))
     )
   }
 
@@ -94,39 +98,57 @@ class RetryPoliciesSuite extends ScalaCheckSuite:
   }
 
   test("fullJitter - implement the AWS Full Jitter backoff algorithm") {
-    val policy                   = fullJitter[Id](100.milliseconds)
+    val mkPolicy: IO[RetryPolicy[IO, Any]] = Random.scalaUtilRandom[IO].map { rnd =>
+      given Random[IO] = rnd
+      fullJitter[IO](100.milliseconds)
+    }
     val arbitraryCumulativeDelay = 999.milliseconds
     val arbitraryPreviousDelay   = Some(999.milliseconds)
 
-    def check(retriesSoFar: Int, expectedMaximumDelay: FiniteDuration): Unit =
+    case class TestCase(retriesSoFar: Int, expectedMaximumDelay: FiniteDuration)
+
+    def check(testCase: TestCase): IO[Unit] =
       val status = RetryStatus(
-        retriesSoFar,
+        testCase.retriesSoFar,
         arbitraryCumulativeDelay,
         arbitraryPreviousDelay
       )
-      for _ <- 1 to 1000 do
-        val verdict = policy.decideNextRetry((), status)
-        val delay   = verdict.asInstanceOf[PolicyDecision.DelayAndRetry].delay
-        assert(delay >= Duration.Zero)
-        assert(delay < expectedMaximumDelay)
+      (1 to 1000).toList.traverse_ { i =>
+        for
+          policy  <- mkPolicy
+          verdict <- policy.decideNextRetry((), status)
+        yield
+          val delay = verdict.asInstanceOf[PolicyDecision.DelayAndRetry].delay
+          assert(clue(delay) >= Duration.Zero)
+          assert(clue(delay) < clue(testCase.expectedMaximumDelay))
+      }
 
-    check(0, 100.milliseconds)
-    check(1, 200.milliseconds)
-    check(2, 400.milliseconds)
-    check(3, 800.milliseconds)
-    check(4, 1600.milliseconds)
-    check(5, 3200.milliseconds)
+    val cases = List(
+      TestCase(0, 100.milliseconds),
+      TestCase(1, 200.milliseconds),
+      TestCase(2, 400.milliseconds),
+      TestCase(3, 800.milliseconds),
+      TestCase(4, 1600.milliseconds),
+      TestCase(5, 3200.milliseconds)
+    )
+
+    cases.traverse_(check)
   }
 
-  property(
+  test(
     "all built-in policies - never try to create a FiniteDuration of more than Long.MaxValue nanoseconds"
   ) {
-    forAll((policy: RetryPolicy[Id, Any], status: RetryStatus) =>
-      policy.decideNextRetry((), status) match
-        case PolicyDecision.DelayAndRetry(nextDelay) =>
-          nextDelay.toNanos <= Long.MaxValue
-        case PolicyDecision.GiveUp => true
-    )
+    Random.scalaUtilRandom[IO].map { rnd =>
+      given Random[IO] = rnd
+      PropF.forAllF((policy: RetryPolicy[IO, Any], status: RetryStatus) =>
+        policy.decideNextRetry((), status).map {
+          case PolicyDecision.DelayAndRetry(nextDelay) =>
+            assert(nextDelay.toNanos <= Long.MaxValue)
+          case PolicyDecision.GiveUp =>
+            assert(true)
+        }
+      )
+    }
   }
 
   property("limitRetries - retry with no delay until the limit is reached") {

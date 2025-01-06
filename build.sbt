@@ -45,12 +45,13 @@ inThisBuild(
   )
 )
 
-val catsVersion            = "2.12.0"
-val catsEffectVersion      = "3.5.7"
-val catsMtlVersion         = "1.5.0"
-val munitVersion           = "1.0.0"
-val munitCatsEffectVersion = "2.0.0"
-val disciplineVersion      = "2.0.0"
+val catsVersion             = "2.12.0"
+val catsEffectVersion       = "3.5.7"
+val catsMtlVersion          = "1.5.0"
+val munitVersion            = "1.0.0"
+val munitCatsEffectVersion  = "2.0.0"
+val disciplineVersion       = "2.0.0"
+val scalacheckEffectVersion = "1.0.4"
 
 val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/core"))
@@ -60,10 +61,11 @@ val core = crossProject(JVMPlatform, JSPlatform)
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-core"         % catsVersion,
       "org.typelevel" %%% "cats-effect"       % catsEffectVersion,
-      "org.scalameta" %%% "munit-scalacheck"  % munitVersion           % Test,
-      "org.typelevel" %%% "munit-cats-effect" % munitCatsEffectVersion % Test,
-      "org.typelevel" %%% "cats-laws"         % catsVersion            % Test,
-      "org.typelevel" %%% "discipline-munit"  % disciplineVersion      % Test
+      "org.scalameta" %%% "munit-scalacheck"  % munitVersion            % Test,
+      "org.typelevel" %%% "munit-cats-effect" % munitCatsEffectVersion  % Test,
+      "org.typelevel" %%% "scalacheck-effect" % scalacheckEffectVersion % Test,
+      "org.typelevel" %%% "cats-laws"         % catsVersion             % Test,
+      "org.typelevel" %%% "discipline-munit"  % disciplineVersion       % Test
     ),
     mimaPreviousArtifacts := Set.empty,
     Test / tpolecatExcludeOptions += ScalacOptions.warnNonUnitStatement
