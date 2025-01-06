@@ -15,7 +15,7 @@ import scala.concurrent.duration.FiniteDuration
 def retryingOnFailures[F[_], A](
     action: F[A]
 )(
-    policy: RetryPolicy[F],
+    policy: RetryPolicy[F, A],
     valueHandler: ValueHandler[F, A]
 )(using
     T: Temporal[F]
@@ -28,7 +28,7 @@ def retryingOnFailures[F[_], A](
 def retryingOnErrors[F[_], A](
     action: F[A]
 )(
-    policy: RetryPolicy[F],
+    policy: RetryPolicy[F, Throwable],
     errorHandler: ErrorHandler[F, A]
 )(using
     T: Temporal[F]
@@ -47,11 +47,14 @@ def retryingOnErrors[F[_], A](
 def retryingOnFailuresAndErrors[F[_], A](
     action: F[A]
 )(
-    policy: RetryPolicy[F],
+    policy: RetryPolicy[F, Either[Throwable, A]],
     errorOrValueHandler: ErrorOrValueHandler[F, A]
 )(using
     T: Temporal[F]
 ): F[Either[A, A]] =
+  val valuePolicy: RetryPolicy[F, A]         = policy.contramap[A](Right(_))
+  val errorPolicy: RetryPolicy[F, Throwable] = policy.contramap[Throwable](Left(_))
+
   val valueHandler: ResultHandler[F, A, A] =
     (a: A, rd: RetryDetails) => errorOrValueHandler(Right(a), rd)
   val errorHandler: ResultHandler[F, Throwable, A] =
@@ -60,10 +63,10 @@ def retryingOnFailuresAndErrors[F[_], A](
   T.tailRecM((action, RetryStatus.NoRetriesYet)) { (currentAction, status) =>
     T.attempt(currentAction).flatMap {
       case Right(actionResult) =>
-        retryingOnFailuresImpl(policy, valueHandler, status, currentAction, actionResult)
+        retryingOnFailuresImpl(valuePolicy, valueHandler, status, currentAction, actionResult)
       case attempt =>
         retryingOnErrorsImpl(
-          policy,
+          errorPolicy,
           errorHandler,
           status,
           currentAction,
@@ -71,13 +74,14 @@ def retryingOnFailuresAndErrors[F[_], A](
         ).map(_.map(Right(_)))
     }
   }
+end retryingOnFailuresAndErrors
 
 /*
  * Implementation
  */
 
 private def retryingOnFailuresImpl[F[_], A](
-    policy: RetryPolicy[F],
+    policy: RetryPolicy[F, A],
     valueHandler: ValueHandler[F, A],
     status: RetryStatus,
     currentAction: F[A],
@@ -116,7 +120,7 @@ private def retryingOnFailuresImpl[F[_], A](
         applyNextStep(nextStep, newAction, Left(actionResult))
 
   for
-    nextStep <- applyPolicy(policy, status)
+    nextStep <- applyPolicy(policy, actionResult, status)
     retryDetails = buildRetryDetails(status, nextStep)
     handlerDecision <- valueHandler(actionResult, retryDetails)
     result          <- applyHandlerDecision(handlerDecision, nextStep)
@@ -124,7 +128,7 @@ private def retryingOnFailuresImpl[F[_], A](
 end retryingOnFailuresImpl
 
 private def retryingOnErrorsImpl[F[_], A](
-    policy: RetryPolicy[F],
+    policy: RetryPolicy[F, Throwable],
     errorHandler: ErrorHandler[F, A],
     status: RetryStatus,
     currentAction: F[A],
@@ -166,7 +170,7 @@ private def retryingOnErrorsImpl[F[_], A](
   attempt match
     case Left(error) =>
       for
-        nextStep <- applyPolicy(policy, status)
+        nextStep <- applyPolicy(policy, error, status)
         retryDetails = buildRetryDetails(status, nextStep)
         handlerDecision <- errorHandler(error, retryDetails)
         result          <- applyHandlerDecision(error, handlerDecision, nextStep)
@@ -175,11 +179,12 @@ private def retryingOnErrorsImpl[F[_], A](
       T.pure(Right(success)) // stop the recursion
 end retryingOnErrorsImpl
 
-private[retry] def applyPolicy[F[_]: Functor](
-    policy: RetryPolicy[F],
+private[retry] def applyPolicy[F[_]: Functor, Res](
+    policy: RetryPolicy[F, Res],
+    actionResult: Res,
     retryStatus: RetryStatus
 ): F[NextStep] =
-  policy.decideNextRetry(retryStatus).map {
+  policy.decideNextRetry(actionResult, retryStatus).map {
     case PolicyDecision.DelayAndRetry(delay) =>
       NextStep.RetryAfterDelay(delay, retryStatus.addRetry(delay))
     case PolicyDecision.GiveUp =>

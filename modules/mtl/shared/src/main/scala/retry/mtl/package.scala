@@ -12,7 +12,7 @@ import retry.*
 def retryingOnErrors[F[_], A, E](
     action: F[A]
 )(
-    policy: RetryPolicy[F],
+    policy: RetryPolicy[F, E],
     errorHandler: ResultHandler[F, E, A]
 )(using
     AH: Handle[F, E],
@@ -35,7 +35,7 @@ def retryingOnErrors[F[_], A, E](
  */
 
 private def retryingOnErrorsImpl[F[_], A, E](
-    policy: RetryPolicy[F],
+    policy: RetryPolicy[F, E],
     errorHandler: ResultHandler[F, E, A],
     status: RetryStatus,
     currentAction: F[A],
@@ -78,7 +78,7 @@ private def retryingOnErrorsImpl[F[_], A, E](
   attempt match
     case Left(error) =>
       for
-        nextStep <- applyPolicy(policy, status)
+        nextStep <- applyPolicy(policy, error, status)
         retryDetails = buildRetryDetails(status, nextStep)
         handlerDecision <- errorHandler(error, retryDetails)
         result          <- applyHandlerDecision(error, handlerDecision, nextStep)
