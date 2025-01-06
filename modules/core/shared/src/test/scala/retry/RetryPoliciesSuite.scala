@@ -224,4 +224,48 @@ class RetryPoliciesSuite extends ScalaCheckSuite:
     check(constantDelay(100.milliseconds), GiveUp)
     check(constantDelay(101.milliseconds), GiveUp)
   }
+
+  test("dynamic - choose the appropriate policy based on the result of the last attempt") {
+    val policy = dynamic[Id, Int] {
+      case 42 => limitRetries(3)
+      case _  => constantDelay(1.second)
+    }
+
+    // given the value 42, it should apply the "limit retries" policy
+    assertEquals(
+      policy.decideNextRetry(
+        42,
+        RetryStatus(
+          retriesSoFar = 2,
+          cumulativeDelay = 0.millis,
+          previousDelay = Some(0.millis)
+        )
+      ),
+      DelayAndRetry(0.millis)
+    )
+    assertEquals(
+      policy.decideNextRetry(
+        42,
+        RetryStatus(
+          retriesSoFar = 3,
+          cumulativeDelay = 0.millis,
+          previousDelay = Some(0.millis)
+        )
+      ),
+      GiveUp
+    )
+
+    // given any other value, it should apply the "constant delay" policy
+    assertEquals(
+      policy.decideNextRetry(
+        99,
+        RetryStatus(
+          retriesSoFar = 100,
+          cumulativeDelay = 100.seconds,
+          previousDelay = Some(1.second)
+        )
+      ),
+      DelayAndRetry(1.second)
+    )
+  }
 end RetryPoliciesSuite

@@ -146,4 +146,16 @@ object RetryPolicies:
       decideNextRetry,
       show"limitRetriesByCumulativeDelay(threshold=$threshold, $policy)"
     )
+
+  /** Build a dynamic retry policy that chooses the retry policy based on the result of the last attempt
+    */
+  def dynamic[F[_], Res](f: Res => RetryPolicy[F, Res]): RetryPolicy[F, Res] =
+    def decideNextRetry(actionResult: Res, status: RetryStatus): F[PolicyDecision] =
+      val policy = f(actionResult)
+      policy.decideNextRetry(actionResult, status)
+
+    RetryPolicy.withShow[F, Res](
+      decideNextRetry,
+      show"dynamic(<function>)"
+    )
 end RetryPolicies
