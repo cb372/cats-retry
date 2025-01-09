@@ -6,7 +6,7 @@ import retry.*
 extension [F[_], A](action: => F[A])
 
   def retryingOnFailures(
-      policy: RetryPolicy[F],
+      policy: RetryPolicy[F, A],
       valueHandler: ValueHandler[F, A]
   )(using T: Temporal[F]): F[Either[A, A]] =
     retry.retryingOnFailures(action)(
@@ -15,7 +15,7 @@ extension [F[_], A](action: => F[A])
     )
 
   def retryingOnErrors(
-      policy: RetryPolicy[F],
+      policy: RetryPolicy[F, Throwable],
       errorHandler: ErrorHandler[F, A]
   )(using T: Temporal[F]): F[A] =
     retry.retryingOnErrors(action)(
@@ -24,7 +24,7 @@ extension [F[_], A](action: => F[A])
     )
 
   def retryingOnFailuresAndErrors(
-      policy: RetryPolicy[F],
+      policy: RetryPolicy[F, Either[Throwable, A]],
       errorOrValueHandler: ErrorOrValueHandler[F, A]
   )(using T: Temporal[F]): F[Either[A, A]] =
     retry.retryingOnFailuresAndErrors(action)(

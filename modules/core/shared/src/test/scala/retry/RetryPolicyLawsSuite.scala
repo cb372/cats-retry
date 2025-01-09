@@ -22,6 +22,8 @@ class RetryPolicyLawsSuite extends DisciplineSuite:
       Cogen[Option[FiniteDuration]].perturb(b, status.previousDelay)
     }
 
+  given Cogen[Any] = Cogen[Unit].contramap[Any](_ => ())
+
   given Arbitrary[PolicyDecision] =
     Arbitrary(for
       delay <- Gen.choose(0L, Long.MaxValue).map(Duration.fromNanos)
@@ -29,11 +31,11 @@ class RetryPolicyLawsSuite extends DisciplineSuite:
         .oneOf(PolicyDecision.GiveUp, PolicyDecision.DelayAndRetry(delay))
     yield decision)
 
-  given Arbitrary[RetryPolicy[Id]] =
+  given Arbitrary[RetryPolicy[Id, Any]] =
     Arbitrary(
       Arbitrary
-        .arbitrary[RetryStatus => PolicyDecision]
-        .map(RetryPolicy.apply[Id])
+        .arbitrary[(Any, RetryStatus) => PolicyDecision]
+        .map(RetryPolicy.apply[Id, Any])
     )
 
   given Eq[PolicyDecision] = Eq.by {
@@ -54,47 +56,55 @@ class RetryPolicyLawsSuite extends DisciplineSuite:
       )
     )
 
-  given Eq[RetryPolicy[Id]] =
-    Eq.by(_.decideNextRetry)
+  given Eq[RetryPolicy[Id, Any]] =
+    Eq.by(policy => policy.decideNextRetry((), _))
 
   property("meet associativity") {
-    forAll((p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
-      Eq[RetryPolicy[Id]].eqv(p1.meet((p2).meet(p3)), (p1.meet(p2)).meet(p3))
+    forAll((p1: RetryPolicy[Id, Any], p2: RetryPolicy[Id, Any], p3: RetryPolicy[Id, Any]) =>
+      Eq[RetryPolicy[Id, Any]].eqv(p1.meet((p2).meet(p3)), (p1.meet(p2)).meet(p3))
     )
   }
 
   property("meet commutativity") {
-    forAll((p1: RetryPolicy[Id], p2: RetryPolicy[Id]) => Eq[RetryPolicy[Id]].eqv(p1.meet(p2), p2.meet(p1)))
+    forAll((p1: RetryPolicy[Id, Any], p2: RetryPolicy[Id, Any]) =>
+      Eq[RetryPolicy[Id, Any]].eqv(p1.meet(p2), p2.meet(p1))
+    )
   }
 
   property("meet idempotence") {
-    forAll((p: RetryPolicy[Id]) => Eq[RetryPolicy[Id]].eqv(p.meet(p), p))
+    forAll((p: RetryPolicy[Id, Any]) => Eq[RetryPolicy[Id, Any]].eqv(p.meet(p), p))
   }
 
   property("meet identity") {
-    forAll((p: RetryPolicy[Id]) => Eq[RetryPolicy[Id]].eqv(p.meet(RetryPolicies.alwaysGiveUp[Id]), p))
+    forAll((p: RetryPolicy[Id, Any]) =>
+      Eq[RetryPolicy[Id, Any]].eqv(p.meet(RetryPolicies.alwaysGiveUp[Id]), p)
+    )
   }
 
   property("join meet absorption") {
-    forAll((p1: RetryPolicy[Id], p2: RetryPolicy[Id]) => Eq[RetryPolicy[Id]].eqv(p1.meet(p1.join(p2)), p1))
+    forAll((p1: RetryPolicy[Id, Any], p2: RetryPolicy[Id, Any]) =>
+      Eq[RetryPolicy[Id, Any]].eqv(p1.meet(p1.join(p2)), p1)
+    )
   }
 
   property("meet join absorption") {
-    forAll((p1: RetryPolicy[Id], p2: RetryPolicy[Id]) => Eq[RetryPolicy[Id]].eqv(p1.join(p1.meet(p2)), p1))
+    forAll((p1: RetryPolicy[Id, Any], p2: RetryPolicy[Id, Any]) =>
+      Eq[RetryPolicy[Id, Any]].eqv(p1.join(p1.meet(p2)), p1)
+    )
   }
 
   property("meet absorption") {
-    forAll((p: RetryPolicy[Id]) =>
-      Eq[RetryPolicy[Id]].eqv(
-        p.meet(Monoid[RetryPolicy[Id]].empty),
-        Monoid[RetryPolicy[Id]].empty
+    forAll((p: RetryPolicy[Id, Any]) =>
+      Eq[RetryPolicy[Id, Any]].eqv(
+        p.meet(Monoid[RetryPolicy[Id, Any]].empty),
+        Monoid[RetryPolicy[Id, Any]].empty
       )
     )
   }
 
   property("join absorption") {
-    forAll((p: RetryPolicy[Id]) =>
-      Eq[RetryPolicy[Id]].eqv(
+    forAll((p: RetryPolicy[Id, Any]) =>
+      Eq[RetryPolicy[Id, Any]].eqv(
         p.join(RetryPolicies.alwaysGiveUp[Id]),
         RetryPolicies.alwaysGiveUp[Id]
       )
@@ -102,58 +112,58 @@ class RetryPolicyLawsSuite extends DisciplineSuite:
   }
 
   property("join meet distributivity") {
-    forAll((p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
-      Eq[RetryPolicy[Id]]
+    forAll((p1: RetryPolicy[Id, Any], p2: RetryPolicy[Id, Any], p3: RetryPolicy[Id, Any]) =>
+      Eq[RetryPolicy[Id, Any]]
         .eqv(p1.meet(p2.join(p3)), (p1.meet(p2)).join(p1.meet(p3)))
     )
   }
 
   property("meet join distributivity") {
-    forAll((p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
-      Eq[RetryPolicy[Id]]
+    forAll((p1: RetryPolicy[Id, Any], p2: RetryPolicy[Id, Any], p3: RetryPolicy[Id, Any]) =>
+      Eq[RetryPolicy[Id, Any]]
         .eqv(p1.join(p2.meet(p3)), (p1.join(p2)).meet(p1.join(p3)))
     )
   }
 
   property("mapK identity") {
-    forAll((p: RetryPolicy[Id]) => Eq[RetryPolicy[Id]].eqv(p.mapK(FunctionK.id), p))
+    forAll((p: RetryPolicy[Id, Any]) => Eq[RetryPolicy[Id, Any]].eqv(p.mapK(FunctionK.id), p))
   }
 
   property("mapDelay identity") {
-    forAll((p: RetryPolicy[Id]) => Eq[RetryPolicy[Id]].eqv(p.mapDelay(identity), p))
+    forAll((p: RetryPolicy[Id, Any]) => Eq[RetryPolicy[Id, Any]].eqv(p.mapDelay(identity), p))
   }
 
   property("mapDelay composition") {
     forAll(
       (
-          p: RetryPolicy[Id],
+          p: RetryPolicy[Id, Any],
           f: FiniteDuration => FiniteDuration,
           g: FiniteDuration => FiniteDuration
       ) =>
-        Eq[RetryPolicy[Id]]
+        Eq[RetryPolicy[Id, Any]]
           .eqv(p.mapDelay(f).mapDelay(g), p.mapDelay(f andThen g))
     )
   }
 
   property("flatMapDelay identity") {
-    forAll((p: RetryPolicy[Id]) => Eq[RetryPolicy[Id]].eqv(p.flatMapDelay(Monad[Id].pure), p))
+    forAll((p: RetryPolicy[Id, Any]) => Eq[RetryPolicy[Id, Any]].eqv(p.flatMapDelay(Monad[Id].pure), p))
   }
 
   property("flatMapDelay composition") {
     forAll(
       (
-          p: RetryPolicy[Id],
+          p: RetryPolicy[Id, Any],
           f: FiniteDuration => FiniteDuration,
           g: FiniteDuration => FiniteDuration
       ) =>
-        Eq[RetryPolicy[Id]]
+        Eq[RetryPolicy[Id, Any]]
           .eqv(p.flatMapDelay(f).flatMapDelay(g), p.flatMapDelay(f andThen g))
     )
   }
 
   property("followedBy associativity") {
-    forAll((p1: RetryPolicy[Id], p2: RetryPolicy[Id], p3: RetryPolicy[Id]) =>
-      Eq[RetryPolicy[Id]].eqv(
+    forAll((p1: RetryPolicy[Id, Any], p2: RetryPolicy[Id, Any], p3: RetryPolicy[Id, Any]) =>
+      Eq[RetryPolicy[Id, Any]].eqv(
         p1.followedBy((p2).followedBy(p3)),
         (p1.followedBy(p2)).followedBy(p3)
       )
@@ -161,15 +171,19 @@ class RetryPolicyLawsSuite extends DisciplineSuite:
   }
 
   property("followedBy left identity") {
-    forAll((p: RetryPolicy[Id]) => Eq[RetryPolicy[Id]].eqv(RetryPolicies.alwaysGiveUp[Id].followedBy(p), p))
+    forAll((p: RetryPolicy[Id, Any]) =>
+      Eq[RetryPolicy[Id, Any]].eqv(RetryPolicies.alwaysGiveUp[Id].followedBy(p), p)
+    )
   }
 
   property("followedBy right identity") {
-    forAll((p: RetryPolicy[Id]) => Eq[RetryPolicy[Id]].eqv(p.followedBy(RetryPolicies.alwaysGiveUp), p))
+    forAll((p: RetryPolicy[Id, Any]) =>
+      Eq[RetryPolicy[Id, Any]].eqv(p.followedBy(RetryPolicies.alwaysGiveUp), p)
+    )
   }
 
   checkAll(
     "BoundedSemilattice[RetryPolicy]",
-    BoundedSemilatticeTests[RetryPolicy[Id]].boundedSemilattice
+    BoundedSemilatticeTests[RetryPolicy[Id, Any]].boundedSemilattice
   )
 end RetryPolicyLawsSuite

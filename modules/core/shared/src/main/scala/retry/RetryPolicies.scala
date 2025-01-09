@@ -32,14 +32,14 @@ object RetryPolicies:
 
   /** Don't retry at all and always give up. Only really useful for combining with other policies.
     */
-  def alwaysGiveUp[F[_]: Applicative]: RetryPolicy[F] =
-    RetryPolicy.liftWithShow(Function.const(GiveUp), "alwaysGiveUp")
+  def alwaysGiveUp[F[_]: Applicative]: RetryPolicy[F, Any] =
+    RetryPolicy.liftWithShow((_, _) => GiveUp, "alwaysGiveUp")
 
   /** Delay by a constant amount before each retry. Never give up.
     */
-  def constantDelay[F[_]: Applicative](delay: FiniteDuration): RetryPolicy[F] =
+  def constantDelay[F[_]: Applicative](delay: FiniteDuration): RetryPolicy[F, Any] =
     RetryPolicy.liftWithShow(
-      Function.const(DelayAndRetry(delay)),
+      (_, _) => DelayAndRetry(delay),
       show"constantDelay($delay)"
     )
 
@@ -47,9 +47,9 @@ object RetryPolicies:
     */
   def exponentialBackoff[F[_]: Applicative](
       baseDelay: FiniteDuration
-  ): RetryPolicy[F] =
+  ): RetryPolicy[F, Any] =
     RetryPolicy.liftWithShow(
-      { status =>
+      { (_, status) =>
         val delay =
           safeMultiply(
             baseDelay,
@@ -62,9 +62,9 @@ object RetryPolicies:
 
   /** Retry without delay, giving up after the given number of retries.
     */
-  def limitRetries[F[_]: Applicative](maxRetries: Int): RetryPolicy[F] =
+  def limitRetries[F[_]: Applicative](maxRetries: Int): RetryPolicy[F, Any] =
     RetryPolicy.liftWithShow(
-      { status =>
+      { (_, status) =>
         if status.retriesSoFar >= maxRetries then GiveUp
         else DelayAndRetry(Duration.Zero)
       },
@@ -76,11 +76,9 @@ object RetryPolicies:
     * e.g. if `baseDelay` is 10 milliseconds, the delays before each retry will be 10 ms, 10 ms, 20 ms, 30ms,
     * 50ms, 80ms, 130ms, ...
     */
-  def fibonacciBackoff[F[_]: Applicative](
-      baseDelay: FiniteDuration
-  ): RetryPolicy[F] =
+  def fibonacciBackoff[F[_]: Applicative](baseDelay: FiniteDuration): RetryPolicy[F, Any] =
     RetryPolicy.liftWithShow(
-      { status =>
+      { (_, status) =>
         val delay =
           safeMultiply(baseDelay, Fibonacci.fibonacci(status.retriesSoFar + 1))
         DelayAndRetry(delay)
@@ -91,9 +89,9 @@ object RetryPolicies:
   /** "Full jitter" backoff algorithm. See
     * https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
     */
-  def fullJitter[F[_]: Applicative](baseDelay: FiniteDuration): RetryPolicy[F] =
+  def fullJitter[F[_]: Applicative](baseDelay: FiniteDuration): RetryPolicy[F, Any] =
     RetryPolicy.liftWithShow(
-      { status =>
+      { (_, status) =>
         val e          = Math.pow(2.0, status.retriesSoFar.toDouble).toLong
         val maxDelay   = safeMultiply(baseDelay, e)
         val delayNanos = (maxDelay.toNanos * Random.nextDouble()).toLong
@@ -104,28 +102,28 @@ object RetryPolicies:
 
   /** Set an upper bound on any individual delay produced by the given policy.
     */
-  def capDelay[F[_]: Applicative](
+  def capDelay[F[_]: Applicative, Res](
       cap: FiniteDuration,
-      policy: RetryPolicy[F]
-  ): RetryPolicy[F] =
+      policy: RetryPolicy[F, Res]
+  ): RetryPolicy[F, Res] =
     policy.meet(constantDelay(cap))
 
   /** Add an upper bound to a policy such that once the given time-delay amount <b>per try</b> has been
     * reached or exceeded, the policy will stop retrying and give up. If you need to stop retrying once
     * <b>cumulative</b> delay reaches a time-delay amount, use [[limitRetriesByCumulativeDelay]].
     */
-  def limitRetriesByDelay[F[_]: Applicative](
+  def limitRetriesByDelay[F[_]: Applicative, Res](
       threshold: FiniteDuration,
-      policy: RetryPolicy[F]
-  ): RetryPolicy[F] =
-    def decideNextRetry(status: RetryStatus): F[PolicyDecision] =
-      policy.decideNextRetry(status).map {
+      policy: RetryPolicy[F, Res]
+  ): RetryPolicy[F, Res] =
+    def decideNextRetry(actionResult: Res, status: RetryStatus): F[PolicyDecision] =
+      policy.decideNextRetry(actionResult, status).map {
         case r @ DelayAndRetry(delay) =>
           if delay > threshold then GiveUp else r
         case GiveUp => GiveUp
       }
 
-    RetryPolicy.withShow[F](
+    RetryPolicy.withShow[F, Res](
       decideNextRetry,
       show"limitRetriesByDelay(threshold=$threshold, $policy)"
     )
@@ -133,19 +131,31 @@ object RetryPolicies:
   /** Add an upperbound to a policy such that once the cumulative delay over all retries has reached or
     * exceeded the given limit, the policy will stop retrying and give up.
     */
-  def limitRetriesByCumulativeDelay[F[_]: Applicative](
+  def limitRetriesByCumulativeDelay[F[_]: Applicative, Res](
       threshold: FiniteDuration,
-      policy: RetryPolicy[F]
-  ): RetryPolicy[F] =
-    def decideNextRetry(status: RetryStatus): F[PolicyDecision] =
-      policy.decideNextRetry(status).map {
+      policy: RetryPolicy[F, Res]
+  ): RetryPolicy[F, Res] =
+    def decideNextRetry(actionResult: Res, status: RetryStatus): F[PolicyDecision] =
+      policy.decideNextRetry(actionResult, status).map {
         case r @ DelayAndRetry(delay) =>
           if status.cumulativeDelay + delay >= threshold then GiveUp else r
         case GiveUp => GiveUp
       }
 
-    RetryPolicy.withShow[F](
+    RetryPolicy.withShow[F, Res](
       decideNextRetry,
       show"limitRetriesByCumulativeDelay(threshold=$threshold, $policy)"
+    )
+
+  /** Build a dynamic retry policy that chooses the retry policy based on the result of the last attempt
+    */
+  def dynamic[F[_], Res](f: Res => RetryPolicy[F, Res]): RetryPolicy[F, Res] =
+    def decideNextRetry(actionResult: Res, status: RetryStatus): F[PolicyDecision] =
+      val policy = f(actionResult)
+      policy.decideNextRetry(actionResult, status)
+
+    RetryPolicy.withShow[F, Res](
+      decideNextRetry,
+      show"dynamic(<function>)"
     )
 end RetryPolicies
