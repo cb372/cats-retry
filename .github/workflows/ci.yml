@@ -39,8 +39,11 @@ jobs:
           java-version: '17'
           cache: 'sbt'
       - uses: sbt/setup-sbt@v1
+      - uses: ruby/setup-ruby@v1
+      - name: Install Jekyll
+        run: gem install jekyll -v 4.3.4
       - name: Compile documentation
-        run: sbt -J-Xms4G -J-Xmx4G docs/mdoc
+        run: sbt -J-Xms4G -J-Xmx4G docs/makeMicrosite
   format:
     runs-on: ubuntu-latest
     steps:
