@@ -1,0 +1,166 @@
+<!DOCTYPE html><html><head><title>cats-retry: Adaptation</title><meta charset="utf-8" /><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Chris Birchall" /><meta name="description" content="cats-retry" /><meta name="og:image" content="/cats-retry/img/poster.png" /><meta name="image" property="og:image" content="/cats-retry/img/poster.png" /><meta name="og:title" content="cats-retry: Adaptation" /><meta name="title" property="og:title" content="cats-retry: Adaptation" /><meta name="og:site_name" content="cats-retry" /><meta name="og:url" content="https://github.com/cb372/cats-retry" /><meta name="og:type" content="website" /><meta name="og:description" content="cats-retry" /><link rel="icon" type="image/png" href="/cats-retry/img/favicon.png" /><meta name="twitter:title" content="cats-retry: Adaptation" /><meta name="twitter:image" content="/cats-retry/img/poster.png" /><meta name="twitter:description" content="cats-retry" /><meta name="twitter:card" content="summary_large_image" /><meta name="twitter:creator" content="@cbirchall" /><link rel="icon" type="image/png" sizes="16x16" href="/cats-retry/img/favicon16x16.png" /><link rel="icon" type="image/png" sizes="24x24" href="/cats-retry/img/favicon24x24.png" /><link rel="icon" type="image/png" sizes="32x32" href="/cats-retry/img/favicon32x32.png" /><link rel="icon" type="image/png" sizes="48x48" href="/cats-retry/img/favicon48x48.png" /><link rel="icon" type="image/png" sizes="57x57" href="/cats-retry/img/favicon57x57.png" /><link rel="icon" type="image/png" sizes="60x60" href="/cats-retry/img/favicon60x60.png" /><link rel="icon" type="image/png" sizes="64x64" href="/cats-retry/img/favicon64x64.png" /><link rel="icon" type="image/png" sizes="70x70" href="/cats-retry/img/favicon70x70.png" /><link rel="icon" type="image/png" sizes="72x72" href="/cats-retry/img/favicon72x72.png" /><link rel="icon" type="image/png" sizes="76x76" href="/cats-retry/img/favicon76x76.png" /><link rel="icon" type="image/png" sizes="96x96" href="/cats-retry/img/favicon96x96.png" /><link rel="icon" type="image/png" sizes="114x114" href="/cats-retry/img/favicon114x114.png" /><link rel="icon" type="image/png" sizes="120x120" href="/cats-retry/img/favicon120x120.png" /><link rel="icon" type="image/png" sizes="128x128" href="/cats-retry/img/favicon128x128.png" /><link rel="icon" type="image/png" sizes="144x144" href="/cats-retry/img/favicon144x144.png" /><link rel="icon" type="image/png" sizes="150x150" href="/cats-retry/img/favicon150x150.png" /><link rel="icon" type="image/png" sizes="152x152" href="/cats-retry/img/favicon152x152.png" /><link rel="icon" type="image/png" sizes="196x196" href="/cats-retry/img/favicon196x196.png" /><link rel="icon" type="image/png" sizes="310x310" href="/cats-retry/img/favicon310x310.png" /><link rel="icon" type="image/png" sizes="310x150" href="/cats-retry/img/favicon310x150.png" /><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" /><link rel="stylesheet" href="/cats-retry/highlight/styles/vs.css" /><link rel="stylesheet" href="/cats-retry/css/light-style.css" /></head><body class="docs"><div id="wrapper"><div id="sidebar-wrapper"><div id="sidebar-brand"><a href="/cats-retry/" class="brand"><div class="brand-wrapper"></div><span>cats-retry</span></a><button id="main-toggle" class="sidebar-toggle"><span class="close"></span></button></div><div class="sidebar-nav"> <div class="sidebar-nav-item  "><a href="/cats-retry/docs/" title="Getting started" class="">Getting started</a></div> <div class="sidebar-nav-item  "><a href="/cats-retry/docs/combinators" title="Combinators" class="">Combinators</a></div> <div class="sidebar-nav-item  "><a href="/cats-retry/docs/mtl-combinators" title="MTL Combinators" class="">MTL Combinators</a></div> <div class="sidebar-nav-item  "><a href="/cats-retry/docs/policies" title="Retry policies" class="">Retry policies</a></div> <div class="sidebar-nav-item  "><a href="/cats-retry/docs/adaptation" title="Adaptation" class="">Adaptation</a></div> <div class="sidebar-nav-item  "><a href="/cats-retry/docs/migration" title="v3 -> v4 Migration" class="">v3 -> v4 Migration</a></div></div></div><div id="page-content-wrapper"><div class="nav"><div class="container-fluid"><div class="row"><div class="col-lg-12"><div class="action-menu pull-left clearfix"><a href="#menu-toggle" id="menu-toggle"><i class="fa fa-bars" aria-hidden="true"></i></a></div><ul class="pull-right"><li class="search-nav"><div id="search-dropdown"><label><i class="fa fa-search"></i>Search</label><input id="search-bar" type="text" placeholder="Enter keywords here..." onclick="displayToggleSearch(event)" /><ul id="search-dropdown-content" class="dropdown dropdown-content"></ul></div></li><li id="gh-eyes-item" class="hidden-xs to-uppercase"><a href="https://github.com/cb372/cats-retry" target="_blank" rel="noopener noreferrer"><i class="fa fa-eye"></i><span>Watchers<span id="eyes" class="label label-default">--</span></span></a></li><li id="gh-stars-item" class="hidden-xs to-uppercase"><a href="https://github.com/cb372/cats-retry" target="_blank" rel="noopener noreferrer"><i class="fa fa-star-o"></i><span>Stars<span id="stars" class="label label-default">--</span></span></a></li></ul></div></div></div></div><div id="content" data-github-owner="cb372" data-github-repo="cats-retry"><div class="content-wrapper"><section><h1 id="adaptation">Adaptation</h1>
+
+<p>When faced with a failure or an error, stubbornly retrying the same action is
+not always useful. Sometimes you want to <em>adapt</em> to the situation and try a
+different action.</p>
+
+<p>cats-retry supports this kind of adaptation.</p>
+
+<p>When using any of the combinators, you pass in a result handler. This handler
+can inspect the result of the action (or the error that the action raised,
+depending on the combinator), perform any necessary logging, then decide what to
+do next:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Stop</code>, either because the result is a successful one, so there is no need to
+retry, or because the error was so bad it’s not worth retrying</li>
+  <li><code class="language-plaintext highlighter-rouge">Continue</code>, meaning to keep retrying, assuming the retry policy agrees to</li>
+  <li><code class="language-plaintext highlighter-rouge">Adapt</code> to a new action. This action will be used on subsequent retries.</li>
+</ul>
+
+<h2 id="example-dynamodb-batch-write">Example: DynamoDB batch write</h2>
+
+<p>DynamoDB provides an API operation called
+<a href="https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html"><code class="language-plaintext highlighter-rouge">BatchWriteItem</code></a>
+for efficiently inserting/updating multiple DB records in bulk, across one or
+more DB tables.</p>
+
+<p>The input to this operation is a map with the table names as keys, and lists of
+write requests as values:</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Map</span><span class="o">(</span>
+  <span class="s">"TableA"</span> <span class="o">-&gt;</span> <span class="nc">List</span><span class="o">(</span>
+    <span class="o">&lt;</span><span class="n">write</span> <span class="n">item</span> <span class="mi">1</span><span class="o">&gt;,</span>
+    <span class="o">&lt;</span><span class="n">write</span> <span class="n">item</span> <span class="mi">2</span><span class="o">&gt;,</span>
+    <span class="o">...</span>
+  <span class="o">),</span>
+  <span class="s">"TableB"</span> <span class="o">-&gt;</span> <span class="nc">List</span><span class="o">(</span>
+    <span class="o">&lt;</span><span class="n">write</span> <span class="n">item</span> <span class="mi">3</span><span class="o">&gt;,</span>
+    <span class="o">&lt;</span><span class="n">write</span> <span class="n">item</span> <span class="mi">4</span><span class="o">&gt;,</span>
+    <span class="o">...</span>
+  <span class="o">)</span>
+<span class="o">)</span>
+</code></pre></div></div>
+
+<p>Executing a <code class="language-plaintext highlighter-rouge">BatchWriteItem</code> operation can result in <em>partial</em> failure: you
+attempted to write 10 records, 7 succeeded and 3 failed. In this case, you
+usually want to retry <em>only</em> the 3 items that failed. Writing the whole batch of
+10 again would be wasteful.</p>
+
+<p>Of course, the second attempt to write the 3 failed items could also partially
+fail: perhaps 2 succceeded this time, but 1 item failed again.</p>
+
+<p>The DynamoDB API response helpfully contains a field called <code class="language-plaintext highlighter-rouge">UnprocessedItems</code>,
+which is a collection of all the failed write requests, in just the right format
+for sending in a subsequent <code class="language-plaintext highlighter-rouge">BatchWriteItem</code> request.</p>
+
+<p>So we want to iterate as follows:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>remaining items = the whole batch
+while size(remaining items) &gt; 0:
+  1. attempt to write all remaining items
+  2. remaining items = UnprocessedItems in the API response
+</code></pre></div></div>
+
+<p>AWS strongly recommends using an exponential backoff algorithm to insert delays
+between the iterations of this loop, and we probably want to limit the total
+number of retries, so we don’t get stuck retrying forever in case of AWS issues.
+This sounds like a perfect use case for cats-retry!</p>
+
+<p>Let’s assume we have a Scala DynamoDB client that simply wraps the AWS Java SDK
+in Cats Effect <code class="language-plaintext highlighter-rouge">IO</code>:</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">ddbClient</span> <span class="k">=</span> <span class="nv">util</span><span class="o">.</span><span class="py">DDBClient</span><span class="o">()</span>
+</code></pre></div></div>
+
+<p>and we have a helper method that turns a Java collection of write requests into
+a <code class="language-plaintext highlighter-rouge">BatchWriteItemRequest</code>:</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">software.amazon.awssdk.services.dynamodb.model.</span><span class="o">*</span>
+<span class="k">import</span> <span class="nn">java.util.List</span> <span class="n">as</span> <span class="nc">JList</span>
+<span class="k">import</span> <span class="nn">java.util.Map</span> <span class="n">as</span> <span class="nc">JMap</span>
+
+<span class="k">def</span> <span class="nf">buildRequest</span><span class="o">(</span><span class="n">writeRequests</span><span class="k">:</span> <span class="kt">JMap</span><span class="o">[</span><span class="kt">String</span>, <span class="kt">JList</span><span class="o">[</span><span class="kt">WriteRequest</span><span class="o">]])</span><span class="k">:</span> <span class="kt">BatchWriteItemRequest</span> <span class="o">=</span> 
+  <span class="nv">BatchWriteItemRequest</span><span class="o">.</span><span class="py">builder</span><span class="o">()</span>
+    <span class="o">.</span><span class="py">requestItems</span><span class="o">(</span><span class="n">writeRequests</span><span class="o">)</span>
+    <span class="o">.</span><span class="py">build</span><span class="o">()</span>
+</code></pre></div></div>
+
+<p>and a batch of write requests that we want to perform:</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// In a real application, this batch would not be empty!</span>
+<span class="k">val</span> <span class="nv">writeRequests</span><span class="k">:</span> <span class="kt">JMap</span><span class="o">[</span><span class="kt">String</span>, <span class="kt">JList</span><span class="o">[</span><span class="kt">WriteRequest</span><span class="o">]]</span> <span class="k">=</span> <span class="nv">JMap</span><span class="o">.</span><span class="py">of</span><span class="o">()</span>
+</code></pre></div></div>
+
+<p>Let’s define a result handler to encode the retry logic we wrote in pseudocode above:</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">cats.effect.IO</span>
+<span class="k">import</span> <span class="nn">cats.effect.unsafe.implicits.global</span>
+<span class="k">import</span> <span class="nn">retry.</span><span class="o">*</span>
+
+<span class="k">val</span> <span class="nv">handler</span><span class="k">:</span> <span class="kt">ValueHandler</span><span class="o">[</span><span class="kt">IO</span>, <span class="kt">BatchWriteItemResponse</span><span class="o">]</span> <span class="k">=</span>
+  <span class="o">(</span><span class="n">response</span><span class="k">:</span> <span class="kt">BatchWriteItemResponse</span><span class="o">,</span> <span class="n">details</span><span class="k">:</span> <span class="kt">RetryDetails</span><span class="o">)</span> <span class="k">=&gt;</span>
+    <span class="k">if</span> <span class="nv">response</span><span class="o">.</span><span class="py">hasUnprocessedItems</span><span class="o">()</span> <span class="n">then</span>
+      <span class="c1">// build a new BatchWriteItemRequest to retry only the requests that failed</span>
+      <span class="k">val</span> <span class="nv">updatedRequest</span> <span class="k">=</span> <span class="nf">buildRequest</span><span class="o">(</span><span class="nv">response</span><span class="o">.</span><span class="py">unprocessedItems</span><span class="o">())</span>
+
+      <span class="c1">// adapt our action to execute the updated request next time</span>
+      <span class="k">val</span> <span class="nv">updatedAction</span> <span class="k">=</span> <span class="nv">ddbClient</span><span class="o">.</span><span class="py">batchWriteItem</span><span class="o">(</span><span class="n">updatedRequest</span><span class="o">)</span>
+      <span class="nv">IO</span><span class="o">.</span><span class="py">pure</span><span class="o">(</span><span class="nv">HandlerDecision</span><span class="o">.</span><span class="py">Adapt</span><span class="o">(</span><span class="n">updatedAction</span><span class="o">))</span>
+    <span class="k">else</span>
+      <span class="c1">// all the write requests succeeded, so we are done</span>
+      <span class="nv">IO</span><span class="o">.</span><span class="py">pure</span><span class="o">(</span><span class="nv">HandlerDecision</span><span class="o">.</span><span class="py">Stop</span><span class="o">)</span>
+</code></pre></div></div>
+
+<p>We also need a retry policy. We’ll use exponential backoff, as recommended by
+AWS, and limit it to 5 retries:</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nn">RetryPolicies.</span><span class="o">*</span>
+<span class="k">import</span> <span class="nn">scala.concurrent.duration.</span><span class="o">*</span>
+
+<span class="k">val</span> <span class="nv">policy</span> <span class="k">=</span> <span class="n">limitRetries</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mi">5</span><span class="o">)</span> <span class="n">join</span> <span class="n">exponentialBackoff</span><span class="o">[</span><span class="kt">IO</span><span class="o">](</span><span class="mf">10.</span><span class="n">milliseconds</span><span class="o">)</span>
+</code></pre></div></div>
+
+<p>Our initial action will attempt to write the entire batch:</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">initialRequest</span> <span class="k">=</span> <span class="nf">buildRequest</span><span class="o">(</span><span class="n">writeRequests</span><span class="o">)</span>
+<span class="k">val</span> <span class="nv">action</span> <span class="k">=</span> <span class="nv">ddbClient</span><span class="o">.</span><span class="py">batchWriteItem</span><span class="o">(</span><span class="n">initialRequest</span><span class="o">)</span>
+</code></pre></div></div>
+
+<p>Now we have all the pieces we need to call <code class="language-plaintext highlighter-rouge">retryingOnFailures</code>:</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">io</span> <span class="k">=</span> <span class="nf">retryingOnFailures</span><span class="o">(</span><span class="n">action</span><span class="o">)(</span><span class="n">policy</span><span class="o">,</span> <span class="n">handler</span><span class="o">)</span>
+</code></pre></div></div>
+
+<p>To recap, executing this <code class="language-plaintext highlighter-rouge">IO</code> will:</p>
+<ul>
+  <li>first attempt to execute the entire batch of write requests using <code class="language-plaintext highlighter-rouge">BatchWriteItem</code></li>
+  <li>retry on partial failure, adapting the action to retry only the failed write requests</li>
+  <li>iterate until there are no more failed write requests</li>
+  <li>retry up to 5 times, with an exponentially increasing delay between retries</li>
+</ul>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">io</span><span class="o">.</span><span class="py">unsafeRunSync</span><span class="o">()</span>
+<span class="c1">// res0: Either[BatchWriteItemResponse, BatchWriteItemResponse] = Right(</span>
+<span class="c1">//   value = BatchWriteItemResponse()</span>
+<span class="c1">// )</span>
+</code></pre></div></div>
+
+</section></div></div></div></div><script src="/cats-retry/highlight/highlight.pack.js"></script><script src="/cats-retry/lunr/lunr.js"></script><script>
+// For all code blocks, copy the language from the containing div
+// to the inner code tag (where hljs expects it to be)
+const langPrefix = 'language-';
+document.querySelectorAll(`div[class^='${langPrefix}']`).forEach(function(div) {
+  div.classList.forEach(function(cssClass) {
+    if (cssClass.startsWith(langPrefix)) {
+      const lang = cssClass.substring(langPrefix.length);
+      div.querySelectorAll('pre code').forEach(function(code) {
+        code.classList.add(lang);
+      });
+    }
+  });
+});
+
+hljs.configure({languages:['scala','java','bash']});
+hljs.initHighlightingOnLoad();
+      </script><script>console.info('\x57\x65\x62\x73\x69\x74\x65\x20\x62\x75\x69\x6c\x74\x20\x77\x69\x74\x68\x3a\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x5f\x5f\x20\x20\x20\x20\x5f\x5f\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x5f\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x5f\x20\x5f\x5f\x0a\x20\x20\x20\x5f\x5f\x5f\x5f\x5f\x2f\x20\x2f\x5f\x20\x20\x2f\x20\x2f\x5f\x20\x20\x20\x20\x20\x20\x5f\x5f\x5f\x5f\x20\x5f\x5f\x5f\x20\x20\x28\x5f\x29\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x20\x20\x5f\x5f\x5f\x5f\x5f\x28\x5f\x29\x20\x2f\x5f\x5f\x5f\x5f\x20\x20\x5f\x5f\x5f\x5f\x5f\x0a\x20\x20\x2f\x20\x5f\x5f\x5f\x2f\x20\x5f\x5f\x20\x5c\x2f\x20\x5f\x5f\x2f\x5f\x5f\x5f\x5f\x5f\x2f\x20\x5f\x5f\x20\x60\x5f\x5f\x20\x5c\x2f\x20\x2f\x20\x5f\x5f\x5f\x2f\x20\x5f\x5f\x5f\x2f\x20\x5f\x5f\x20\x5c\x2f\x20\x5f\x5f\x5f\x2f\x20\x2f\x20\x5f\x5f\x2f\x20\x5f\x20\x5c\x2f\x20\x5f\x5f\x5f\x2f\x0a\x20\x28\x5f\x5f\x20\x20\x29\x20\x2f\x5f\x2f\x20\x2f\x20\x2f\x5f\x2f\x5f\x5f\x5f\x5f\x5f\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x5f\x5f\x2f\x20\x2f\x20\x20\x2f\x20\x2f\x5f\x2f\x20\x28\x5f\x5f\x20\x20\x29\x20\x2f\x20\x2f\x5f\x2f\x20\x20\x5f\x5f\x28\x5f\x5f\x20\x20\x29\x0a\x2f\x5f\x5f\x5f\x5f\x2f\x5f\x2e\x5f\x5f\x5f\x2f\x5c\x5f\x5f\x2f\x20\x20\x20\x20\x20\x2f\x5f\x2f\x20\x2f\x5f\x2f\x20\x2f\x5f\x2f\x5f\x2f\x5c\x5f\x5f\x5f\x2f\x5f\x2f\x20\x20\x20\x5c\x5f\x5f\x5f\x5f\x2f\x5f\x5f\x5f\x5f\x2f\x5f\x2f\x5c\x5f\x5f\x2f\x5c\x5f\x5f\x5f\x2f\x5f\x5f\x5f\x5f\x2f\x0a\x0a\x68\x74\x74\x70\x73\x3a\x2f\x2f\x34\x37\x64\x65\x67\x2e\x67\x69\x74\x68\x75\x62\x2e\x69\x6f\x2f\x73\x62\x74\x2d\x6d\x69\x63\x72\x6f\x73\x69\x74\x65\x73')</script><script>((window.gitter = {}).chat = {}).options = {
+room: 'typelevel/cats-retry'};</script><script src="https://sidecar.gitter.im/dist/sidecar.v1.js"></script><script src="/cats-retry/js/search.js"></script><script src="/cats-retry/js/docs.js"></script></body></html>
