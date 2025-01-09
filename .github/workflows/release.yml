@@ -37,9 +37,9 @@ jobs:
       - uses: sbt/setup-sbt@v1
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 2.6
+          ruby-version: 3.4
       - name: Install Jekyll
-        run: gem install jekyll -v 4
+        run: gem install jekyll -v 4.3.4
       - name: Publish the microsite
         run: sbt -J-Xms4G -J-Xmx4G docs/publishMicrosite
         env:
