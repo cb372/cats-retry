@@ -6,3 +6,6 @@ target
 *.ipr
 *.iws
 .bsp
+.metals
+project/metals.sbt
+project/project/

@@ -5,11 +5,16 @@ title: Retry policies
 
 # Retry policies
 
-A retry policy is a function that takes in a `RetryStatus` and returns a
-`PolicyDecision` in a monoidal context:
+A retry policy is a function that takes as input:
+- the result of the last execution of the action, which might be a value or an error
+- a `RetryStatus` containing details of the retries and delays so far
+
+and returns a `PolicyDecision` in a monoidal context:
 
 ```scala
-case class RetryPolicy[M[_]](decideNextRetry: RetryStatus => M[PolicyDecision])
+case class RetryPolicy[F[_], Res](
+    decideNextRetry: (Res, RetryStatus) => F[PolicyDecision]
+)
 ```
 
 The policy decision can be one of two things:
@@ -26,6 +31,32 @@ There are a number of policies available in `retry.RetryPolicies`, including:
 * `exponentialBackoff` (double the delay after each retry)
 * `fibonacciBackoff` (`delay(n) = (delay(n - 2) + delay(n - 1)`)
 * `fullJitter` (randomised exponential backoff)
+
+All of these are "static" policies, in the sense that they ignore the
+result of the last attempt and decide what to do based only on the
+`RetryStatus`.
+
+## Dynamic policies
+
+In general we recommend using combinations of the built-in static policies to
+build your retry policy, and only inspecting the action's result in the result
+handler. This separation of concerns, keeping the retry policy simple and
+encapsulating all the dynamic logic in the result handler, makes your retry
+logic easy to reason about.
+
+However, there are use scenarios where you need a more powerful retry policy.
+For example, you might want to use a short constant delay for most errors, but
+switch to exponential backoff when your requests to another service are
+throttled.
+
+You can build a dynamic policy like this using `RetryPolicies.dynamic`:
+
+```scala
+val policy = dynamic[IO, Throwable] {
+  case _: ProvisionedThroughputExceeded => exponentialBackoff(500.millis)
+  case _                                => constantDelay(100.millis)
+}
+```
 
 ## Policy transformers
 
@@ -62,12 +93,12 @@ For an example of composing policies like this, we can use `join` to create a po
 exponentially:
 
 ```scala mdoc:silent
-import cats._
+import cats.*
 import cats.effect.IO
-import cats.implicits._
-import scala.concurrent.duration._
+import cats.syntax.all.*
+import scala.concurrent.duration.*
 import retry.RetryPolicy
-import retry.RetryPolicies._
+import retry.RetryPolicies.*
 
 val policy = limitRetries[IO](5) join exponentialBackoff[IO](10.milliseconds)
 ```
@@ -89,8 +120,11 @@ You can use `meet` to compose policies where you want an upper bound on the dela
 As an example the `capDelay` combinator is implemented using `meet`:
 
 ```scala mdoc:silent
-def capDelay[M[_]: Applicative](cap: FiniteDuration, policy: RetryPolicy[M]): RetryPolicy[M] =
-  policy meet constantDelay[M](cap)
+def capDelay[F[_]: Applicative, Res](
+    cap: FiniteDuration,
+    policy: RetryPolicy[F, Res]
+): RetryPolicy[F, Res] =
+  policy.meet(constantDelay(cap))
 
 val neverAbove5Minutes = capDelay(5.minutes, exponentialBackoff[IO](10.milliseconds))
 ```
@@ -111,7 +145,7 @@ limitRetries[IO](5) |+| constantDelay[IO](100.milliseconds)
 There is also an operator `followedBy` to sequentially compose policies, i.e. if the first one wants to give up, use the second one.
 As an example, we can retry with a 100ms delay 5 times and then retry every minute:
 
-```scala mdoc
+```scala mdoc:silent
 val retry5times100millis = constantDelay[IO](100.millis) |+| limitRetries[IO](5)
 
 retry5times100millis.followedBy(constantDelay[IO](1.minute))
@@ -132,14 +166,13 @@ The `mapDelay` and `flatMapDelay` operators work just like `map` and `flatMap`, 
 
 As a simple example, it allows us to add a specific delay of 10ms on top of an existing policy:
 
-```scala mdoc
+```scala mdoc:silent
 fibonacciBackoff[IO](200.millis).mapDelay(_ + 10.millis)
 ```
 
 Furthermore, `flatMapDelay` also allows us to depend on certain effects to evaluate how to modify the delay:
 
-```scala mdoc
-
+```scala mdoc:silent
 def determineDelay: IO[FiniteDuration] = ???
 
 fibonacciBackoff[IO](200.millis).flatMapDelay { currentDelay =>
@@ -153,11 +186,11 @@ fibonacciBackoff[IO](200.millis).flatMapDelay { currentDelay =>
 If you've defined a `RetryPolicy[F]`, but you need a `RetryPolicy` for another effect type `G[_]`, you can use `mapK` to convert from one to the other.
 For example, you might have defined a custom `RetryPolicy[cats.effect.IO]` and for another part of the app you might need a `RetryPolicy[Kleisli[IO]]`:
 
-```scala mdoc
+```scala mdoc:silent
 import cats.effect.LiftIO
 import cats.data.Kleisli
 
-val customPolicy: RetryPolicy[IO] = 
+val customPolicy: RetryPolicy[IO, Any] = 
   limitRetries[IO](5).join(constantDelay[IO](100.milliseconds))
 
 customPolicy.mapK[Kleisli[IO, String, *]](LiftIO.liftK[Kleisli[IO, String, *]])
@@ -169,11 +202,11 @@ customPolicy.mapK[Kleisli[IO, String, *]](LiftIO.liftK[Kleisli[IO, String, *]])
 The easiest way to define a custom retry policy is to use `RetryPolicy.lift`,
 specifying the monad you need to work in:
 
-```scala mdoc
+```scala mdoc:silent
 import retry.{RetryPolicy, PolicyDecision}
 import java.time.{LocalDate, DayOfWeek}
 
-val onlyRetryOnTuesdays = RetryPolicy.lift[IO] { _ =>
+val onlyRetryOnTuesdays = RetryPolicy.lift[IO, Any] { (_, _) =>
   if (LocalDate.now().getDayOfWeek() == DayOfWeek.TUESDAY) {
     PolicyDecision.DelayAndRetry(delay = 100.milliseconds)
   } else {

@@ -10,296 +10,334 @@ retries.
 
 ## Cheat sheet
 
-| Combinator | Context bound | Handles |
-| --- | --- | --- |
-| [`retryingOnFailures`](#retryingOnFailures) | Monad | Failures |
-| [`retryingOnSomeErrors`](#retryingonsomeerrors) | MonadError | Errors |
-| [`retryingOnAllErrors`](#retryingonallerrors) | MonadError | Errors |
-| [`retryingOnFailuresAndSomeErrors`](#retryingonfailuresandsomeerrors) | MonadError | Failures and errors |
-| [`retryingOnFailuresAndAllErrors`](#retryingonfailuresandallerrors) | MonadError | Failures and errors |
+| Combinator                                                    | Context bound | Handles             |
+| ------------------------------------------------------------- | ------------- | ------------------- |
+| [`retryingOnFailures`](#retryingonfailures)                   | Temporal      | Failures            |
+| [`retryingOnErrors`](#retryingonerrors)                       | Temporal      | Errors              |
+| [`retryingOnFailuresAndErrors`](#retryingonfailuresanderrors) | Temporal      | Failures and errors |
 
 More information on each combinator is provided below.
 
+The context bound for all the combinators is Cats Effect `Temporal`, because we
+need the ability to sleep between retries. This implies that your effect monad
+needs to be Cats Effect `IO` or something similar.
+
+## Failures vs errors
+
+We make a distinction between "failures" and "errors", which deserves some
+explanation.
+
+An action with type `IO[HttpResponse]`, when executed, can result in one of
+three things:
+* *Success*, meaning it returned an HTTP response that we are happy with, e.g. a
+  200 response
+* *Failure*, meaning it returned an HTTP response but we are not happy with it,
+  e.g. a 404 response
+* *Error*, meaning it raised an exception, e.g. using `IO.raiseError(...)`
+
+cats-retry lets you choose whether you want to retry on failures, on errors, or
+both.
+
+### Unrecoverable errors
+
+Some errors are worth retrying, while others are so serious that it's not worth
+retrying.
+
+For example, if an HTTP request failed with a 500 response, it's probably worth
+retrying, but if the server responded with a `401 Unauthorized`, it's probably
+not. Retrying the same request would just result in another 401 response.
+
+When an action raises an error, cats-retry lets you inspect the error and decide
+whether you want to retry or bail out. See the
+[`retryingOnErrors`](#retryingonerrors) combinator for more details.
+
 ## `retryingOnFailures`
 
-To use `retryingOnFailures`, you pass in a predicate that decides whether you are happy
-with the result or you want to retry.  It is useful when you are working in an
-arbitrary `Monad` that is not a `MonadError`.  Your operation doesn't throw
-errors, but you want to retry until it returns a value that you are happy with.
+To use `retryingOnFailures`, you pass in a value handler that decides whether
+you are happy with the result or you want to retry.
 
-The API (modulo some type-inference trickery) looks like this:
+The API looks like this:
 
 ```scala
-def retryingOnFailures[M[_]: Monad: Sleep, A](policy: RetryPolicy[M],
-                                              wasSuccessful: A => M[Boolean],
-                                              onFailure: (A, RetryDetails) => M[Unit])
-                                              (action: => M[A]): M[A]
+def retryingOnFailures[F[_]: Temporal, A](
+    action: F[A]
+)(
+    policy: RetryPolicy[F],
+    valueHandler: ValueHandler[F, A]
+): F[Either[A, A]]
 ```
 
-You need to pass in:
+The inputs are:
 
-* a retry policy
-* a predicate that decides whether the operation was successful
-* a failure handler, often used for logging
-* the operation that you want to wrap with retries
+- the operation that you want to wrap with retries
+- a retry policy, which determines the maximum number of retries and how long to
+  delay after each attempt
+- a handler that decides whether the operation was successful, and does any
+  necessary logging
+
+The return value is one of:
+- the successful value returned by the final attempt, wrapped in a `Right(...)`
+  to indicate success
+- the failed value returned by the final attempt before giving up, wrapped in a
+  `Left(...)` to indicate failure
+- an error raised in `F`, if either the action or the value handler raised an error
+
+### Semantics
+
+[![](https://mermaid.ink/img/pako:eNp1UstuwjAQ_BXLJ5DgB3KohAptDz1URFya5LCyN8SSY0d-0EZJ_r2ODRREm4N3Z_Y163igTHOkGa2l_mINGEfe96Ui4ctdQIsimmpJ1usnsvtG5h2m-BnMgXEPwqIlaIw2I9nNZlFEMnHV8q6muNQCc0KrKvVA542y5ATS40jeQHGJZnjWynrpSJPwlBqdo_8Nf0zKne5GknvG0NqgLQ4jNuHayzT2ovO2MghwQs2SPrQUrL8q6iL8Q9CGQ-dGEk1x6Dj8bpqSYyTeaGqZ2OTHDq_ihIeg9wWE9AaveuuAkd9rvSnbooR-o3jINv1IIkxJ0X34h_NBV7RF04Lg4RUMM1NS12CLJc2Cy7GGsGxJSzWFVPBO571iNHPG44oa7Y8NzWqQNiAfd90KOBpor2wH6lPrC55-AD8B1nA?type=png)](https://mermaid.live/edit#pako:eNp1UstuwjAQ_BXLJ5DgB3KohAptDz1URFya5LCyN8SSY0d-0EZJ_r2ODRREm4N3Z_Y163igTHOkGa2l_mINGEfe96Ui4ctdQIsimmpJ1usnsvtG5h2m-BnMgXEPwqIlaIw2I9nNZlFEMnHV8q6muNQCc0KrKvVA542y5ATS40jeQHGJZnjWynrpSJPwlBqdo_8Nf0zKne5GknvG0NqgLQ4jNuHayzT2ovO2MghwQs2SPrQUrL8q6iL8Q9CGQ-dGEk1x6Dj8bpqSYyTeaGqZ2OTHDq_ihIeg9wWE9AaveuuAkd9rvSnbooR-o3jINv1IIkxJ0X34h_NBV7RF04Lg4RUMM1NS12CLJc2Cy7GGsGxJSzWFVPBO571iNHPG44oa7Y8NzWqQNiAfd90KOBpor2wH6lPrC55-AD8B1nA)
+
+### Example
 
 For example, let's keep rolling a die until we get a six, using `IO`.
 
-```scala mdoc
+```scala mdoc:silent
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
-import retry._
+import retry.*
 
-import scala.concurrent.duration._
-
-val policy = RetryPolicies.constantDelay[IO](10.milliseconds)
-
-def onFailure(failedValue: Int, details: RetryDetails): IO[Unit] = {
-  IO(println(s"Rolled a $failedValue, retrying ..."))
-}
+import scala.concurrent.duration.*
 
 val loadedDie = util.LoadedDie(2, 5, 4, 1, 3, 2, 6)
 
-val io = retryingOnFailures(policy, (i: Int) => IO.pure(i == 6), onFailure){
-  IO(loadedDie.roll())
-}
+val io = retryingOnFailures(loadedDie.roll)(
+  policy = RetryPolicies.constantDelay(10.milliseconds),
+  valueHandler = (value: Int, details: RetryDetails) =>
+    value match
+      case 6 =>
+        IO.pure(HandlerDecision.Stop)   // successful result, stop retrying
+      case failedValue =>
+        IO(println(s"Rolled a $failedValue, retrying ..."))
+          .as(HandlerDecision.Continue) // keep trying, as long as the retry policy allows it
+)
+```
 
+```scala mdoc
 io.unsafeRunSync()
 ```
 
-## `retryingOnSomeErrors`
+There is also a helper for lifting a predicate into a `ValueHandler`:
 
-This is useful when you are working with a `MonadError[M, E]` but you only want
-to retry on some errors.
-
-To use `retryingOnSomeErrors`, you need to pass in a predicate that decides
-whether a given error is worth retrying.
-
-The API (modulo some type-inference trickery) looks like this:
-
-```scala
-def retryingOnSomeErrors[M[_]: Sleep, A, E](policy: RetryPolicy[M],
-                                            isWorthRetrying: E => M[Boolean],
-                                            onError: (E, RetryDetails) => M[Unit])
-                                           (action: => M[A])
-                                           (implicit ME: MonadError[M, E]): M[A]
+```scala mdoc:nest:silent
+val io = retryingOnFailures(loadedDie.roll)(
+  policy = RetryPolicies.constantDelay(10.milliseconds),
+  valueHandler = ResultHandler.retryUntilSuccessful(_ == 6, log = ResultHandler.noop)
+)
 ```
 
-You need to pass in:
+```scala mdoc
+io.unsafeRunSync()
+```
 
-* a retry policy
-* a predicate that decides whether a given error is worth retrying
-* an error handler, often used for logging
-* the operation that you want to wrap with retries
+## `retryingOnErrors`
+
+This is useful when you want to retry on some or all errors raised in your
+effect monad's error channel.
+
+To use `retryingOnErrors`, you pass in a handler that decides whether a given
+error is worth retrying.
+
+The API looks like this:
+
+```scala
+def retryingOnErrors[F[_]: Temporal, A](
+    action: F[A]
+)(
+    policy: RetryPolicy[F],
+    errorHandler: ErrorHandler[F, A]
+): F[A]
+```
+
+The inputs are:
+
+- the operation that you want to wrap with retries
+- a retry policy, which determines the maximum number of retries and how long to
+  delay after each attempt
+- a handler that decides whether a given error is worth retrying, and does any
+  necessary logging
+
+The return value is either:
+- the value returned by the action, or
+- an error raised in `F`, if
+    - the action raised an error that the error handler judged to be unrecoverable
+    - the action repeatedly raised errors and we ran out of retries
+    - the error handler raised an error
+
+### Semantics
+
+[![](https://mermaid.ink/img/pako:eNptUU1vwjAM_StRTiDBH-hhEhpoO-wwUXFZy8FKXBopTap8sFWU_740BgYaudjP7_nFTk5cWIm84I2236IFF9jHtjYsnTIkNKty2M_ZcvnCNj8oYkDiL2Aixi2G6IxnR9ARR1ZGIdD7WUV15gk3UZNiP3-wqK5WIIKyZk-WoDx6hs5ZN7J3MFKjO71a46MOrCV8Jp8L-6RvM4U0x1Sk2vXu-54y2P6i_U-mK4My01qfVisx3GboM3wywkpCH0aWQ7XrJfytRuLM5BclS6pSnh3e1BF3jyPdsWvUMKyMTK_rhpFlSKKc3n8VX_AOXQdKpj8-TaKahxY7rHmRUokNpFVqXptzkkIMthyM4EVwERfc2XhoedGA9gnFvMlawcFBd6v2YL6sveLzL-oSyzM?type=png)](https://mermaid.live/edit#pako:eNptUU1vwjAM_StRTiDBH-hhEhpoO-wwUXFZy8FKXBopTap8sFWU_740BgYaudjP7_nFTk5cWIm84I2236IFF9jHtjYsnTIkNKty2M_ZcvnCNj8oYkDiL2Aixi2G6IxnR9ARR1ZGIdD7WUV15gk3UZNiP3-wqK5WIIKyZk-WoDx6hs5ZN7J3MFKjO71a46MOrCV8Jp8L-6RvM4U0x1Sk2vXu-54y2P6i_U-mK4My01qfVisx3GboM3wywkpCH0aWQ7XrJfytRuLM5BclS6pSnh3e1BF3jyPdsWvUMKyMTK_rhpFlSKKc3n8VX_AOXQdKpj8-TaKahxY7rHmRUokNpFVqXptzkkIMthyM4EVwERfc2XhoedGA9gnFvMlawcFBd6v2YL6sveLzL-oSyzM)
+
+### Example
 
 For example, let's make a request for a cat gif using our flaky HTTP client,
 retrying only if we get an `IOException`.
 
-```scala mdoc:nest
+```scala mdoc:nest:silent
 import java.io.IOException
 
 val httpClient = util.FlakyHttpClient()
-val flakyRequest: IO[String] = IO(httpClient.getCatGif())
+val flakyRequest: IO[String] = httpClient.getCatGif
 
-def isIOException(e: Throwable): IO[Boolean] = e match {
-  case _: IOException => IO.pure(true)
-  case _ => IO.pure(false)
-}
+val io = retryingOnErrors(flakyRequest)(
+  policy = RetryPolicies.limitRetries(5),
+  errorHandler = (e: Throwable, retryDetails: RetryDetails) =>
+    e match
+      case _: IOException =>
+        IO.pure(HandlerDecision.Continue) // worth retrying
+      case _ =>
+        IO.pure(HandlerDecision.Stop)     // not worth retrying
+)
+```
 
-val io = retryingOnSomeErrors(
-  isWorthRetrying = isIOException,
-  policy = RetryPolicies.limitRetries[IO](5),
-  onError = retry.noop[IO, Throwable]
-)(flakyRequest)
-
+```scala mdoc
 io.unsafeRunSync()
 ```
 
-## `retryingOnAllErrors`
+There is also a helper for the common case where you want to retry on all errors:
 
-This is useful when you are working with a `MonadError[M, E]` and you want to
-retry on all errors.
-
-The API (modulo some type-inference trickery) looks like this:
-
-```scala
-def retryingOnAllErrors[M[_]: Sleep, A, E](policy: RetryPolicy[M],
-                                           onError: (E, RetryDetails) => M[Unit])
-                                          (action: => M[A])
-                                          (implicit ME: MonadError[M, E]): M[A]
+```scala mdoc:nest:silent
+val io = retryingOnErrors(flakyRequest)(
+  policy = RetryPolicies.limitRetries(5),
+  errorHandler = ResultHandler.retryOnAllErrors(log = ResultHandler.noop)
+)
 ```
 
-You need to pass in:
-
-* a retry policy
-* an error handler, often used for logging
-* the operation that you want to wrap with retries
-
-For example, let's make the same request for a cat gif, this time retrying on
-all errors.
-
-```scala mdoc:nest
-import java.io.IOException
-
-val httpClient = util.FlakyHttpClient()
-val flakyRequest: IO[String] = IO(httpClient.getCatGif())
-
-val io = retryingOnAllErrors(
-  policy = RetryPolicies.limitRetries[IO](5),
-  onError = retry.noop[IO, Throwable]
-)(flakyRequest)
-
+```scala mdoc
 io.unsafeRunSync()
 ```
 
-## `retryingOnFailuresAndSomeErrors`
+## `retryingOnFailuresAndErrors`
 
-This is a combination of `retryingOnFailures` and `retryingOnSomeErrors`. It allows you
+This is a combination of `retryingOnFailures` and `retryingOnErrors`. It allows you
 to specify failure conditions for both the results and errors that can occur.
 
-To use `retryingOnFailuresAndSomeErrors`, you need to pass in predicates that
-decide whether a given error or result is worth retrying.
+To use `retryingOnFailuresAndErrors`, you need to pass in a handler that
+decides whether a given result is a success, a failure, an error that's worth
+retrying, or an unrecoverable error.
 
-The API (modulo some type-inference trickery) looks like this:
+The API looks like this:
 
 ```scala
-def retryingOnFailuresAndSomeErrors[M[_]: Sleep, A, E](policy: RetryPolicy[M],
-                                                       wasSuccessful: A => M[Boolean],
-                                                       isWorthRetrying: E => M[Boolean],
-                                                       onFailure: (A, RetryDetails) => M[Unit],
-                                                       onError: (E, RetryDetails) => M[Unit])
-                                                      (action: => M[A])
-                                                      (implicit ME: MonadError[M, E]): M[A]
+def retryingOnFailuresAndErrors[F[_]: Temporal, A](
+    action: F[A]
+)(
+    policy: RetryPolicy[F],
+    errorOrValueHandler: ErrorOrValueHandler[F, A]
+): F[Either[A, A]]
 ```
 
-You need to pass in:
+The inputs are:
 
-* a retry policy
-* a predicate that decides whether the operation was successful
-* a predicate that decides whether a given error is worth retrying
-* a failure handler, often used for logging
-* an error handler, often used for logging
-* the operation that you want to wrap with retries
+- the operation that you want to wrap with retries
+- a retry policy, which determines the maximum number of retries and how long to
+  delay after each attempt
+- a handler that inspects the action's return value or error and decides whether
+  to retry, and does any necessary logging
+
+The return value is one of:
+- the successful value returned by the final attempt, wrapped in a `Right(...)`
+  to indicate success
+- the failed value returned by the final attempt before giving up, wrapped in a
+  `Left(...)` to indicate failure
+- an error raised in `F`, if
+    - the action raised an error that the error handler judged to be unrecoverable
+    - the action repeatedly raised errors and we ran out of retries
+    - the error handler raised an error
+
+### `ErrorOrValueHandler`
+
+Note that the behaviour of the `ErrorOrValueHandler` is quite subtle.
+
+The interpretation of its decision (a `HandlerDecision`) depends on whether the
+action returned a value or raised an error
+
+If the action returned a value, the handler will be given a `Right(someValue)`
+to inspect.
+* If the handler decides the result of the action was successful, it should
+  return `Stop`, meaning there is no need to keep retrying. cats-retry will stop
+  retrying, and return the successful result.
+* On the other hand, if the handler decides that action was *not* successful, it
+  should return `Continue`, meaning the action has not succeeded yet so we should
+  keep retrying. cats-retry will then consult the retry policy. If the policy
+  agrees to keep retrying, cats-retry will do so. Otherwise it will return the
+  failed value.
+
+If the action raised an error, the handler will be given a `Left(someThrowable)`
+to inspect.
+* If the handler decides the error is worth retrying, it should return
+  `Continue`. cats-retry will then consult the retry policy. If the policy agrees
+  to keep retrying, cats-retry will do so. Otherwise it will re-raise the error.
+* If the handler decides the error is *not* worth retrying, it should return
+  `Stop`. cats-retry will re-raise the error.
+
+### Semantics
+
+[![](https://mermaid.ink/img/pako:eNqVU8tugzAQ_BXLp0RKfoBDpahJ20OlVkHpoZCDhZdgydjIj7Qo5N9rbIIgCZHKxcx4ZtfL4BPOJAUc4ZzLn6wgyqD3bSqQe2Lj0Czxy36OlssntPmFzBoI-x1oN5otGKuERkfCLTToq13eiKAc1OlZCm25QUXA5-AeSnyJ2MiqQbHNMtB6loSKSAecWx5q7-cTdtfFMNE2_5ScZfWHeCGMWwV9_8rzU-1XlFSmQX7pvcmuosSNSDLDpNgH61jiv8tVy6C7In2XV3aEnRuz4_oxc4eBjke8518DJ_VKUGdTdYM8nBhoS5gGjUApqRq0aRfXriUDd2nTxZhc4uxmnarxONWh5H-nuDaG38HTE4rbxL3kft437nHefvtR2l4wynpwtBE1yvmhaDpM_zq8cXiBS1AlYdRd1VMrSrEpoIQUR-6VQk7cyClOxdlJiTUyrkWGI6MsLLCS9lDgKCdcO2T9lGtGDoqUPVsR8S3lBZ__AAneb50?type=png)](https://mermaid.live/edit#pako:eNqVU8tugzAQ_BXLp0RKfoBDpahJ20OlVkHpoZCDhZdgydjIj7Qo5N9rbIIgCZHKxcx4ZtfL4BPOJAUc4ZzLn6wgyqD3bSqQe2Lj0Czxy36OlssntPmFzBoI-x1oN5otGKuERkfCLTToq13eiKAc1OlZCm25QUXA5-AeSnyJ2MiqQbHNMtB6loSKSAecWx5q7-cTdtfFMNE2_5ScZfWHeCGMWwV9_8rzU-1XlFSmQX7pvcmuosSNSDLDpNgH61jiv8tVy6C7In2XV3aEnRuz4_oxc4eBjke8518DJ_VKUGdTdYM8nBhoS5gGjUApqRq0aRfXriUDd2nTxZhc4uxmnarxONWh5H-nuDaG38HTE4rbxL3kft437nHefvtR2l4wynpwtBE1yvmhaDpM_zq8cXiBS1AlYdRd1VMrSrEpoIQUR-6VQk7cyClOxdlJiTUyrkWGI6MsLLCS9lDgKCdcO2T9lGtGDoqUPVsR8S3lBZ__AAneb50)
+
+### Example
 
 For example, let's make a request to an API to retrieve details for a record, which we will only retry if:
-* A timeout exception occurs
-* The record's details are incomplete pending future operations
 
-```scala mdoc:nest
+- A timeout exception occurs
+- The record's details are incomplete pending future operations
+
+```scala mdoc:nest:silent
 import java.util.concurrent.TimeoutException
 
 val httpClient = util.FlakyHttpClient()
-val flakyRequest: IO[String] = IO(httpClient.getRecordDetails("foo"))
+val flakyRequest: IO[String] = httpClient.getRecordDetails("foo")
 
-def isTimeoutException(e: Throwable): IO[Boolean] = e match {
-  case _: TimeoutException => IO.pure(true)
-  case _ => IO.pure(false)
-}
+val errorOrValueHandler: ErrorOrValueHandler[IO, String] =
+  (result: Either[Throwable, String], retryDetails: RetryDetails) =>
+    result match
+      case Left(_: TimeoutException) =>
+        IO.pure(HandlerDecision.Continue) // worth retrying
+      case Left(_) =>
+        IO.pure(HandlerDecision.Stop)     // not worth retrying
+      case Right("pending") =>
+        IO.pure(HandlerDecision.Continue) // failure, retry
+      case Right(_) =>
+        IO.pure(HandlerDecision.Stop)     // success
 
-val io = retryingOnFailuresAndSomeErrors(
-  wasSuccessful = (s: String) => IO.pure(s != "pending"),
-  isWorthRetrying = isTimeoutException,
-  policy = RetryPolicies.limitRetries[IO](5),
-  onFailure = retry.noop[IO, String],
-  onError = retry.noop[IO, Throwable]
-)(flakyRequest)
-
-io.unsafeRunSync()
+val io = retryingOnFailuresAndErrors(flakyRequest)(
+  policy = RetryPolicies.limitRetries(5),
+  errorOrValueHandler = errorOrValueHandler
+)
 ```
 
-## `retryingOnFailuresAndAllErrors`
-
-This is a combination of `retryingOnFailures` and `retryingOnAllErrors`. It allows you to specify failure
-conditions for your results as well as retry an error that occurs
-
-To use `retryingOnFailuresAndAllErrors`, you need to pass in a predicate that decides
-whether a given result is worth retrying.
-
-The API (modulo some type-inference trickery) looks like this:
-
-```scala
-def retryingOnFailuresAndAllErrors[M[_]: Sleep, A, E](policy: RetryPolicy[M],
-                                                      wasSuccessful: A => M[Boolean],
-                                                      onFailure: (A, RetryDetails) => M[Unit],
-                                                      onError: (E, RetryDetails) => M[Unit])
-                                                     (action: => M[A])
-                                                     (implicit ME: MonadError[M, E]): M[A]
-```
-
-You need to pass in:
-
-* a retry policy
-* a predicate that decides whether the operation was successful
-* a failure handler, often used for logging
-* an error handler, often used for logging
-* the operation that you want to wrap with retries
-
-For example, let's make a request to an API to retrieve details for a record, which we will only retry if:
-* Any exception occurs
-* The record's details are incomplete pending future operations
-
-```scala mdoc:nest
-import java.util.concurrent.TimeoutException
-
-val httpClient = util.FlakyHttpClient()
-val flakyRequest: IO[String] = IO(httpClient.getRecordDetails("foo"))
-
-val io = retryingOnFailuresAndAllErrors(
-  wasSuccessful = (s: String) => IO.pure(s != "pending"),
-  policy = RetryPolicies.limitRetries[IO](5),
-  onFailure = retry.noop[IO, String],
-  onError = retry.noop[IO, Throwable]
-)(flakyRequest)
-
+```scala mdoc
 io.unsafeRunSync()
 ```
 
 ## Syntactic sugar
 
-Cats-retry includes some syntactic sugar in order to reduce boilerplate.
+The cats-retry API is also available as extension methods.
 
-Instead of calling the combinators and passing in your action, you can call them
-as extension methods.
+You need to opt into this using an import:
+
+```scala mdoc:silent
+import retry.syntax.*
+```
+
+Examples:
 
 ```scala mdoc:nest:silent
-import retry.syntax.all._
-
 // To retry until you get a value you like
-IO(loadedDie.roll()).retryingOnFailures(
-  policy = RetryPolicies.limitRetries[IO](2),
-  wasSuccessful = (i: Int) => IO.pure(i == 6),
-  onFailure = retry.noop[IO, Int]
+loadedDie.roll.retryingOnFailures(
+  policy = RetryPolicies.limitRetries(2),
+  valueHandler = ResultHandler.retryUntilSuccessful(_ == 6, log = ResultHandler.noop)
 )
 
 val httpClient = util.FlakyHttpClient()
 
-// To retry only on errors that are worth retrying
-IO(httpClient.getCatGif()).retryingOnSomeErrors(
-  isWorthRetrying = isIOException,
-  policy = RetryPolicies.limitRetries[IO](2),
-  onError = retry.noop[IO, Throwable]
+// To retry on some or all errors
+httpClient.getCatGif.retryingOnErrors(
+  policy = RetryPolicies.limitRetries(2),
+  errorHandler = ResultHandler.retryOnAllErrors(log = ResultHandler.noop)
 )
 
-// To retry on all errors
-IO(httpClient.getCatGif()).retryingOnAllErrors(
-  policy = RetryPolicies.limitRetries[IO](2),
-  onError = retry.noop[IO, Throwable]
-)
-
-// To retry only on errors and results that are worth retrying
-IO(httpClient.getRecordDetails("foo")).retryingOnFailuresAndSomeErrors(
-  wasSuccessful = (s: String) => IO.pure(s != "pending"),
-  isWorthRetrying = isTimeoutException,
-  policy = RetryPolicies.limitRetries[IO](2),
-  onFailure = retry.noop[IO, String],
-  onError = retry.noop[IO, Throwable]
-)
-
-// To retry all errors and results that are worth retrying
-IO(httpClient.getRecordDetails("foo")).retryingOnFailuresAndAllErrors(
-  wasSuccessful = (s: String) => IO.pure(s != "pending"),
-  policy = RetryPolicies.limitRetries[IO](2),
-  onFailure = retry.noop[IO, String],
-  onError = retry.noop[IO, Throwable]
+// To retry on failures and some or all errors
+httpClient.getRecordDetails("foo").retryingOnFailuresAndErrors(
+  policy = RetryPolicies.limitRetries(2),
+  errorOrValueHandler = errorOrValueHandler
 )
 ```

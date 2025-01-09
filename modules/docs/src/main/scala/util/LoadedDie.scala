@@ -1,13 +1,12 @@
 package util
 
-case class LoadedDie(rolls: Int*) {
+import cats.effect.IO
+
+class LoadedDie(rolls: Int*):
   private var i = -1
 
-  def roll(): Int = {
+  def roll: IO[Int] = IO {
     i = i + 1
-    if (i >= rolls.length) {
-      i = 0
-    }
+    if i >= rolls.length then i = 0
     rolls(i)
   }
-}

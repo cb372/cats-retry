@@ -2,30 +2,24 @@ package retry
 
 import scala.concurrent.duration.FiniteDuration
 
-sealed trait RetryDetails {
-  def retriesSoFar: Int
-  def cumulativeDelay: FiniteDuration
-  def givingUp: Boolean
-  def upcomingDelay: Option[FiniteDuration]
-}
+/** A collection of information about retries that could be useful for logging
+  *
+  * @param retriesSoFar
+  *   How many retries have occurred so far. Will be zero or more. The total number of attempts so far is one
+  *   more than this number.
+  * @param cumulativeDelay
+  *   The total time we have spent delaying between retries so far.
+  * @param nextStepIfUnsuccessful
+  *   What the retry policy has chosen to do next if the latest attempt is not successful.
+  */
+case class RetryDetails(
+    retriesSoFar: Int,
+    cumulativeDelay: FiniteDuration,
+    nextStepIfUnsuccessful: RetryDetails.NextStep
+)
 
-object RetryDetails {
-  final case class GivingUp(
-      totalRetries: Int,
-      totalDelay: FiniteDuration
-  ) extends RetryDetails {
-    val retriesSoFar: Int                     = totalRetries
-    val cumulativeDelay: FiniteDuration       = totalDelay
-    val givingUp: Boolean                     = true
-    val upcomingDelay: Option[FiniteDuration] = None
-  }
+object RetryDetails:
 
-  final case class WillDelayAndRetry(
-      nextDelay: FiniteDuration,
-      retriesSoFar: Int,
-      cumulativeDelay: FiniteDuration
-  ) extends RetryDetails {
-    val givingUp: Boolean                     = false
-    val upcomingDelay: Option[FiniteDuration] = Some(nextDelay)
-  }
-}
+  enum NextStep:
+    case GiveUp
+    case DelayAndRetry(nextDelay: FiniteDuration)
