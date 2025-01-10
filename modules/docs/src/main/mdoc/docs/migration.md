@@ -88,7 +88,7 @@ New:
 def retryingOnFailures[F[_]: Temporal, A](
     action: F[A]
 )(
-    policy: RetryPolicy[F],
+    policy: RetryPolicy[F, A],
     valueHandler: ValueHandler[F, A]
 ): F[Either[A, A]]
 ```
@@ -140,7 +140,7 @@ New:
 def retryingOnErrors[F[_], A](
     action: F[A]
 )(
-    policy: RetryPolicy[F],
+    policy: RetryPolicy[F, Throwable],
     errorHandler: ErrorHandler[F, A]
 ): F[A]
 ```
@@ -190,7 +190,7 @@ New:
 def retryingOnErrors[F[_], A](
     action: F[A]
 )(
-    policy: RetryPolicy[F],
+    policy: RetryPolicy[F, Throwable],
     errorHandler: ErrorHandler[F, A]
 ): F[A]
 ```
@@ -241,7 +241,7 @@ New:
 def retryingOnFailuresAndErrors[F[_], A](
     action: F[A]
 )(
-    policy: RetryPolicy[F],
+    policy: RetryPolicy[F, Either[Throwable, A]],
     errorOrValueHandler: ErrorOrValueHandler[F, A]
 ): F[Either[A, A]]
 ```
@@ -289,7 +289,7 @@ New:
 def retryingOnFailuresAndErrors[F[_], A](
     action: F[A]
 )(
-    policy: RetryPolicy[F],
+    policy: RetryPolicy[F, Either[Throwable, A]],
     errorOrValueHandler: ErrorOrValueHandler[F, A]
 ): F[Either[A, A]]
 ```
