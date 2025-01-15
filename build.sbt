@@ -53,6 +53,10 @@ val munitCatsEffectVersion  = "2.0.0"
 val disciplineVersion       = "2.0.0"
 val scalacheckEffectVersion = "1.0.4"
 
+// All the versions we want to check against for binary compatibility.
+// In general, every time we release a new version, we should add it here.
+val mimaPreviousVersions = Set("4.0.0")
+
 val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/core"))
   .settings(
@@ -67,7 +71,7 @@ val core = crossProject(JVMPlatform, JSPlatform)
       "org.typelevel" %%% "cats-laws"         % catsVersion             % Test,
       "org.typelevel" %%% "discipline-munit"  % disciplineVersion       % Test
     ),
-    mimaPreviousArtifacts := Set.empty,
+    mimaPreviousArtifacts := mimaPreviousVersions.map(v => organization.value %%% name.value % v),
     Test / tpolecatExcludeOptions += ScalacOptions.warnNonUnitStatement
   )
 val coreJVM = core.jvm
@@ -86,6 +90,7 @@ val mtlRetry = crossProject(JVMPlatform, JSPlatform)
       "org.scalameta" %%% "munit-scalacheck"  % munitVersion           % Test
     ),
     mimaPreviousArtifacts := Set.empty,
+    mimaPreviousArtifacts := mimaPreviousVersions.map(v => organization.value %%% name.value % v),
     Test / tpolecatExcludeOptions += ScalacOptions.warnNonUnitStatement
   )
 val mtlJVM = mtlRetry.jvm
