@@ -40,7 +40,7 @@ inThisBuild(
         url = url("https://github.com/ccantarero91")
       )
     ),
-    versionScheme := Some("semver-spec"),
+    versionScheme         := Some("semver-spec"),
     mimaPreviousArtifacts := Set.empty,
     scalafmtOnCompile     := false
   )
