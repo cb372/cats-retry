@@ -2,7 +2,7 @@ import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
 lazy val scalaVersion213 = "2.13.5"
 lazy val scalaVersion212 = "2.12.13"
-lazy val scalaVersion3   = "3.0.0-RC3"
+lazy val scalaVersion3   = "3.3.5"
 lazy val scalaVersions   = List(scalaVersion213, scalaVersion212, scalaVersion3)
 
 ThisBuild / scalaVersion := scalaVersion212
@@ -63,11 +63,11 @@ val moduleJsSettings = Seq(
   Test / scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) }
 )
 
-val catsVersion            = "2.6.0"
-val catsEffectVersion      = "2.5.0"
-val catsMtlVersion         = "1.2.0"
+val catsVersion            = "2.13.0"
+val catsEffectVersion      = "2.5.5"
+val catsMtlVersion         = "1.5.0"
 val munitVersion           = "0.7.25"
-val disciplineMunitVersion = "1.0.8"
+val disciplineMunitVersion = "1.0.9"
 
 val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("modules/core"))
@@ -131,11 +131,20 @@ val docs = project
     scalacOptions -= "-Ywarn-dead-code",
     scalacOptions -= "-Ywarn-unused",
     scalacOptions += "-Ydelambdafy:inline",
-    addCompilerPlugin(
-      "org.typelevel" %% "kind-projector" % "0.11.3" cross CrossVersion.full
-    ),
+    libraryDependencies ++= {
+      scalaBinaryVersion.value match {
+        case "3" =>
+          Nil
+        case _ =>
+          Seq(
+            compilerPlugin(
+              "org.typelevel" %% "kind-projector" % "0.11.3" cross CrossVersion.full
+            )
+          )
+      }
+    },
     libraryDependencies ++= Seq(
-      "io.monix" %%% "monix" % "3.1.0"
+      "io.monix" %%% "monix" % "3.4.1"
     ),
     crossScalaVersions := Nil,
     buildInfoPackage := "retry",
