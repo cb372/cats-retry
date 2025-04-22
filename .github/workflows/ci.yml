@@ -3,7 +3,7 @@ on:
   pull_request:
   push:
     branches:
-      - main
+      - series/3.x
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -14,6 +14,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           cache: 'sbt'
+      - uses: sbt/setup-sbt@v1
       - name: Test
         run: sbt -J-Xms4G -J-Xmx4G +test
   bincompat:
@@ -25,6 +26,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           cache: 'sbt'
+      - uses: sbt/setup-sbt@v1
       - name: Check binary compatibility
         run: sbt -J-Xms4G -J-Xmx4G +mimaReportBinaryIssues
   docs:
@@ -36,6 +38,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           cache: 'sbt'
+      - uses: sbt/setup-sbt@v1
       - name: Compile documentation
         run: sbt -J-Xms4G -J-Xmx4G docs/mdoc
   format:
@@ -47,5 +50,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           cache: 'sbt'
+      - uses: sbt/setup-sbt@v1
       - name: Check formatting
         run: sbt -J-Xms4G -J-Xmx4G scalafmtCheckAll scalafmtSbtCheck
