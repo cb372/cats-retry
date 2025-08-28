@@ -153,7 +153,7 @@ class RetryPoliciesSuite extends CatsEffectSuite with ScalaCheckSuite:
 
   property("limitRetries - retry with no delay until the limit is reached") {
     forAll { (status: RetryStatus) =>
-      val limit = 500
+      val limit   = 500
       val verdict =
         limitRetries[Id](limit).decideNextRetry((), status)
       if status.retriesSoFar < limit then verdict == PolicyDecision.DelayAndRetry(Duration.Zero)
@@ -196,7 +196,7 @@ class RetryPoliciesSuite extends CatsEffectSuite with ScalaCheckSuite:
     val cumulativeDelay        = 400.milliseconds
     val arbitraryRetriesSoFar  = 5
     val arbitraryPreviousDelay = Some(123.milliseconds)
-    val status = RetryStatus(
+    val status                 = RetryStatus(
       arbitraryRetriesSoFar,
       cumulativeDelay,
       arbitraryPreviousDelay

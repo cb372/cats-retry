@@ -559,7 +559,7 @@ class CombinatorsSuite extends CatsEffectSuite:
           result match
             case Left(_)      => Continue // retry on all errors
             case Right("yay") => Stop     // success
-            case Right(_) =>
+            case Right(_)     =>
               val newAction =
                 fixture.incrementAttempts().as("yay")
               Adapt(newAction)
