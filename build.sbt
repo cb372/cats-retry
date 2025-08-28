@@ -8,12 +8,12 @@ inThisBuild(
   Seq(
     scalaVersion := scalaVersion3,
     organization := "com.github.cb372",
-    licenses := Seq(
+    licenses     := Seq(
       "Apache License, Version 2.0" -> url(
         "http://www.apache.org/licenses/LICENSE-2.0.html"
       )
     ),
-    homepage := Some(url("https://cb372.github.io/cats-retry/")),
+    homepage   := Some(url("https://cb372.github.io/cats-retry/")),
     developers := List(
       Developer(
         id = "cb372",

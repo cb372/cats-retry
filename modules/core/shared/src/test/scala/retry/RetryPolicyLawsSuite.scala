@@ -26,7 +26,7 @@ class RetryPolicyLawsSuite extends DisciplineSuite:
 
   given Arbitrary[PolicyDecision] =
     Arbitrary(for
-      delay <- Gen.choose(0L, Long.MaxValue).map(Duration.fromNanos)
+      delay    <- Gen.choose(0L, Long.MaxValue).map(Duration.fromNanos)
       decision <- Gen
         .oneOf(PolicyDecision.GiveUp, PolicyDecision.DelayAndRetry(delay))
     yield decision)
