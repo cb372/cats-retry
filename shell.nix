@@ -1,23 +1,36 @@
+{ jdk ? "jdk16" }:
+
 let
+  config = {
+    packageOverrides = p: rec {
+      java = p.${jdk};
 
-  # use a pinned version of nixpkgs for reproducability
-  nixpkgs-version = "18.09";
-  pkgs = import (builtins.fetchTarball {
-    # Descriptive name to make the store path easier to identify
-    name = "nixpkgs-${nixpkgs-version}";
-    url = "https://github.com/nixos/nixpkgs/archive/${nixpkgs-version}.tar.gz";
-    # Hash obtained using `nix-prefetch-url --unpack <url>`
-    # sha256 = "1ib96has10v5nr6bzf7v8kw7yzww8zanxgw2qi1ll1sbv6kj6zpd";
-  }) {};
+      sbt = p.sbt.overrideAttrs (
+        old: rec {
+          patchPhase = ''
+            echo -java-home ${java} >> conf/sbtopts
+          '';
+        }
+      );
+    };
+  };
+
+  nixpkgs = fetchTarball {
+    name   = "nixos-unstable-2021-09-02";
+    url    = "https://github.com/NixOS/nixpkgs/archive/8a2ec31e224.tar.gz";
+    sha256 = "0w8sl1dwmvng2bd03byiaz8j9a9hlvv8n16641m8m5dd06dyqli7";
+  };
+
+  pkgs = import nixpkgs { inherit config; };
 in
-  with pkgs;
-  stdenv.mkDerivation {
-    name = "cats-retry-dev-env";
+pkgs.mkShell {
+  name = "cats-retry-dev-env";
 
-    buildInputs = [
-      sbt
-      git # used by sbt-buildinfo
-      nodejs # used by scala.js
-      jekyll # used by sbt-microsites
-    ];
-  }
+  buildInputs = with pkgs; [
+    pkgs.${jdk}
+    sbt
+    git    # used by sbt-buildinfo
+    nodejs # used by scala.js
+    jekyll # used by sbt-microsites
+  ];
+}
