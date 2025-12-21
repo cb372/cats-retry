@@ -9,6 +9,8 @@ object Fibonacci:
   // See e.g. http://funloop.org/post/2017-04-14-computing-fibonacci-numbers.html for explanation.
   private def fib(n: Int): (Long, Long) = n match
     case 0 => (0, 1)
+    // avoid overflow
+    case _ if n >= 93 => (Long.MaxValue, Long.MaxValue)
     case m =>
       val (a, b) = fib(m / 2)
       val c      = a * (b * 2 - a)
