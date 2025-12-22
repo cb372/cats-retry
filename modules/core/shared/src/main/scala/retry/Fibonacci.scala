@@ -11,7 +11,7 @@ object Fibonacci:
     case 0 => (0, 1)
     // avoid overflow
     case _ if n >= 93 => (Long.MaxValue, Long.MaxValue)
-    case m =>
+    case m            =>
       val (a, b) = fib(m / 2)
       val c      = a * (b * 2 - a)
       val d      = a * a + b * b
