@@ -15,3 +15,14 @@ class FibonacciSuite extends FunSuite:
     assertEquals(Fibonacci.fibonacci(7), 13L)
     assertEquals(Fibonacci.fibonacci(75), 2111485077978050L)
   }
+
+  test("should not overflow") {
+    val fib91 = 4660046610375530309L
+    val fib92 = 7540113804746346429L
+    val fib93 = fib91 + fib92
+    assert(fib93 < 0)
+    assertEquals(Fibonacci.fibonacci(91), 4660046610375530309L)
+    assertEquals(Fibonacci.fibonacci(92), 7540113804746346429L)
+    //
+    assertEquals(Fibonacci.fibonacci(93), Long.MaxValue)
+  }
