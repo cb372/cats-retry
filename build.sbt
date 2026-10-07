@@ -52,7 +52,7 @@ val catsMtlVersion          = "1.7.0"
 val munitVersion            = "1.3.1"
 val munitCatsEffectVersion  = "2.2.1"
 val disciplineVersion       = "2.0.0"
-val scalacheckEffectVersion = "1.0.4"
+val scalacheckEffectVersion = "2.1.0"
 
 // All the versions we want to check against for binary compatibility.
 // In general, every time we release a new version, we should add it here.
